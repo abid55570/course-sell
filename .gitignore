@@ -1,0 +1,17 @@
+node_modules/
+.env
+public/uploads/pdfs/*
+public/uploads/thumbnails/*
+!public/uploads/pdfs/.gitkeep
+!public/uploads/thumbnails/.gitkeep
+.DS_Store
+*.log
+data/
+.claude/
+/.claude_cache/
+.claude_sessions/
+.claude_temp/
+.claude_uploads/
+.claude_downloads/
+.claude_logs/
+.claude_backups/

@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Login - Course Hub</title>
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body class="login-shell">
+  <div class="login-card">
+    <div class="brand mb-16">
+      <span class="logo"></span>
+      <span>Admin Login</span>
+    </div>
+    <form id="loginForm" class="form">
+      <div>
+        <label>Email</label>
+        <input type="email" name="email" required autocomplete="username">
+      </div>
+      <div>
+        <label>Password</label>
+        <input type="password" name="password" required autocomplete="current-password">
+      </div>
+      <button type="submit" class="btn btn-primary">Sign in</button>
+      <div id="loginAlert"></div>
+      <p class="text-muted center" style="font-size:13px">Forgot password? Re-run <code>npm run init-admin</code> on the server.</p>
+    </form>
+  </div>
+  <script>
+    document.getElementById('loginForm').addEventListener('submit', async (ev) => {
+      ev.preventDefault();
+      const fd = new FormData(ev.target);
+      const alertEl = document.getElementById('loginAlert');
+      alertEl.className = '';
+      alertEl.textContent = '';
+      try {
+        const res = await fetch('/api/auth/login', {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: fd.get('email'), password: fd.get('password') }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Login failed');
+        location.href = '/admin/dashboard';
+      } catch (e) {
+        alertEl.className = 'alert error';
+        alertEl.textContent = e.message;
+      }
+    });
+  </script>
+</body>
+</html>

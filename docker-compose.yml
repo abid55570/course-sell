@@ -1,0 +1,77 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: course-platform-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-course}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-coursepw}
+      POSTGRES_DB: ${POSTGRES_DB:-courseplatform}
+    ports:
+      - "${DB_HOST_PORT:-5432}:5432"
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-course} -d ${POSTGRES_DB:-courseplatform}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    networks:
+      - course-net
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: course-platform:latest
+    container_name: course-platform
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "${HOST_PORT:-3000}:3000"
+    env_file:
+      - .env
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      DATABASE_URL: postgres://${POSTGRES_USER:-course}:${POSTGRES_PASSWORD:-coursepw}@db:5432/${POSTGRES_DB:-courseplatform}
+    volumes:
+      - app-uploads:/app/public/uploads
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:3000/api/site-info >/dev/null || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+    networks:
+      - course-net
+
+  test:
+    profiles: ["test"]
+    build:
+      context: .
+      dockerfile: Dockerfile.test
+    image: course-platform-test:latest
+    container_name: course-platform-test
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      NODE_ENV: test
+      DATABASE_URL: postgres://${POSTGRES_USER:-course}:${POSTGRES_PASSWORD:-coursepw}@db:5432/${POSTGRES_DB:-courseplatform}
+      TEST_DATABASE_URL: postgres://${POSTGRES_USER:-course}:${POSTGRES_PASSWORD:-coursepw}@db:5432/${POSTGRES_DB:-courseplatform}
+    networks:
+      - course-net
+
+volumes:
+  db-data:
+    driver: local
+  app-uploads:
+    driver: local
+
+networks:
+  course-net:
+    driver: bridge

@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard</title>
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+  <div class="admin-shell">
+    <aside>
+      <a class="brand" href="/admin/dashboard"><span class="logo"></span> <span>Admin</span></a>
+      <nav class="admin-nav mt-16">
+        <a data-tab="overview" class="active">Overview</a>
+        <a data-tab="courses">Courses</a>
+        <a data-tab="orders">Orders</a>
+        <a data-tab="transactions">Transactions</a>
+        <a id="logoutBtn" style="margin-top:auto">Logout</a>
+      </nav>
+    </aside>
+    <main>
+      <header class="topbar">
+        <div>
+          <h2 id="tabTitle" style="margin:0">Overview</h2>
+          <p class="text-muted" style="margin:4px 0 0">Manage courses, orders, and support.</p>
+        </div>
+        <div id="adminEmail" class="text-muted"></div>
+      </header>
+
+      <section id="tab-overview">
+        <div id="stats" class="stats"></div>
+        <div class="card body" style="padding:22px">
+          <h3 style="margin-top:0">Quick start</h3>
+          <ul class="text-muted">
+            <li>Add a new course from the <a data-tab-link="courses" style="cursor:pointer;color:#a5b4fc">Courses</a> tab. Toggle whether each course's PDF, Drive link, or custom email template is sent on payment confirmation.</li>
+            <li>Verify UPI payments and confirm orders in the <a data-tab-link="orders" style="cursor:pointer;color:#a5b4fc">Orders</a> tab. The customer gets the access email automatically.</li>
+            <li>Inspect the audit trail in the <a data-tab-link="transactions" style="cursor:pointer;color:#a5b4fc">Transactions</a> tab.</li>
+          </ul>
+        </div>
+      </section>
+
+      <section id="tab-courses" class="hidden">
+        <div class="flex-between mb-16">
+          <p class="text-muted" style="margin:0">All courses (published and drafts).</p>
+          <button id="addCourseBtn" class="btn btn-primary">+ New course</button>
+        </div>
+        <div id="coursesTable"></div>
+      </section>
+
+      <section id="tab-orders" class="hidden">
+        <p class="text-muted">Submitted orders need verification. Click confirm to deliver the course.</p>
+        <div id="ordersTable"></div>
+      </section>
+
+      <section id="tab-transactions" class="hidden">
+        <p class="text-muted">Audit log of all order events (created, submitted, completed, cancelled).</p>
+        <div id="transactionsTable"></div>
+      </section>
+    </main>
+  </div>
+
+  <div id="modalRoot"></div>
+
+  <script src="/js/admin.js"></script>
+</body>
+</html>

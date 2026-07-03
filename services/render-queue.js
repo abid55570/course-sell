@@ -5,11 +5,12 @@
 
 const path = require('path');
 const fs = require('fs');
+const os = require('os');
 const db = require('../utils/db');
 const { buildRenderModel } = require('./video-templates');
 const { renderProject } = require('./renderer');
 const { getPlan, defaultPlanForTier } = require('./pricing');
-const { RENDERS_DIR, PHOTOS_DIR } = require('./storage');
+const mediaStore = require('./media-store');
 
 const CONCURRENCY = parseInt(process.env.RENDER_CONCURRENCY || '1', 10);
 const queue = [];
@@ -62,31 +63,34 @@ async function processProject(projectId) {
       project.style || {},
       { duration: plan.seconds }
     );
-    // Uploaded photos, capped to the plan's allowance (skip any missing files).
-    const photos = (project.photos || [])
-      .slice(0, plan.maxPhotos)
-      .map((f) => path.join(PHOTOS_DIR, path.basename(f)))
-      .filter((p) => fs.existsSync(p));
-
-    const { hdFile, waFile, hdSizeMb } = await renderProject({
-      model,
-      outDir: RENDERS_DIR,
-      baseName: project.public_id,
-      watermark: false,
-      photos,
-      hdWidth: plan.width,
-      hdHeight: plan.height,
-    });
-    await db.run(
-      `UPDATE video_projects
-         SET render_status='done', output_file=$1, wa_file=$2, output_size_mb=$3, updated_at=NOW()
-       WHERE id=$4`,
-      [path.basename(hdFile), path.basename(waFile), hdSizeMb, projectId]
-    );
-    if (project.order_id) {
-      await db.logTransaction({ order_id: project.order_id, event: 'note', actor: 'renderer', detail: `video rendered (${hdSizeMb}MB)` });
+    // Render in an isolated temp dir; fetch photos + push outputs via the media
+    // store (Swift object storage when configured, else local disk).
+    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'render-'));
+    try {
+      const photoFiles = [];
+      for (const key of (project.photos || []).slice(0, plan.maxPhotos)) {
+        try { photoFiles.push(await mediaStore.toLocalFile(key, tmpDir)); }
+        catch (e) { console.warn('photo fetch failed', key, e.message); }
+      }
+      const { hdFile, waFile, hdSizeMb } = await renderProject({
+        model, outDir: tmpDir, baseName: project.public_id, watermark: false,
+        photos: photoFiles, hdWidth: plan.width, hdHeight: plan.height,
+      });
+      const hdKey = await mediaStore.saveFile('renders', path.basename(hdFile), hdFile, 'video/mp4');
+      const waKey = await mediaStore.saveFile('renders', path.basename(waFile), waFile, 'video/mp4');
+      await db.run(
+        `UPDATE video_projects
+           SET render_status='done', output_file=$1, wa_file=$2, output_size_mb=$3, updated_at=NOW()
+         WHERE id=$4`,
+        [hdKey, waKey, hdSizeMb, projectId]
+      );
+      if (project.order_id) {
+        await db.logTransaction({ order_id: project.order_id, event: 'note', actor: 'renderer', detail: `video rendered (${hdSizeMb}MB)` });
+      }
+      await notifyReady(project).catch((e) => console.warn('video-ready email failed', e.message));
+    } finally {
+      try { fs.rmSync(tmpDir, { recursive: true, force: true }); } catch { /* ignore */ }
     }
-    await notifyReady(project).catch((e) => console.warn('video-ready email failed', e.message));
   } catch (err) {
     console.error('render failed for project', projectId, err.message);
     await db.run("UPDATE video_projects SET render_status='failed', render_error=$1, updated_at=NOW() WHERE id=$2",

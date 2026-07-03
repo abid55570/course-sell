@@ -7,7 +7,7 @@ const db = require('../utils/db');
 const { validateProjectData, validateStyle } = require('../utils/video-fields');
 const { PALETTES } = require('../services/video-templates');
 const { planCatalog, isValidPlan, getPlan, defaultPlanForTier, planPricing } = require('../services/pricing');
-const { RENDERS_DIR, PHOTOS_DIR } = require('../services/storage');
+const mediaStore = require('../services/media-store');
 
 const router = express.Router();
 const PALETTE_NAMES = Object.keys(PALETTES);
@@ -208,8 +208,8 @@ router.post('/projects/:publicId/photos', photoUpload.array('photos', 5), async 
     const saved = [];
     for (const file of files) {
       const safe = `${project.public_id}-${crypto.randomBytes(4).toString('hex')}.img`;
-      fs.writeFileSync(path.join(PHOTOS_DIR, safe), file.buffer);
-      saved.push(safe);
+      const key = await mediaStore.saveBuffer('photos', safe, file.buffer, file.mimetype);
+      saved.push(key);
     }
     const photos = [...existing, ...saved];
     await db.run('UPDATE video_projects SET photos = $1, updated_at = NOW() WHERE id = $2', [JSON.stringify(photos), project.id]);
@@ -227,11 +227,9 @@ router.get('/projects/:publicId/download', async (req, res, next) => {
     const order = await db.get('SELECT status FROM orders WHERE order_id = $1', [project.order_id]);
     if (!order || order.status !== 'completed') return res.status(403).send('Payment not confirmed');
     if (project.render_status !== 'done') return res.status(409).send('Video still rendering');
-    const fileName = variant === 'wa' ? project.wa_file : project.output_file;
-    if (!fileName) return res.status(404).send('File not available');
-    const abs = path.join(RENDERS_DIR, path.basename(fileName));
-    if (!fs.existsSync(abs)) return res.status(404).send('File missing');
-    res.download(abs, `invite-${project.public_id}-${variant}.mp4`);
+    const key = variant === 'wa' ? project.wa_file : project.output_file;
+    if (!key) return res.status(404).send('File not available');
+    return mediaStore.streamTo(key, res, `invite-${project.public_id}-${variant}.mp4`);
   } catch (e) { next(e); }
 });
 

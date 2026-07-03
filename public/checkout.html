@@ -3,15 +3,16 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Checkout - Course Hub</title>
+  <title>Checkout - DropDash</title>
   <link rel="stylesheet" href="/css/styles.css">
 </head>
 <body>
   <header class="site-header">
     <div class="container nav">
-      <a class="brand" href="/"><span class="logo"></span> <span>Course Hub</span></a>
+      <a class="brand" href="/"><span class="logo"></span> <span id="brandName">DropDash</span></a>
       <nav class="nav-links">
         <a href="/#courses">Courses</a>
+        <a href="/generator">Invite Videos</a>
       </nav>
     </div>
   </header>
@@ -34,7 +35,8 @@
             <label>Phone (optional)</label>
             <input name="buyer_phone">
           </div>
-          <button type="submit" class="btn btn-primary">Continue to payment</button>
+          <button type="submit" class="btn btn-primary" id="payBtn">Pay &amp; get access</button>
+          <p class="text-muted" style="font-size:12px;margin-top:10px">Secure payment by Razorpay — UPI, cards, netbanking &amp; wallets.</p>
           <div id="buyerAlert"></div>
         </form>
         <div class="card body" style="padding:22px">
@@ -43,43 +45,15 @@
         </div>
       </div>
 
-      <div id="step2" class="checkout-grid mt-16 hidden">
-        <div class="card body" style="padding:22px">
-          <h3 style="margin-top:0">Pay using UPI</h3>
-          <p class="text-muted">Scan the QR with any UPI app or tap the button on mobile.</p>
-          <div id="qrWrap" class="qr-wrap"></div>
-          <p class="center mt-16"><a id="upiLink" class="btn btn-primary" href="#">Open in UPI app</a></p>
-          <div class="alert mt-16">
-            <strong>UPI ID:</strong> <span id="upiId"></span><br>
-            <strong>Amount:</strong> ₹<span id="upiAmount"></span><br>
-            <strong>Order ID:</strong> <span id="upiOrderId"></span>
-          </div>
-        </div>
-        <form id="txnForm" class="form">
-          <h3 style="margin-top:0">Submit payment reference</h3>
-          <p class="text-muted">After paying, copy the UPI Transaction/UTR reference from your UPI app and paste it below.</p>
-          <div>
-            <label>UPI Transaction Reference (UTR)</label>
-            <input name="upi_txn_ref" required>
-          </div>
-          <div>
-            <label>Notes (optional)</label>
-            <textarea name="notes"></textarea>
-          </div>
-          <button type="submit" class="btn btn-primary">Submit reference</button>
-          <div id="txnAlert"></div>
-        </form>
-      </div>
-
       <div id="step3" class="hidden">
         <div class="alert success mt-16">
-          <strong>Payment reference received.</strong> We're verifying your payment. You'll get an email with course access shortly.
+          <strong>Payment successful!</strong> Redirecting you to your order…
         </div>
-        <p><a id="orderTrackLink" href="#" class="btn">Track your order</a></p>
       </div>
     </div>
   </main>
 
+  <script src="/js/checkout-lib.js"></script>
   <script src="/js/app.js"></script>
 </body>
 </html>

@@ -38,13 +38,16 @@ router.use(requireAdmin);
 
 const COURSE_LIST_COLS =
   `id, slug, title, short_description, description, thumbnail, pdf_file, drive_link,
-   original_price, discounted_price, category, level, duration, is_published,
+   original_price, discounted_price, category, level, duration, kind, is_published,
    send_pdf_in_email, send_drive_in_email, email_template_html, created_at, updated_at,
    thumbnail_mime, (thumbnail_data IS NOT NULL) AS has_thumbnail`;
 
 router.get('/courses', async (req, res, next) => {
   try {
-    const rows = await db.all(`SELECT ${COURSE_LIST_COLS} FROM courses ORDER BY created_at DESC`);
+    const params = [];
+    let where = '';
+    if (req.query.kind) { params.push(req.query.kind); where = `WHERE kind = $${params.length}`; }
+    const rows = await db.all(`SELECT ${COURSE_LIST_COLS} FROM courses ${where} ORDER BY created_at DESC`, params);
     res.json(rows);
   } catch (e) { next(e); }
 });
@@ -90,10 +93,10 @@ router.post('/courses', courseUpload, async (req, res, next) => {
     const result = await db.run(
       `INSERT INTO courses (slug, title, short_description, description, thumbnail, thumbnail_data, thumbnail_mime, pdf_file, drive_link,
         original_price, discounted_price, category, level, duration, is_published,
-        send_pdf_in_email, send_drive_in_email, email_template_html)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18)
+        send_pdf_in_email, send_drive_in_email, email_template_html, kind)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19)
        RETURNING id, slug, title, short_description, description, thumbnail, pdf_file, drive_link,
-         original_price, discounted_price, category, level, duration, is_published,
+         original_price, discounted_price, category, level, duration, kind, is_published,
          send_pdf_in_email, send_drive_in_email, email_template_html, created_at, updated_at,
          (thumbnail_data IS NOT NULL) AS has_thumbnail`,
       [
@@ -106,6 +109,7 @@ router.post('/courses', courseUpload, async (req, res, next) => {
         parseBoolField(b.send_pdf_in_email, true),
         parseBoolField(b.send_drive_in_email, true),
         b.email_template_html || null,
+        b.kind === 'product' ? 'product' : 'course',
       ]
     );
     res.json(result.rows[0]);
@@ -130,11 +134,11 @@ router.put('/courses/:id', courseUpload, async (req, res, next) => {
         title = $1, short_description = $2, description = $3, thumbnail = $4, thumbnail_data = $5, thumbnail_mime = $6,
         pdf_file = $7, drive_link = $8,
         original_price = $9, discounted_price = $10, category = $11, level = $12, duration = $13, is_published = $14,
-        send_pdf_in_email = $15, send_drive_in_email = $16, email_template_html = $17,
+        send_pdf_in_email = $15, send_drive_in_email = $16, email_template_html = $17, kind = $18,
         updated_at = NOW()
-       WHERE id = $18
+       WHERE id = $19
        RETURNING id, slug, title, short_description, description, thumbnail, pdf_file, drive_link,
-         original_price, discounted_price, category, level, duration, is_published,
+         original_price, discounted_price, category, level, duration, kind, is_published,
          send_pdf_in_email, send_drive_in_email, email_template_html, created_at, updated_at,
          (thumbnail_data IS NOT NULL) AS has_thumbnail`,
       [
@@ -153,6 +157,7 @@ router.put('/courses/:id', courseUpload, async (req, res, next) => {
         b.send_pdf_in_email !== undefined ? parseBoolField(b.send_pdf_in_email, current.send_pdf_in_email) : current.send_pdf_in_email,
         b.send_drive_in_email !== undefined ? parseBoolField(b.send_drive_in_email, current.send_drive_in_email) : current.send_drive_in_email,
         b.email_template_html !== undefined ? (b.email_template_html || null) : current.email_template_html,
+        b.kind === 'product' ? 'product' : (b.kind === 'course' ? 'course' : current.kind),
         id,
       ]
     );
@@ -179,9 +184,14 @@ router.delete('/courses/:id', async (req, res, next) => {
 
 router.get('/orders', async (req, res, next) => {
   try {
+    // LEFT JOIN so video orders (which have no course) are included too.
     const rows = await db.all(
-      `SELECT o.*, c.title AS course_title, c.slug AS course_slug
-       FROM orders o JOIN courses c ON c.id = o.course_id
+      `SELECT o.*, c.title AS course_title, c.slug AS course_slug,
+              vt.name AS template_name, vp.public_id AS project_public_id, vp.render_status
+       FROM orders o
+       LEFT JOIN courses c ON c.id = o.course_id
+       LEFT JOIN video_projects vp ON vp.id = o.video_project_id
+       LEFT JOIN video_templates vt ON vt.id = vp.template_id
        ORDER BY o.created_at DESC`
     );
     res.json(rows);
@@ -205,30 +215,21 @@ router.get('/transactions', async (req, res, next) => {
   } catch (e) { next(e); }
 });
 
+// Manual override. Razorpay auto-completes orders via checkout-verify + webhook;
+// this lets an admin force-complete/fulfil an order (e.g. an offline payment or
+// to re-trigger a stuck video render) through the same idempotent path.
 router.post('/orders/:orderId/confirm', async (req, res, next) => {
   try {
-    const { sendOrderCompletedEmail } = require('../utils/email');
+    const { markOrderPaid } = require('../services/fulfillment');
     const order = await db.get('SELECT * FROM orders WHERE order_id = $1', [req.params.orderId]);
     if (!order) return res.status(404).json({ error: 'not found' });
     if (order.status === 'completed') return res.status(400).json({ error: 'already completed' });
-    const course = await db.get('SELECT * FROM courses WHERE id = $1', [order.course_id]);
-    const newRef = req.body?.upi_txn_ref || order.upi_txn_ref;
-    await db.run(
-      "UPDATE orders SET status = 'completed', upi_txn_ref = $1, updated_at = NOW() WHERE order_id = $2",
-      [newRef, req.params.orderId]
-    );
-    await db.logTransaction({
-      order_id: req.params.orderId, event: 'completed', actor: req.admin.email,
-      amount: order.amount, upi_txn_ref: newRef,
-      detail: `Email sent with includePdf=${!!course.send_pdf_in_email && !!course.pdf_file}, includeDrive=${!!course.send_drive_in_email && !!course.drive_link}`,
+    const result = await markOrderPaid(order.order_id, {
+      paymentId: req.body?.upi_txn_ref || order.razorpay_payment_id || null,
+      actor: req.admin.email,
     });
-    let emailResult = null;
-    try {
-      emailResult = await sendOrderCompletedEmail({ ...order, status: 'completed' }, course);
-    } catch (e) {
-      console.warn('email send failed', e.message);
-    }
-    res.json({ ok: true, email: emailResult });
+    if (!result.ok) return res.status(400).json({ error: result.error || 'could not complete' });
+    res.json({ ok: true, result });
   } catch (e) { next(e); }
 });
 

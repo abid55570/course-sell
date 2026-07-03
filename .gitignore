@@ -15,3 +15,11 @@ data/
 .claude_downloads/
 .claude_logs/
 .claude_backups/
+
+# video generator generated media (served only via gated endpoints)
+storage/renders/*
+storage/photos/*
+!storage/**/.gitkeep
+
+# PM2 logs
+logs/

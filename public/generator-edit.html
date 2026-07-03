@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Customise your invite</title>
+  <link rel="stylesheet" href="/css/styles.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Cinzel:wght@700;900&family=Noto+Sans:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    .edit-grid { display:grid; grid-template-columns:1fr 400px; gap:28px; align-items:start; padding:24px 20px 60px; }
+    @media (max-width:900px){ .edit-grid { grid-template-columns:1fr; } .preview-col { order:-1; } }
+    .field-group { margin-bottom:22px; }
+    .field-group h4 { margin:0 0 10px; font-size:13px; text-transform:uppercase; letter-spacing:.06em; color:var(--muted,#8a90a6); }
+    .field { margin-bottom:12px; }
+    .field label { display:block; font-size:13px; margin-bottom:4px; }
+    .field .err { color:#ef4444; font-size:12px; margin-top:3px; }
+    .preview-col { position:sticky; top:20px; }
+    .phone { width:300px; max-width:100%; margin:0 auto; border-radius:34px; border:10px solid #0b0d15; box-shadow:0 20px 50px rgba(0,0,0,.4); overflow:hidden; }
+    .invite { position:relative; aspect-ratio:9/16; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:34px 26px; box-sizing:border-box; }
+    .invite .frame { position:absolute; inset:16px; border:2px solid; border-radius:4px; opacity:.75; pointer-events:none; }
+    .invite .kicker { font-family:'Cinzel',serif; font-weight:700; letter-spacing:.08em; text-transform:uppercase; font-size:14px; margin:6px 0; }
+    .invite .name { font-family:'Great Vibes',cursive; font-size:52px; line-height:1; margin:4px 0; }
+    .invite .amp { font-family:'Great Vibes',cursive; font-size:34px; margin:2px 0; }
+    .invite .detail { font-family:'Noto Sans',sans-serif; font-size:16px; margin:6px 0; }
+    .invite .message { font-family:'Noto Sans',sans-serif; font-size:14px; opacity:.85; margin:8px 0; }
+    .invite .small { font-family:'Noto Sans',sans-serif; font-size:12px; opacity:.7; margin:3px 0; }
+    .invite .wm { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-family:'Noto Sans',sans-serif; font-weight:600; color:rgba(255,255,255,.22); font-size:20px; transform:rotate(-24deg); pointer-events:none; }
+    .invite .photo-bg { position:absolute; inset:0; background-size:cover; background-position:center; z-index:0; }
+    .invite .photo-scrim { position:absolute; inset:0; background:rgba(0,0,0,.45); z-index:0; }
+    .invite > .kicker, .invite > .name, .invite > .amp, .invite > .detail, .invite > .message, .invite > .small, .invite > .frame, .invite > .wm { position:relative; z-index:1; }
+    .photo-thumbs { display:flex; gap:8px; flex-wrap:wrap; margin-top:10px; }
+    .photo-thumbs .pt { width:52px; height:70px; border-radius:6px; object-fit:cover; border:1px solid var(--border,#33374d); }
+    .swatches { display:flex; gap:9px; flex-wrap:wrap; }
+    .swatch { width:38px; height:38px; border-radius:9px; cursor:pointer; border:2px solid transparent; position:relative; transition:transform .1s; }
+    .swatch:hover { transform:scale(1.08); }
+    .swatch.active { border-color:#fff; box-shadow:0 0 0 2px var(--primary,#6d6bff); }
+    .swatch.active::after { content:'✓'; position:absolute; inset:0; display:flex; align-items:center; justify-content:center; color:#fff; font-size:14px; text-shadow:0 1px 2px rgba(0,0,0,.6); }
+    input[type=color] { width:100%; height:40px; padding:3px; border-radius:9px; border:1px solid var(--border,#33374d); background:rgba(255,255,255,0.04); cursor:pointer; }
+    .ctext-row { display:flex; gap:8px; margin-bottom:8px; align-items:center; }
+    .ctext-row input { flex:1; }
+    .ctext-row select { width:120px; flex:none; }
+    .ctext-row .rm { flex:none; cursor:pointer; padding:8px 11px; }
+    .plan-cards { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
+    @media (max-width:520px){ .plan-cards { grid-template-columns:1fr; } }
+    .plan-card { border:1px solid var(--border,#33374d); border-radius:12px; padding:12px 11px; cursor:pointer; transition:all .15s; background:rgba(255,255,255,0.02); position:relative; }
+    .plan-card:hover { border-color:#5a58f0; }
+    .plan-card.active { border-color:#6d6bff; box-shadow:0 0 0 2px rgba(109,107,255,.4); background:rgba(109,107,255,0.08); }
+    .plan-card .pname { font-weight:700; font-size:13px; }
+    .plan-card .pprice { font-size:18px; font-weight:800; margin:3px 0; }
+    .plan-card .pwas { text-decoration:line-through; color:var(--muted,#8a90a6); font-size:11px; font-weight:400; margin-left:4px; }
+    .plan-card ul { margin:6px 0 0; padding-left:15px; font-size:11px; color:var(--muted,#8a90a6); line-height:1.55; }
+    .price-tag { text-align:center; margin:14px 0; }
+    .price-tag .now { font-size:26px; font-weight:700; }
+    .price-tag .was { text-decoration:line-through; color:var(--muted,#8a90a6); margin-left:8px; }
+  </style>
+</head>
+<body>
+  <header class="site-header">
+    <div class="container nav">
+      <a class="brand" href="/"><span class="logo"></span> <span id="brandName">DropDash</span></a>
+      <nav class="nav-links">
+        <a href="/generator">← All templates</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container">
+    <div id="editRoot">
+      <div class="edit-grid">
+        <div>
+          <h2 id="tplName" style="margin-top:10px">Loading…</h2>
+          <form id="detailsForm" class="form" autocomplete="off">
+            <div class="field-group" id="planGroup">
+              <h4>Choose your plan</h4>
+              <div id="planCards" class="plan-cards"></div>
+            </div>
+            <div class="field-group" id="designGroup">
+              <h4>Design <span style="text-transform:none;letter-spacing:0;color:var(--muted,#8a90a6)">— pick a colour palette, or set your own</span></h4>
+              <div id="paletteSwatches" class="swatches"></div>
+              <div class="row-2" style="margin-top:12px">
+                <div class="field" style="margin-bottom:0"><label>Accent colour</label><input type="color" id="styleAccent"></div>
+                <div class="field" style="margin-bottom:0"><label>Background colour</label><input type="color" id="styleBg"></div>
+              </div>
+              <div class="field" style="margin-top:12px"><label>Frame / border style</label>
+                <select id="styleFrame">
+                  <option value="double">Double (classic)</option>
+                  <option value="single">Single line</option>
+                  <option value="inset">Thin inset</option>
+                  <option value="none">No border</option>
+                </select>
+              </div>
+              <button type="button" class="btn btn-sm" id="styleReset" style="margin-top:10px">↺ Reset colours</button>
+            </div>
+            <div id="fields"></div>
+            <div class="field-group">
+              <h4>Your own text <span style="text-transform:none;letter-spacing:0;color:var(--muted,#8a90a6)">(add any extra lines to the card)</span></h4>
+              <div id="customTexts"></div>
+              <button type="button" class="btn btn-sm" id="addTextBtn">+ Add text line</button>
+            </div>
+            <div class="field-group">
+              <h4>Photos <span style="text-transform:none;letter-spacing:0;color:var(--muted,#8a90a6)">(optional, up to 5 — shown as a slideshow behind the text)</span></h4>
+              <input type="file" id="photoInput" accept="image/*" multiple>
+              <div id="photoThumbs" class="photo-thumbs"></div>
+            </div>
+          </form>
+        </div>
+        <div class="preview-col">
+          <div class="phone"><div class="invite" id="invite"></div></div>
+          <div class="price-tag" id="priceTag"></div>
+          <form id="buyerForm" class="form card body" style="padding:18px">
+            <h4 style="margin:0 0 10px">Delivery details</h4>
+            <div class="field"><label>Your name</label><input name="buyer_name" required></div>
+            <div class="field"><label>Email (we send the video here)</label><input type="email" name="buyer_email" required></div>
+            <div class="field"><label>Phone (optional)</label><input name="buyer_phone"></div>
+            <button type="submit" class="btn btn-primary" id="payBtn" style="width:100%">Pay &amp; generate video</button>
+            <p class="text-muted" style="font-size:12px;margin:10px 0 0">Live preview above is watermarked. Pay to get the clean HD video. Secure payment by Razorpay.</p>
+            <div id="payAlert"></div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script src="/js/checkout-lib.js"></script>
+  <script src="/js/app.js"></script>
+  <script src="/js/generator.js"></script>
+</body>
+</html>

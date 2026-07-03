@@ -3,70 +3,71 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>My Course Hub - Premium Online Courses</title>
-  <meta name="description" content="Premium online courses with downloadable PDFs and Drive resources. Pay securely via UPI.">
+  <title>Courses & Digital Products</title>
+  <meta name="description" content="Premium online courses and digital products with instant delivery. Pay securely via UPI, cards & netbanking.">
   <link rel="stylesheet" href="/css/styles.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&family=Great+Vibes&family=Cinzel:wght@700&display=swap" rel="stylesheet">
 </head>
 <body>
   <header class="site-header">
     <div class="container nav">
-      <a class="brand" href="/">
-        <span class="logo"></span>
-        <span id="brandName">Course Hub</span>
-      </a>
+      <a class="brand" href="/"><span class="logo"></span> <span id="brandName">DropDash</span></a>
       <nav class="nav-links">
         <a href="#courses">Courses</a>
-        <a href="#about">About</a>
+        <a href="#products">Products</a>
+        <a href="/invite" class="nav-new">Invite Videos <span class="newtag">New</span></a>
         <a href="/admin" class="btn btn-sm">Admin</a>
       </nav>
     </div>
   </header>
 
   <main>
+    <!-- HERO -->
     <section class="hero">
-      <div class="container">
-        <h1>Learn skills that pay you back.</h1>
-        <p>Hand-crafted, project-based courses with downloadable PDFs and private Drive resources. Pay securely via UPI - get instant access on confirmation.</p>
-        <div class="hero-cta">
-          <a href="#courses" class="btn btn-primary">Explore courses</a>
+      <div class="container" style="text-align:center;max-width:820px">
+        <span class="eyebrow">🎓 Learn · Build · Grow</span>
+        <h1>Premium courses &amp; <span class="grad">digital products</span></h1>
+        <p class="lead" style="margin-left:auto;margin-right:auto">Hand-crafted courses and ready-to-use digital products, delivered instantly. Pay securely via UPI, cards &amp; netbanking.</p>
+        <div class="hero-cta" style="justify-content:center">
+          <a href="#courses" class="btn btn-primary btn-lg">Browse courses</a>
+          <a href="#products" class="btn btn-lg">Shop products</a>
         </div>
       </div>
     </section>
 
+    <!-- COURSES -->
     <section id="courses">
       <div class="container">
         <div class="section-head">
-          <div>
-            <h2>All Courses</h2>
-            <p>Lifetime access. Updated regularly.</p>
-          </div>
+          <div><h2>Courses</h2><p>Lifetime access. Updated regularly.</p></div>
         </div>
         <div id="coursesGrid" class="grid"></div>
-        <div id="coursesEmpty" class="alert hidden">No courses available yet. Check back soon.</div>
+        <div id="coursesEmpty" class="alert hidden">No courses yet — add one from the admin panel.</div>
       </div>
     </section>
 
-    <section id="about">
+    <!-- PRODUCTS -->
+    <section id="products">
       <div class="container">
         <div class="section-head">
-          <div>
-            <h2>Why learners choose us</h2>
-            <p>Authentic content, no fluff, no ad-padding.</p>
-          </div>
+          <div><h2>Digital Products</h2><p>Instant download / access on payment.</p></div>
         </div>
-        <div class="grid">
-          <div class="card body" style="padding:22px;display:block">
-            <h3 style="margin:0 0 8px">PDFs + Drive resources</h3>
-            <p class="text-muted">Every course ships with a downloadable PDF and a private Drive folder of source files.</p>
+        <div id="productsGrid" class="grid"></div>
+        <div id="productsEmpty" class="alert hidden">No products yet — add one from the admin panel.</div>
+      </div>
+    </section>
+
+    <!-- INVITE PROMO -->
+    <section>
+      <div class="container">
+        <div class="promo">
+          <div>
+            <h3>🎬 Need an invite video?</h3>
+            <p>Make a personalised wedding / festival / birthday invite video in minutes — customise, preview, and get it on WhatsApp.</p>
           </div>
-          <div class="card body" style="padding:22px;display:block">
-            <h3 style="margin:0 0 8px">UPI Payments</h3>
-            <p class="text-muted">Pay using any UPI app - GPay, PhonePe, Paytm, BHIM. Instant access on confirmation.</p>
-          </div>
-          <div class="card body" style="padding:22px;display:block">
-            <h3 style="margin:0 0 8px">Instant access on confirmation</h3>
-            <p class="text-muted">Once your UPI payment is approved, your course access email lands in your inbox automatically.</p>
-          </div>
+          <a href="/invite" class="btn btn-primary btn-lg">Explore Invite Maker →</a>
         </div>
       </div>
     </section>
@@ -74,8 +75,8 @@
 
   <footer class="site-footer">
     <div class="container">
-      <div class="brand"><span class="logo"></span> <span id="brandFooter">Course Hub</span></div>
-      <p class="text-muted mt-8">Hand-crafted courses with lifetime access.</p>
+      <div class="brand"><span class="logo"></span> <span id="brandFooter">DropDash</span></div>
+      <p class="text-muted mt-8">Courses, digital products &amp; invite videos · Pay securely via UPI, cards &amp; netbanking.</p>
     </div>
   </footer>
 

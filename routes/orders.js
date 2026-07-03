@@ -2,101 +2,154 @@ const express = require('express');
 const path = require('path');
 const fs = require('fs');
 const { v4: uuidv4 } = require('uuid');
-const QRCode = require('qrcode');
 const db = require('../utils/db');
-const { sendOrderPendingEmail } = require('../utils/email');
+const payments = require('../services/payments');
+const { markOrderPaid } = require('../services/fulfillment');
+const { planPricing } = require('../services/pricing');
 
 const router = express.Router();
 
-function buildUpiLink(amount, orderId) {
-  const upiId = process.env.UPI_ID || 'merchant@upi';
-  const payeeName = process.env.UPI_PAYEE_NAME || 'Course Hub';
-  const currency = process.env.UPI_CURRENCY || 'INR';
-  const params = new URLSearchParams({
-    pa: upiId,
-    pn: payeeName,
-    am: String(amount),
-    cu: currency,
-    tn: `Course Order ${orderId}`,
-    tr: orderId,
-  });
-  return `upi://pay?${params.toString()}`;
+// Resolve the product being purchased (course OR video project) into a common
+// shape: { productType, courseId, videoProjectId, amount, title }.
+async function resolveProduct(body) {
+  const { course_id, video_project_id } = body || {};
+  if (course_id) {
+    const course = await db.get('SELECT * FROM courses WHERE id = $1 AND is_published = TRUE', [course_id]);
+    if (!course) return { error: 'course not found' };
+    const amount = Number(course.discounted_price) || Number(course.original_price) || 0;
+    return { productType: 'course', courseId: course.id, amount, title: course.title, course };
+  }
+  if (video_project_id) {
+    // Accept the project's public_id (what the browser holds) or numeric id.
+    const project = await db.get(
+      'SELECT * FROM video_projects WHERE public_id = $1 OR id::text = $1',
+      [String(video_project_id)]
+    );
+    if (!project) return { error: 'video project not found' };
+    const template = await db.get('SELECT * FROM video_templates WHERE id = $1 AND is_published = TRUE', [project.template_id]);
+    if (!template) return { error: 'template not found' };
+    // Block re-purchase of an already-paid project.
+    if (project.order_id) {
+      const existing = await db.get('SELECT status FROM orders WHERE order_id = $1', [project.order_id]);
+      if (existing && existing.status === 'completed') return { error: 'this video is already paid for' };
+    }
+    // Amount comes from the buyer's chosen plan on the project.
+    const amount = (planPricing(project.plan) || planPricing('standard')).discounted_price;
+    return { productType: 'video', videoProjectId: project.id, amount, title: `${template.name} · ${project.plan}`, project, template };
+  }
+  return { error: 'course_id or video_project_id required' };
 }
 
+// Create an order + a Razorpay order. Razorpay is the only payment path.
 router.post('/', async (req, res, next) => {
   try {
-    const { course_id, buyer_name, buyer_email, buyer_phone } = req.body || {};
-    if (!course_id || !buyer_name || !buyer_email) {
-      return res.status(400).json({ error: 'course_id, buyer_name, buyer_email required' });
+    const { buyer_name, buyer_email, buyer_phone } = req.body || {};
+    if (!buyer_name || !buyer_email) {
+      return res.status(400).json({ error: 'buyer_name and buyer_email required' });
     }
-    const course = await db.get(
-      'SELECT * FROM courses WHERE id = $1 AND is_published = TRUE',
-      [course_id]
-    );
-    if (!course) return res.status(404).json({ error: 'course not found' });
+    const product = await resolveProduct(req.body);
+    if (product.error) return res.status(400).json({ error: product.error });
+
     const orderId = `ORD-${uuidv4().slice(0, 8).toUpperCase()}`;
-    const amount = Number(course.discounted_price) || Number(course.original_price) || 0;
     await db.run(
-      `INSERT INTO orders (order_id, course_id, buyer_name, buyer_email, buyer_phone, amount, status)
-       VALUES ($1, $2, $3, $4, $5, $6, 'pending')`,
-      [orderId, course.id, buyer_name.trim(), buyer_email.trim().toLowerCase(), buyer_phone || null, amount]
+      `INSERT INTO orders (order_id, product_type, course_id, video_project_id, buyer_name, buyer_email, buyer_phone, amount, status)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,'pending')`,
+      [orderId, product.productType, product.courseId || null, product.videoProjectId || null,
+        buyer_name.trim(), buyer_email.trim().toLowerCase(), buyer_phone || null, product.amount]
     );
-    await db.logTransaction({
-      order_id: orderId, event: 'created', actor: 'buyer', amount,
-      detail: `course=${course.slug}`,
+    await db.logTransaction({ order_id: orderId, event: 'created', actor: 'buyer', amount: product.amount, detail: `product=${product.productType}` });
+
+    // Tie the video project to this (still-unpaid) order so the render can find it later.
+    if (product.productType === 'video') {
+      await db.run('UPDATE video_projects SET order_id = $1, buyer_email = $2, updated_at = NOW() WHERE id = $3',
+        [orderId, buyer_email.trim().toLowerCase(), product.videoProjectId]);
+    }
+
+    const pay = await payments.createPaymentOrder({
+      orderId, amountInr: product.amount, buyerName: buyer_name, buyerEmail: buyer_email, buyerPhone: buyer_phone,
+      notes: { product_type: product.productType },
     });
-    const order = await db.get('SELECT * FROM orders WHERE order_id = $1', [orderId]);
-    const upiLink = buildUpiLink(amount, orderId);
-    const qrDataUrl = await QRCode.toDataURL(upiLink, { margin: 1, width: 320 });
-    sendOrderPendingEmail(order, course).catch((e) => console.warn('email failed', e.message));
+    await db.run('UPDATE orders SET razorpay_order_id = $1, updated_at = NOW() WHERE order_id = $2', [pay.razorpay_order_id, orderId]);
+
     res.json({
       order_id: orderId,
-      amount,
-      course: { id: course.id, title: course.title, slug: course.slug },
-      upi: {
-        upi_id: process.env.UPI_ID,
-        payee_name: process.env.UPI_PAYEE_NAME,
-        link: upiLink,
-        qr: qrDataUrl,
+      amount: product.amount,
+      currency: pay.currency,
+      product: { type: product.productType, title: product.title },
+      razorpay: {
+        configured: pay.configured,
+        key_id: pay.key_id,
+        order_id: pay.razorpay_order_id,
+        amount_paise: pay.amount,
+        prefill: pay.prefill,
+        name: process.env.SITE_NAME || 'Checkout',
       },
     });
   } catch (err) { next(err); }
 });
 
-router.post('/:orderId/submit-txn', async (req, res, next) => {
+// Verify a Razorpay Checkout success payload and fulfil the order. When Razorpay
+// keys are not configured (local dev), this accepts without a signature so the
+// flow is clickable; in production a valid signature is mandatory.
+router.post('/:orderId/verify', async (req, res, next) => {
   try {
-    const { upi_txn_ref, notes } = req.body || {};
-    if (!upi_txn_ref) return res.status(400).json({ error: 'upi_txn_ref required' });
-    const result = await db.run(
-      `UPDATE orders SET upi_txn_ref = $1, notes = $2, status = 'submitted', updated_at = NOW()
-       WHERE order_id = $3 AND status IN ('pending','submitted')`,
-      [upi_txn_ref.trim(), notes || null, req.params.orderId]
-    );
-    if (result.rowCount === 0) return res.status(404).json({ error: 'order not found or already processed' });
-    await db.logTransaction({
-      order_id: req.params.orderId, event: 'submitted', actor: 'buyer',
-      upi_txn_ref: upi_txn_ref.trim(), detail: notes || null,
+    const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body || {};
+    const order = await db.get('SELECT * FROM orders WHERE order_id = $1', [req.params.orderId]);
+    if (!order) return res.status(404).json({ error: 'order not found' });
+    if (order.status === 'completed') return res.json({ ok: true, status: 'completed', product_type: order.product_type });
+
+    if (payments.isConfigured()) {
+      const ok = razorpay_order_id === order.razorpay_order_id &&
+        payments.verifyCheckoutSignature({ razorpay_order_id, razorpay_payment_id, razorpay_signature });
+      if (!ok) return res.status(400).json({ error: 'payment verification failed' });
+    }
+    const result = await markOrderPaid(order.order_id, {
+      paymentId: razorpay_payment_id || `dev_${Date.now()}`,
+      actor: 'razorpay-checkout',
     });
-    res.json({ ok: true });
+    if (!result.ok) return res.status(400).json({ error: result.error || 'could not complete order' });
+    res.json({ ok: true, status: 'completed', product_type: order.product_type });
   } catch (e) { next(e); }
 });
 
+// Order status for the delivery page (works for both product types).
 router.get('/:orderId', async (req, res, next) => {
   try {
-    const order = await db.get(
-      `SELECT o.order_id, o.status, o.amount, o.buyer_name, o.buyer_email, o.created_at,
-              c.title AS course_title, c.slug AS course_slug, c.drive_link, c.pdf_file,
-              c.send_drive_in_email, c.send_pdf_in_email
-       FROM orders o JOIN courses c ON c.id = o.course_id
-       WHERE o.order_id = $1`,
-      [req.params.orderId]
-    );
+    const order = await db.get('SELECT * FROM orders WHERE order_id = $1', [req.params.orderId]);
     if (!order) return res.status(404).json({ error: 'not found' });
     const isCompleted = order.status === 'completed';
+    const base = {
+      order_id: order.order_id, status: order.status, amount: order.amount,
+      buyer_name: order.buyer_name, buyer_email: order.buyer_email,
+      product_type: order.product_type, created_at: order.created_at,
+    };
+
+    if (order.product_type === 'video') {
+      const project = await db.get(
+        `SELECT vp.public_id, vp.render_status, vp.output_size_mb, vt.name AS template_name
+         FROM video_projects vp JOIN video_templates vt ON vt.id = vp.template_id
+         WHERE vp.id = $1`, [order.video_project_id]);
+      return res.json({
+        ...base,
+        title: project ? project.template_name : 'Video',
+        video: project ? {
+          public_id: project.public_id,
+          render_status: project.render_status,
+          size_mb: project.output_size_mb,
+          ready: isCompleted && project.render_status === 'done',
+        } : null,
+      });
+    }
+
+    const course = await db.get(
+      `SELECT title, slug, drive_link, pdf_file, send_drive_in_email, send_pdf_in_email FROM courses WHERE id = $1`,
+      [order.course_id]);
     res.json({
-      ...order,
-      drive_link: isCompleted && order.send_drive_in_email ? order.drive_link : null,
-      pdf_file: isCompleted && order.send_pdf_in_email ? order.pdf_file : null,
+      ...base,
+      course_title: course ? course.title : null,
+      course_slug: course ? course.slug : null,
+      drive_link: isCompleted && course && course.send_drive_in_email ? course.drive_link : null,
+      pdf_file: isCompleted && course && course.send_pdf_in_email ? course.pdf_file : null,
     });
   } catch (e) { next(e); }
 });

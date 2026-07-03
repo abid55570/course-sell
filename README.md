@@ -1,183 +1,189 @@
-# Course Platform
+# DropDash
 
-Sell courses online with UPI payments, downloadable PDFs, Google Drive resources, automated confirmation emails via Gmail SMTP, an admin panel, an audit log of every order event, and a real PostgreSQL database that runs as its own Docker service.
+A digital-product platform with two product lines and one automated checkout:
 
-## Stack
+1. **Invite Video Maker** — buyers customise a template (names, dates, photos, colours, their own text), preview it live, pay, and receive an HD + WhatsApp-ready video rendered on the server.
+2. **Courses** — a course store with PDF / Google-Drive delivery and automated confirmation emails.
 
-- **Node.js** + Express (no build step on the frontend)
-- **PostgreSQL 16** — schema in versioned migration files, BYTEA storage for course thumbnails
-- **Docker Compose** — `db` (postgres) + `app` (node) + optional `test` profile
-- **node:test** — built-in test runner (no Jest), unit + E2E
+All payments go through **Razorpay** (UPI, cards, netbanking, wallets) — courses *and* videos. There is no manual UPI/UTR flow.
+
+---
 
 ## Features
 
-- Public course listing, course detail, UPI checkout, order tracking
-- UPI QR code per order, UTR submission, admin verification
-- Per-course email visibility flags (`send_pdf_in_email`, `send_drive_in_email`) and an optional custom HTML template
-- Append-only `transactions` audit table — every state change recorded with actor, amount, UPI ref, timestamp
-- Course thumbnails stored as BYTEA in Postgres and served from `/api/courses/<slug>/thumbnail` with `Cache-Control: public, max-age=86400`
-- Original price, discounted price, auto-calculated discount %
-- PDF download gated by both order status (must be `completed`) and the per-course flag
+### Invite video generator
+- **16 templates** across 10 occasions (weddings, engagement, save-the-date, anniversary, birthday, baby shower, griha pravesh, new year, festivals, business), using 4 render engines (`elegant_wedding`, `greeting`, `birthday`, `classic`).
+- **Buyer customisation**: 13 colour palettes + custom accent/background colours, 4 frame/border styles, add-your-own text lines, and up to 5 photos (Ken Burns slideshow behind the text).
+- **Live preview** in the editor that mirrors the final render, watermarked until paid.
+- **Server-side render** via bundled `ffmpeg-static` (no system ffmpeg required) → clean HD MP4 + a <16 MB WhatsApp variant.
+- **Payment-gated download** — the clean file is rendered only after payment and served only through an authorised, unguessable link kept outside the public web root.
+- **Plan ladder** (Basic / Standard / Premium): the buyer picks a plan per template; higher plans unlock longer video, more photos, higher resolution, and free revisions. Plan prices come from env, so occasion pricing changes without code edits.
 
-## Database
+### Courses
+- Admin-managed courses with binary (BYTEA) thumbnails, PDF upload, Drive links, per-course email visibility flags, and optional custom confirmation-email HTML.
+- PDF / Drive delivery unlocked automatically on payment; PDF download gated by order status **and** the per-course flag.
 
-Defined explicitly in [migrations/001_init.sql](migrations/001_init.sql) and [migrations/002_thumbnail_binary.sql](migrations/002_thumbnail_binary.sql). Tables:
+### Payments — Razorpay (courses and videos)
+- `POST /api/orders` → creates a local order + a Razorpay order.
+- Razorpay Checkout in the browser → `POST /api/orders/:id/verify` (HMAC signature check).
+- `POST /api/payments/webhook` (signature-verified) is the reliable server-to-server fallback.
+- Both converge on one **idempotent** fulfilment step (course email OR enqueue video render).
+- **Dev-bypass**: with no Razorpay keys set, checkout auto-completes so you can click through locally.
 
-| Table              | Purpose                                                                      |
-| ------------------ | ---------------------------------------------------------------------------- |
-| `admins`           | bcrypt-hashed admin users                                                    |
-| `courses`          | course metadata + price + visibility flags + `thumbnail_data BYTEA`          |
-| `orders`           | one row per buyer order, status checked by `CHECK` constraint                |
-| `transactions`     | append-only audit log of order events (`created`/`submitted`/`completed`/…)  |
-| `support_messages` | legacy table (public submission form was removed; admin can still read rows) |
-| `schema_migrations`| applied migration versions, used by `scripts/migrate.js`                     |
+### Admin (`/admin`)
+- Overview stats · Courses CRUD · **Video Templates** CRUD (+ categories, render-queue, re-render) · Orders (auto-completed by Razorpay, with a manual confirm override) · Transactions audit log.
 
-Apply migrations with `npm run migrate` (the Docker `app` service runs them automatically on startup).
+---
 
-## Quick start (Docker — recommended)
+## Stack
 
-Brings up Postgres + the app together. The `db` service is health-checked; the `app` waits until it reports healthy, then runs migrations and `init-admin` before starting.
+- **Node.js + Express** (no frontend build step)
+- **PostgreSQL** — versioned SQL migrations, BYTEA thumbnails, JSONB for template/field/style data
+- **ffmpeg-static** + bundled OFL fonts (Great Vibes, Cinzel, Noto Sans) for rendering
+- **Razorpay** payments · **Nodemailer** email · **node:test** runner
+- **Docker Compose** available for Postgres (and the full app)
 
-```bash
-cd course-platform
-cp .env.example .env
-# edit .env: ADMIN_PASSWORD, JWT_SECRET, UPI_ID, UPI_PAYEE_NAME, SMTP_USER, SMTP_PASS
+---
 
-docker compose up --build -d                   # build + start db + app
-docker compose logs -f app                     # tail
-docker compose exec app node scripts/seed-demo.js   # optional demo data
-docker compose down                            # stop (data persists)
-docker compose down -v                         # stop AND wipe volumes
-```
+## Local setup
 
-Override the host port:
+**Prerequisites:** Node.js 18+ and a PostgreSQL database. No system ffmpeg needed — it's bundled.
 
 ```bash
-HOST_PORT=8080 docker compose up -d
-```
-
-Open http://localhost:3000, admin at `/admin`.
-
-## Quick start (local Node)
-
-You still need a Postgres somewhere. The fastest is to start just the `db` service from the compose file:
-
-```bash
-cd course-platform
-cp .env.example .env
-
-docker compose up -d db                # postgres on localhost:5432
+# 1. Install
 npm install
-npm run migrate                        # apply migrations
-npm run init-admin                     # create admin user from .env
-node scripts/seed-demo.js              # optional
-npm start
+
+# 2. Configure
+cp .env.example .env
+#   Edit .env — at minimum DATABASE_URL and JWT_SECRET.
+#   Leave RAZORPAY_* blank for local dev-bypass checkout.
+
+# 3. Database  (need Postgres? start just the db service: `docker compose up -d db`)
+npm run migrate         # apply migrations 001–005
+npm run seed:video      # 16 templates + 10 categories
+npm run seed:demo       # (optional) sample courses
+npm run init-admin      # create admin from ADMIN_EMAIL / ADMIN_PASSWORD
+
+# 4. Run
+npm run dev             # http://localhost:3000  (nodemon)   — or: npm start
 ```
 
-## Tests
+Open:
+- `/` landing · `/generator` invite maker · `/admin` admin panel
 
-Unit tests (pure helpers and DB schema) and E2E tests (full HTTP flow against a real Express server, real Postgres, ephemeral schema per run).
+> **Database note:** point `DATABASE_URL` at a **single primary** Postgres. A connection endpoint that load-balances across replicas (each connection hitting a different node) will show inconsistent data and break the per-session schema used by the e2e tests.
+
+### Key environment variables
+
+| Var | Purpose |
+|---|---|
+| `DATABASE_URL` | Postgres connection string (single primary). |
+| `JWT_SECRET` | Admin session signing (≥32 chars). |
+| `SITE_NAME` / `SITE_URL` | Brand name + public base URL (used in emails/webhook). |
+| `RAZORPAY_KEY_ID` / `_KEY_SECRET` | Razorpay API keys. Blank = dev-bypass. |
+| `RAZORPAY_WEBHOOK_SECRET` | Webhook signature secret. |
+| `SMTP_*`, `SUPPORT_EMAIL` | Email delivery. Blank SMTP = emails logged, not sent. |
+| `RENDER_CONCURRENCY` | Videos rendered at once (CPU-bound; default 1). |
+| **`VIDEO_PRICE_LOW/MID/HIGH`** | **Final (discounted) price per tier — e.g. 699 / 999 / 1299.** |
+| **`VIDEO_DISCOUNT_PERCENT`** | **Headline discount, e.g. 70 → "70% OFF"; the "was" price is derived.** |
+
+### Plans & changing prices per occasion
+
+Every template is sold on a **3-plan ladder** the buyer chooses in the editor:
+
+| Plan | Price env | Length | Photos | Resolution | Free revisions |
+|---|---|---|---|---|---|
+| Basic | `VIDEO_PRICE_LOW` | 15s | 1 | 720p HD | — |
+| Standard | `VIDEO_PRICE_MID` | 25s | 3 | 1080p Full HD | 1 |
+| Premium | `VIDEO_PRICE_HIGH` | 40s | 5 | 1080p Full HD | 2 + priority |
+
+The chosen plan drives the **order amount** and the **render** (length, photo cap, output resolution). A template's `price_tier` (`low`/`mid`/`high`) is just the plan **pre-selected** in the editor (weddings default to Premium, greetings to Basic); the buyer can pick any plan. Gallery cards show a "from" (Basic) price.
+
+To run a sale, edit the plan prices in `.env` — buyer-facing prices update on **restart**:
+
+```env
+VIDEO_PRICE_LOW=599     # Basic
+VIDEO_PRICE_MID=899     # Standard
+VIDEO_PRICE_HIGH=1199   # Premium
+VIDEO_DISCOUNT_PERCENT=75
+```
+
+The strike-through "was" price is derived so the discount is exact: `was = round(price / (1 − percent/100))` — e.g. `999` at `70%` → **₹999** ~~₹3,330~~ **70% OFF**. The plan **features** (length/photos/resolution/revisions) are product constants in `services/pricing.js`; run `npm run seed:video` after changing env to refresh admin-stored values.
+
+---
+
+## Run with Docker
+
+Bring up Postgres + the app together:
 
 ```bash
-npm test            # all 49 tests (unit + E2E)
-npm run test:unit   # just unit
-npm run test:e2e    # just E2E
+cp .env.example .env
+docker compose up --build -d
+docker compose logs -f app
+docker compose exec app npm run seed:video   # seed templates
+HOST_PORT=8080 docker compose up -d           # override host port
 ```
 
-Both suites need `DATABASE_URL` (or `TEST_DATABASE_URL`) pointing at a Postgres they can write to. They create a unique schema per test run and drop it at the end, so they don't interfere with the live `public` schema. Run them in Docker if you don't want to install Postgres locally:
+For **production** deployment with PM2 + Nginx, see [deployment.md](deployment.md).
+
+---
+
+## Scripts
+
+| Command | What it does |
+|---|---|
+| `npm start` / `npm run dev` | Run the server (dev = nodemon). |
+| `npm run migrate` | Apply pending SQL migrations. |
+| `npm run seed:video` | Seed/refresh video categories + templates (also refreshes tier prices). |
+| `npm run seed:demo` | Seed sample courses. |
+| `npm run init-admin` | Create the admin user. |
+| `npm test` | Unit + e2e (`node --test`). |
+| `npm run test:unit` | Unit tests only (no DB). |
+| `npm run test:e2e` | E2E tests (needs `TEST_DATABASE_URL` / `DATABASE_URL`). |
+
+---
+
+## Project structure
+
+```
+server.js                 Express app + route wiring
+routes/                   auth, courses, orders, video, admin, admin-video, payments (webhook)
+services/                 payments (razorpay), pricing (tiers), renderer (ffmpeg),
+                          render-queue, fulfillment, video-templates (catalog), storage
+utils/                    db (pg), email, video-fields (validation), discount, slug, template
+migrations/               001_init … 005_price_tier
+public/                   landing, generator (gallery + editor), checkout, order, admin, css, js
+assets/fonts/             bundled OFL fonts used by the renderer
+storage/                  rendered videos + buyer photos (NOT web-served; payment-gated)
+docs/                     plan + implementation notes
+```
+
+---
+
+## Testing
 
 ```bash
-docker compose --profile test run --rm test
+npm run test:unit                                   # fast, no DB
+TEST_DATABASE_URL=postgres://... npm run test:e2e   # ephemeral schema per test
 ```
 
-### What the unit tests cover (`tests/unit/`)
-- `discount.test.js` — discount % math, edge cases
-- `slug.test.js` — slug generation, length cap, unicode
-- `template.test.js` — placeholder rendering, HTML escaping, visibility flags, default-vs-custom template
-- `db.test.js` — schema creation against ephemeral schema, BYTEA round-trip for thumbnails, status `CHECK` constraint, transaction logging
+E2E covers admin auth, the course Razorpay flow, and the full video pipeline (template → project → gated 403 → pay → render → MP4 download). The harness creates a temporary schema per test, so point it at a **single consistent primary**.
 
-### What the E2E test covers (`tests/e2e/api.test.js`)
-1. `/api/site-info`
-2. Login fail (wrong password)
-3. Login success, cookie set
-4. `/api/auth/me`
-5. **Create course with `send_pdf_in_email=false`, custom template, AND a binary PNG thumbnail** — assert `has_thumbnail: true` and `thumbnail: '/api/courses/<slug>/thumbnail'`
-6. **Thumbnail endpoint streams the bytes back with `Content-Type: image/png`** (round-trip equality)
-7. **Thumbnail endpoint 404 for unknown slug**
-8. Public listing shows the course with `discount_percent: 75`
-9. Anonymous order placement → UPI QR + `upi://pay?...` link
-10. UTR submission
-11. Order detail hides `drive_link` while status is `submitted`
-12. Admin lists submitted order with the correct UTR
-13. Admin confirms → email body contains buyer name + Drive link, **excludes PDF link** (visibility flag was off)
-14. Order detail now exposes `drive_link` (status `completed`)
-15. Audit log contains `created`, `submitted`, `completed` events
-16. PDF download returns 403 (per-course flag is off)
-17. Admin stats: `completed_orders=1`, `revenue=500`
-18. Removed public `/api/support` route returns 404
-19. Logout clears cookie
+---
 
-## Email templates
+## Email (Gmail SMTP)
 
-`utils/template.js#renderCompletedEmail` builds the confirmation email with these placeholders, all HTML-escaped except `{{resources_block}}`:
+1. Enable 2-step verification on your Google account.
+2. Create an App Password (myaccount.google.com/apppasswords → "Mail").
+3. Put the 16-char password in `SMTP_PASS`, and your Gmail in `SMTP_USER`.
 
-| Placeholder           | Meaning                                                       |
-| --------------------- | ------------------------------------------------------------- |
-| `{{buyer_name}}`      | Buyer's name                                                  |
-| `{{buyer_email}}`     | Buyer's email                                                 |
-| `{{course_title}}`    | Course title                                                  |
-| `{{course_slug}}`     | Course slug                                                   |
-| `{{order_id}}`        | Order reference                                               |
-| `{{amount}}`          | Order amount                                                  |
-| `{{drive_link}}`      | Drive URL (only if course has one and the flag is on)         |
-| `{{pdf_url}}`         | Absolute PDF download URL (only if applicable)                |
-| `{{resources_block}}` | Pre-rendered HTML `<ul>` of visible resources, raw            |
+With SMTP blank/invalid, `sendMail` returns `{ skipped: true, … }` and logs the would-be email — handy for local dev and tests.
 
-If the course's `email_template_html` field is empty, the platform uses `DEFAULT_COMPLETED_TEMPLATE`.
+---
 
-## Gmail SMTP setup
+## Security notes
 
-1. Enable 2-step verification on your Google account
-2. https://myaccount.google.com/apppasswords → create an App Password for "Mail"
-3. Put the 16-char app password in `SMTP_PASS` in `.env`. Set `SMTP_USER` to the same Gmail address.
-
-When SMTP credentials are missing or invalid, `sendMail` returns `{ skipped: true, ... }` and logs the would-be email — handy for local development and the E2E test.
-
-## UPI
-
-Set `UPI_ID` to your VPA (e.g. `yourname@okhdfcbank`) and `UPI_PAYEE_NAME` to your name. The platform generates `upi://pay?...` deep links and a QR code per order. The customer pays, pastes the UTR back; you verify and confirm in the admin Orders tab; the system emails the access link.
-
-## Security
-
-- bcrypt-hashed admin passwords; HTTP-only cookie JWT
-- File uploads restricted to PDF / images, 100 MB max
-- Rate limiting on `/api/auth/login`
-- PDFs only downloadable on confirmed orders, and only when the per-course `send_pdf_in_email` flag is on
-- Thumbnail endpoint is public (intentional — thumbnails are marketing) but only returns bytes; no metadata leak
-- `orders.status` enforced by a `CHECK` constraint
-- Replace `JWT_SECRET` with a long random value before deploying
-
-## Project layout
-
-```
-course-platform/
-  server.js
-  Dockerfile          production image (Alpine, non-root, healthcheck)
-  Dockerfile.test     test-runner image
-  docker-compose.yml  db (postgres) + app + optional test profile
-  .dockerignore
-  migrations/
-    001_init.sql              admins, courses, orders, transactions, support
-    002_thumbnail_binary.sql  thumbnail_data BYTEA + thumbnail_mime
-  routes/      auth, courses, admin, orders
-  middleware/  JWT auth
-  utils/       db, email, discount, slug, template
-  scripts/     migrate, init-admin, seed-demo
-  tests/
-    unit/      discount, slug, template, db
-    e2e/       api  (+ helpers/start-server.js)
-  public/      index, course, checkout, order, admin/login, admin/dashboard
-    css/styles.css
-    js/app.js, js/admin.js
-    uploads/   pdfs (thumbnails now live in postgres)
-```
+- bcrypt-hashed admin passwords; HTTP-only JWT cookie; rate limiting on login.
+- Razorpay checkout + webhook signatures verified (HMAC); fulfilment is idempotent.
+- Rendered videos + buyer photos live **outside** the public web root and are served only through payment-gated endpoints.
+- Uploads restricted by type/size. Replace `JWT_SECRET` with a long random value before deploying, and set real `RAZORPAY_*` keys in production.

@@ -13,6 +13,8 @@
       <nav class="admin-nav mt-16">
         <a data-tab="overview" class="active">Overview</a>
         <a data-tab="courses">Courses</a>
+        <a data-tab="products">Products</a>
+        <a data-tab="templates">Video Templates</a>
         <a data-tab="orders">Orders</a>
         <a data-tab="transactions">Transactions</a>
         <a id="logoutBtn" style="margin-top:auto">Logout</a>
@@ -41,14 +43,33 @@
 
       <section id="tab-courses" class="hidden">
         <div class="flex-between mb-16">
-          <p class="text-muted" style="margin:0">All courses (published and drafts).</p>
+          <p class="text-muted" style="margin:0">Courses (published and drafts).</p>
           <button id="addCourseBtn" class="btn btn-primary">+ New course</button>
         </div>
         <div id="coursesTable"></div>
       </section>
 
+      <section id="tab-products" class="hidden">
+        <div class="flex-between mb-16">
+          <p class="text-muted" style="margin:0">Digital products (ebooks, packs, files — delivered on payment, same as courses).</p>
+          <button id="addProductBtn" class="btn btn-primary">+ New product</button>
+        </div>
+        <div id="productsTable"></div>
+      </section>
+
+      <section id="tab-templates" class="hidden">
+        <div class="flex-between mb-16">
+          <p class="text-muted" style="margin:0">Invite-video templates shown in the generator.</p>
+          <div style="display:flex;gap:8px">
+            <button id="addCategoryBtn" class="btn">+ Category</button>
+            <button id="addTemplateBtn" class="btn btn-primary">+ New template</button>
+          </div>
+        </div>
+        <div id="templatesTable"></div>
+      </section>
+
       <section id="tab-orders" class="hidden">
-        <p class="text-muted">Submitted orders need verification. Click confirm to deliver the course.</p>
+        <p class="text-muted">Orders auto-complete via Razorpay. Use Confirm only as a manual override.</p>
         <div id="ordersTable"></div>
       </section>
 

@@ -39,6 +39,7 @@ async function bootstrap() {
 
   const app = express();
   app.use(cors({ origin: true, credentials: true }));
+  app.post('/api/payments/webhook', express.raw({ type: '*/*' }), require('../../../routes/payments').webhook);
   app.use(express.json({ limit: '5mb' }));
   app.use(express.urlencoded({ extended: true }));
   app.use(cookieParser());
@@ -46,7 +47,9 @@ async function bootstrap() {
   app.use('/api/auth', require('../../../routes/auth'));
   app.use('/api/courses', require('../../../routes/courses'));
   app.use('/api/orders', require('../../../routes/orders'));
+  app.use('/api/video', require('../../../routes/video'));
   app.use('/api/admin', require('../../../routes/admin'));
+  app.use('/api/admin/video', require('../../../routes/admin-video'));
 
   app.get('/api/site-info', (req, res) => {
     res.json({

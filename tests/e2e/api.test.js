@@ -179,7 +179,7 @@ test('public list shows the course with discount %', SKIP ? { skip: skipReason }
   assert.equal(course.discount_percent, 75);
 });
 
-test('buyer can place an order and get UPI QR + link', SKIP ? { skip: skipReason } : {}, async () => {
+test('buyer can place a course order and get a Razorpay order (dev-bypass)', SKIP ? { skip: skipReason } : {}, async () => {
   const list = await http('GET', '/api/courses');
   const course = list.data.find((c) => c.title === 'E2E Test Course');
   const cookieBefore = cookieJar; cookieJar = '';
@@ -190,47 +190,40 @@ test('buyer can place an order and get UPI QR + link', SKIP ? { skip: skipReason
   assert.equal(r.status, 200);
   assert.match(r.data.order_id, /^ORD-/);
   assert.equal(Number(r.data.amount), 500);
-  assert.match(r.data.upi.link, /^upi:\/\/pay\?/);
-  assert.ok(r.data.upi.qr.startsWith('data:image/png'));
+  assert.equal(r.data.product.type, 'course');
+  // No Razorpay keys in the test env -> dev-bypass order.
+  assert.equal(r.data.razorpay.configured, false);
+  assert.match(r.data.razorpay.order_id, /^order_dev_/);
   globalThis.__lastOrderId = r.data.order_id;
 });
 
-test('buyer can submit UPI transaction reference', SKIP ? { skip: skipReason } : {}, async () => {
-  const orderId = globalThis.__lastOrderId;
-  const cookieBefore = cookieJar; cookieJar = '';
-  const r = await http('POST', `/api/orders/${orderId}/submit-txn`, { body: { upi_txn_ref: 'UTR12345' } });
-  cookieJar = cookieBefore;
-  assert.equal(r.status, 200);
-});
-
-test('order details hide drive_link until completed', SKIP ? { skip: skipReason } : {}, async () => {
+test('order details hide drive_link until paid', SKIP ? { skip: skipReason } : {}, async () => {
   const orderId = globalThis.__lastOrderId;
   const cookieBefore = cookieJar; cookieJar = '';
   const r = await http('GET', `/api/orders/${orderId}`);
   cookieJar = cookieBefore;
   assert.equal(r.status, 200);
-  assert.equal(r.data.status, 'submitted');
+  assert.equal(r.data.status, 'pending');
   assert.equal(r.data.drive_link, null);
 });
 
-test('admin sees the order in the list', SKIP ? { skip: skipReason } : {}, async () => {
+test('verifying payment (dev-bypass) completes the order', SKIP ? { skip: skipReason } : {}, async () => {
+  const orderId = globalThis.__lastOrderId;
+  const cookieBefore = cookieJar; cookieJar = '';
+  const r = await http('POST', `/api/orders/${orderId}/verify`, {
+    body: { razorpay_order_id: `order_dev_${orderId}`, razorpay_payment_id: 'pay_dev', razorpay_signature: 'dev' },
+  });
+  cookieJar = cookieBefore;
+  assert.equal(r.status, 200);
+  assert.equal(r.data.status, 'completed');
+});
+
+test('admin sees the completed order in the list', SKIP ? { skip: skipReason } : {}, async () => {
   const r = await http('GET', '/api/admin/orders');
   assert.equal(r.status, 200);
   const found = r.data.find((o) => o.order_id === globalThis.__lastOrderId);
   assert.ok(found);
-  assert.equal(found.status, 'submitted');
-  assert.equal(found.upi_txn_ref, 'UTR12345');
-});
-
-test('admin confirms; email body contains drive but not pdf (visibility flags)', SKIP ? { skip: skipReason } : {}, async () => {
-  const orderId = globalThis.__lastOrderId;
-  const r = await http('POST', `/api/admin/orders/${orderId}/confirm`, { body: {} });
-  assert.equal(r.status, 200);
-  assert.ok(r.data.email);
-  assert.equal(r.data.email.skipped, true);
-  assert.match(r.data.email.html, /E2E Buyer/);
-  assert.match(r.data.email.html, /Google Drive/);
-  assert.doesNotMatch(r.data.email.html, /Download PDF/);
+  assert.equal(found.status, 'completed');
 });
 
 test('completed order exposes drive_link to public endpoint', SKIP ? { skip: skipReason } : {}, async () => {
@@ -243,13 +236,21 @@ test('completed order exposes drive_link to public endpoint', SKIP ? { skip: ski
   assert.equal(r.data.drive_link, 'https://drive.google.com/folder/e2e');
 });
 
-test('transactions audit log contains created/submitted/completed', SKIP ? { skip: skipReason } : {}, async () => {
+test('verify is idempotent (second call still completed)', SKIP ? { skip: skipReason } : {}, async () => {
+  const orderId = globalThis.__lastOrderId;
+  const cookieBefore = cookieJar; cookieJar = '';
+  const r = await http('POST', `/api/orders/${orderId}/verify`, { body: {} });
+  cookieJar = cookieBefore;
+  assert.equal(r.status, 200);
+  assert.equal(r.data.status, 'completed');
+});
+
+test('transactions audit log contains created + completed', SKIP ? { skip: skipReason } : {}, async () => {
   const orderId = globalThis.__lastOrderId;
   const r = await http('GET', `/api/admin/orders/${orderId}/transactions`);
   assert.equal(r.status, 200);
   const events = r.data.map((t) => t.event);
   assert.ok(events.includes('created'));
-  assert.ok(events.includes('submitted'));
   assert.ok(events.includes('completed'));
 });
 
@@ -266,6 +267,88 @@ test('admin stats reflect completed-order revenue', SKIP ? { skip: skipReason } 
   assert.equal(r.status, 200);
   assert.equal(r.data.completed_orders, 1);
   assert.equal(Number(r.data.revenue), 500);
+});
+
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+test('video generator: template -> project -> gated download -> pay -> render -> download', SKIP ? { skip: skipReason } : {}, async () => {
+  // Admin creates a category + a fast (6s) template.
+  const cat = await http('POST', '/api/admin/video/categories', { body: { name: 'E2E Fest', slug: 'e2e-fest' } });
+  assert.equal(cat.status, 200);
+  const tpl = await http('POST', '/api/admin/video/templates', {
+    body: {
+      name: 'E2E Greeting', slug: 'e2e-greet', composition_id: 'greeting',
+      category_id: cat.data.id, duration_seconds: 6,
+      fields_schema: [
+        { key: 'greeting_from', label: 'From', type: 'text', required: true },
+        { key: 'message', label: 'Message', type: 'textarea' },
+      ],
+      preset: { palette: 'midnight', heading: 'Happy Test' },
+      original_price: 499, discounted_price: 399,
+    },
+  });
+  assert.equal(tpl.status, 200);
+
+  // Public: create a project (customization) on the Basic plan (fast 15s render).
+  const cookieBefore = cookieJar; cookieJar = '';
+  const proj = await http('POST', '/api/video/projects', {
+    body: { template_slug: 'e2e-greet', plan: 'basic', form_data: { greeting_from: 'The E2E Team', message: 'Hello there' } },
+  });
+  assert.equal(proj.status, 200);
+  assert.equal(proj.data.plan, 'basic');
+  const pid = proj.data.public_id;
+
+  // Missing required field is rejected.
+  const bad = await http('POST', '/api/video/projects', { body: { template_slug: 'e2e-greet', form_data: {} } });
+  assert.equal(bad.status, 400);
+  assert.ok(bad.data.fields.greeting_from);
+
+  // Photo-upload endpoint — on a separate throwaway project so the render flow
+  // below stays photo-free and fast. (Photo-based rendering is verified with
+  // realistic images outside the e2e suite; a 1x1 test pixel is degenerate.)
+  const projB = await http('POST', '/api/video/projects', { body: { template_slug: 'e2e-greet', form_data: { greeting_from: 'PhotoTest' } } });
+  const pfd = new FormData();
+  pfd.set('photos', new Blob([TINY_PNG], { type: 'image/png' }), 'p.png');
+  const upl = await fetch(`${baseUrl}/api/video/projects/${projB.data.public_id}/photos`, { method: 'POST', body: pfd });
+  assert.equal(upl.status, 200);
+  const uplData = await upl.json();
+  assert.equal(uplData.photos.length, 1);
+
+  // Download is gated before payment.
+  const gated = await fetch(`${baseUrl}/api/video/projects/${pid}/download`);
+  assert.equal(gated.status, 403);
+
+  // Create order + verify (dev bypass) -> triggers render.
+  const order = await http('POST', '/api/orders', {
+    body: { video_project_id: pid, buyer_name: 'Vid Buyer', buyer_email: 'vid@e2e.com' },
+  });
+  assert.equal(order.status, 200);
+  assert.equal(order.data.product.type, 'video');
+  const verify = await http('POST', `/api/orders/${order.data.order_id}/verify`, {
+    body: { razorpay_order_id: `order_dev_${order.data.order_id}`, razorpay_payment_id: 'pay_dev', razorpay_signature: 'dev' },
+  });
+  assert.equal(verify.status, 200);
+
+  // Poll until the render completes. ffmpeg (HD + WhatsApp variant) can take a
+  // while on a loaded machine, so allow a generous window.
+  let ready = false;
+  let last = null;
+  for (let i = 0; i < 120 && !ready; i++) {
+    const s = await http('GET', `/api/video/projects/${pid}/status`);
+    last = s.data.render_status;
+    if (s.data.render_status === 'failed') throw new Error(`render failed: ${s.data.error}`);
+    ready = s.data.ready;
+    if (!ready) await sleep(2000);
+  }
+  assert.ok(ready, `video render did not finish in time (last status: ${last})`);
+
+  // Clean HD download now works and returns an mp4.
+  const dl = await fetch(`${baseUrl}/api/video/projects/${pid}/download?variant=hd`);
+  assert.equal(dl.status, 200);
+  assert.match(dl.headers.get('content-type') || '', /video\/mp4/);
+  const bytes = Buffer.from(await dl.arrayBuffer());
+  assert.ok(bytes.length > 10000, 'downloaded video looks too small');
+  cookieJar = cookieBefore;
 });
 
 test('public support route is removed', SKIP ? { skip: skipReason } : {}, async () => {

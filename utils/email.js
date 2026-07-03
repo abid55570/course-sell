@@ -69,9 +69,30 @@ async function sendOrderCompletedEmail(order, course) {
   });
 }
 
+async function sendVideoReadyEmail(order, project) {
+  const base = (process.env.SITE_URL || '').replace(/\/$/, '');
+  const orderUrl = `${base}/order/${order.order_id}`;
+  const html = `
+  <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:24px;color:#1f2937">
+    <h2 style="color:#16a34a">Your video is ready 🎬</h2>
+    <p>Hi ${order.buyer_name || 'there'},</p>
+    <p>Your <strong>${project.template_name || 'invite'}</strong> video has been created and is ready to download.</p>
+    <p style="margin:24px 0">
+      <a href="${orderUrl}" style="background:#4f46e5;color:#fff;padding:12px 22px;border-radius:8px;text-decoration:none">Download your video</a>
+    </p>
+    <p style="color:#6b7280;font-size:13px">Order ID: <strong>${order.order_id}</strong>. The download includes an HD version and a WhatsApp-ready version. Need a spelling fix? Reply to this email — one free revision is included.</p>
+  </div>`;
+  return sendMail({
+    to: order.buyer_email,
+    subject: `Your video is ready — order ${order.order_id}`,
+    html,
+  });
+}
+
 module.exports = {
   sendMail,
   sendOrderPendingEmail,
   sendOrderCompletedEmail,
+  sendVideoReadyEmail,
   resetTransporter,
 };

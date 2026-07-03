@@ -6,7 +6,7 @@ const router = express.Router();
 
 const COURSE_PUBLIC_COLS =
   `id, slug, title, short_description, description, thumbnail, pdf_file, drive_link,
-   original_price, discounted_price, category, level, duration, is_published,
+   original_price, discounted_price, category, level, duration, kind, is_published,
    send_pdf_in_email, send_drive_in_email, created_at, updated_at,
    (thumbnail_data IS NOT NULL) AS has_thumbnail`;
 
@@ -16,8 +16,11 @@ function withDiscount(course) {
 
 router.get('/', async (req, res, next) => {
   try {
+    const params = [];
+    let where = 'WHERE is_published = TRUE';
+    if (req.query.kind) { params.push(req.query.kind); where += ` AND kind = $${params.length}`; }
     const rows = await db.all(
-      `SELECT ${COURSE_PUBLIC_COLS} FROM courses WHERE is_published = TRUE ORDER BY created_at DESC`
+      `SELECT ${COURSE_PUBLIC_COLS} FROM courses ${where} ORDER BY created_at DESC`, params
     );
     res.json(rows.map(withDiscount));
   } catch (e) { next(e); }

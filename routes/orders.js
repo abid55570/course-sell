@@ -6,6 +6,7 @@ const db = require('../utils/db');
 const payments = require('../services/payments');
 const { markOrderPaid } = require('../services/fulfillment');
 const { planPricing } = require('../services/pricing');
+const { isToolKey, getTool } = require('../services/tool-products');
 
 const router = express.Router();
 
@@ -17,7 +18,10 @@ async function resolveProduct(body) {
     const course = await db.get('SELECT * FROM courses WHERE id = $1 AND is_published = TRUE', [course_id]);
     if (!course) return { error: 'course not found' };
     const amount = Number(course.discounted_price) || Number(course.original_price) || 0;
-    return { productType: 'course', courseId: course.id, amount, title: course.title, course };
+    let productType = 'course';
+    if (course.slug === 'carousel-editor') productType = 'carousel';
+    else if (isToolKey(course.slug)) productType = course.slug;
+    return { productType, courseId: course.id, amount, title: course.title, course };
   }
   if (video_project_id) {
     // Accept the project's public_id (what the browser holds) or numeric id.
@@ -108,7 +112,20 @@ router.post('/:orderId/verify', async (req, res, next) => {
       actor: 'razorpay-checkout',
     });
     if (!result.ok) return res.status(400).json({ error: result.error || 'could not complete order' });
-    res.json({ ok: true, status: 'completed', product_type: order.product_type });
+
+    // Return the full license key here — this response only reaches the party
+    // who just completed payment (a valid Razorpay signature is required in
+    // production), so it is the safe place to hand over the key for instant
+    // unlock, unlike the guessable public GET /:orderId status endpoint.
+    const payload = { ok: true, status: 'completed', product_type: order.product_type };
+    if (isToolKey(order.product_type)) {
+      const lic = await db.get('SELECT license_key FROM tool_licenses WHERE order_id = $1', [order.order_id]);
+      if (lic) payload.license_key = lic.license_key;
+    } else if (order.product_type === 'carousel') {
+      const lic = await db.get('SELECT license_key FROM carousel_licenses WHERE order_id = $1', [order.order_id]);
+      if (lic) payload.license_key = lic.license_key;
+    }
+    res.json(payload);
   } catch (e) { next(e); }
 });
 
@@ -138,6 +155,43 @@ router.get('/:orderId', async (req, res, next) => {
           size_mb: project.output_size_mb,
           ready: isCompleted && project.render_status === 'done',
         } : null,
+      });
+    }
+
+    if (order.product_type === 'carousel') {
+      const lic = isCompleted
+        ? await db.get('SELECT license_key FROM carousel_licenses WHERE order_id = $1 AND is_active = TRUE', [order.order_id])
+        : null;
+      const redacted = lic ? lic.license_key.replace(/^(CRS-).+(-[A-Za-z0-9]+)$/, '$1••••••-••••••-••••••$2') : null;
+      return res.json({
+        ...base,
+        title: 'Carousel & Post Editor',
+        carousel: {
+          license_key_hint: redacted,
+          ready: isCompleted,
+        },
+      });
+    }
+
+    if (isToolKey(order.product_type)) {
+      const tool = getTool(order.product_type);
+      const lic = isCompleted
+        ? await db.get('SELECT license_key FROM tool_licenses WHERE order_id = $1 AND is_active = TRUE', [order.order_id])
+        : null;
+      // Reveal only the prefix; the greedy-middle form leaked the final segment
+      // on this public, guessable endpoint.
+      const redacted = lic
+        ? lic.license_key.replace(/^([A-Z]{2,4}-).*/, '$1••••••-••••••-••••••')
+        : null;
+      return res.json({
+        ...base,
+        title: tool ? tool.name : 'Tool',
+        tool: {
+          product: order.product_type,
+          editor_path: tool ? tool.editorPath : null,
+          license_key_hint: redacted,
+          ready: isCompleted,
+        },
       });
     }
 

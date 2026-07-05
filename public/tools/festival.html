@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Festival Offer Poster Maker — branded posters in 1 minute</title>
+  <meta name="description" content="Make branded festival offer posters for your shop. Enter your logo, name & number once — it's auto-placed on every poster. Pay ₹299 once, not ₹3,000/year.">
+  <link rel="stylesheet" href="/css/styles.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700;800&family=Playfair+Display:wght@500;600;700&family=Cinzel:wght@600;700&display=swap" rel="stylesheet">
+  <style>
+    .tool-hero{padding:56px 0 30px;text-align:center}
+    .tool-hero .eyebrow{display:inline-flex;gap:8px;align-items:center;background:var(--gold-soft);color:var(--gold);border:1px solid rgba(230,193,90,.3);padding:6px 13px;border-radius:999px;font-size:13px;font-weight:600;margin-bottom:16px}
+    .tool-hero h1{font-size:clamp(32px,5vw,52px);margin:0 0 14px;line-height:1.08}
+    .tool-hero p.lead{max-width:660px;margin:0 auto 22px;color:var(--muted);font-size:18px}
+    .hero-cta{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+    .compare-line{display:inline-block;margin:22px auto 0;background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.35);color:#bbf7d0;padding:9px 16px;border-radius:999px;font-size:14.5px;font-weight:600}
+    .sample-strip{display:flex;gap:18px;justify-content:center;flex-wrap:wrap;margin:38px 0 10px}
+    .sample{width:200px;height:250px;border-radius:14px;border:1px solid var(--border);box-shadow:var(--shadow-sm);position:relative;overflow:hidden;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:16px}
+    .sample .sh{font-size:14px;letter-spacing:5px}
+    .sample .stitle{text-align:center;font-family:'Playfair Display',serif;font-weight:700;font-size:22px;line-height:1.05}
+    .sample .soffer{font-weight:800;font-size:13px;padding:5px 14px;border-radius:999px;font-family:'Space Grotesk',sans-serif}
+    .sample .sbar{position:absolute;left:0;right:0;bottom:0;padding:9px 12px;font-weight:800;font-size:12px;text-align:left}
+    .steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:18px}
+    .step{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:22px}
+    .step .n{width:34px;height:34px;border-radius:10px;background:linear-gradient(120deg,var(--primary),var(--primary-2));display:flex;align-items:center;justify-content:center;font-weight:700;margin-bottom:12px}
+    .feature-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px}
+    .feature{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px}
+    .feature .fi{font-size:24px;margin-bottom:8px}
+    .brand-highlight{background:linear-gradient(120deg,rgba(247,201,72,.08),rgba(109,107,255,.08));border:1px solid var(--border);border-radius:var(--radius-lg);padding:28px;display:grid;grid-template-columns:1fr;gap:14px}
+    .brand-highlight h2{margin:0}
+    .brand-highlight ul{list-style:none;padding:0;margin:6px 0 0}
+    .brand-highlight li{padding:6px 0 6px 26px;position:relative;color:var(--muted)}
+    .brand-highlight li::before{content:'✓';position:absolute;left:0;color:var(--gold);font-weight:700}
+    .price-card{max-width:420px;margin:0 auto;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:30px;text-align:center;box-shadow:var(--shadow)}
+    .price-card .amt{font-size:48px;font-weight:800;font-family:var(--font-display)}
+    .price-card .was{color:var(--muted);text-decoration:line-through;margin-left:8px;font-size:20px;font-weight:400}
+    .price-card ul{list-style:none;padding:0;margin:18px 0;text-align:left}
+    .price-card li{padding:7px 0 7px 26px;position:relative}
+    .price-card li::before{content:'✓';position:absolute;left:0;color:var(--success);font-weight:700}
+    .faq details{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px 18px;margin-bottom:10px}
+    .faq summary{cursor:pointer;font-weight:600}
+    section{padding:34px 0}
+    .section-head h2{font-size:28px;margin:0 0 6px}
+    .section-head p{color:var(--muted);margin:0 0 22px}
+  </style>
+</head>
+<body>
+  <header class="site-header">
+    <div class="container nav">
+      <a class="brand" href="/"><span class="logo"></span> <span id="brandName">DropDash</span></a>
+      <nav class="nav-links">
+        <a href="/#products">Products</a>
+        <a href="/festival" class="nav-new">Festival Poster Maker</a>
+        <a href="/festival/editor" class="btn btn-sm btn-primary">Open editor</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <section class="tool-hero">
+      <div class="container">
+        <span class="eyebrow">🪔 Festival Offer Poster Maker</span>
+        <h1>Branded festival posters<br>in <span class="grad">1 minute</span></h1>
+        <p class="lead">Pick a festival template, edit the offer, and download an Instagram / WhatsApp / Facebook-ready poster. Enter your logo, shop name &amp; phone <strong>once</strong> — it's auto-placed on every poster you make.</p>
+        <div class="hero-cta">
+          <a href="/festival/editor" class="btn btn-primary btn-lg">Make your poster →</a>
+          <a href="#pricing" class="btn btn-lg">See pricing</a>
+        </div>
+        <div><span class="compare-line">Pay ₹299 once vs ₹2,000–3,500/year on AdBanao &amp; Brands.live</span></div>
+        <div class="sample-strip">
+          <div class="sample" style="background:radial-gradient(120% 90% at 50% 0%,#7a1030,#2a0a1a);color:#fff3d6">
+            <div class="sh" style="color:#f7c948">🪔 🪔 🪔</div>
+            <div class="stitle">Happy Diwali</div>
+            <div class="soffer" style="background:#f7c948;color:#1a1206">Flat 40% OFF</div>
+            <div class="sbar" style="background:#f7c948;color:#141008">Your Shop · ☎ 90000 00000</div>
+          </div>
+          <div class="sample" style="background:radial-gradient(120% 90% at 50% 0%,#0a6b4a,#04241c);color:#eafff5">
+            <div class="sh" style="color:#e6c15a">🌙 🌙 🌙</div>
+            <div class="stitle">Eid Mubarak</div>
+            <div class="soffer" style="background:#e6c15a;color:#1a1206">Up to 50% OFF</div>
+            <div class="sbar" style="background:#e6c15a;color:#141008">Your Shop · ☎ 90000 00000</div>
+          </div>
+          <div class="sample" style="background:radial-gradient(120% 90% at 50% 0%,#dc2626,#0b0b12);color:#fff">
+            <div class="sh" style="color:#facc15">🎆 🎆 🎆</div>
+            <div class="stitle">Mega Sale</div>
+            <div class="soffer" style="background:#facc15;color:#1a1206">Up to 70% OFF</div>
+            <div class="sbar" style="background:#facc15;color:#141008">Your Shop · ☎ 90000 00000</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="container">
+        <div class="section-head"><h2>How it works</h2><p>No design skills needed.</p></div>
+        <div class="steps">
+          <div class="step"><div class="n">1</div><h3>Pick a festival</h3><p class="text-muted">Diwali, Holi, Eid, New Year, Independence Day and more — ready to edit.</p></div>
+          <div class="step"><div class="n">2</div><h3>Set your brand once</h3><p class="text-muted">Add your logo, shop name, phone &amp; address. It's placed on every poster automatically.</p></div>
+          <div class="step"><div class="n">3</div><h3>Download &amp; post</h3><p class="text-muted">Export in Instagram, WhatsApp Story or square size and share instantly.</p></div>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="container">
+        <div class="brand-highlight">
+          <h2>🏪 Auto brand placement — the feature that saves you hours</h2>
+          <p class="text-muted" style="margin:0">Enter your shop details once and stop redoing them for every poster. Every design you make carries a full-width brand bar with your logo, name, phone and address — automatically.</p>
+          <ul>
+            <li>Auto logo, phone &amp; shop-name placement on every poster</li>
+            <li>Festival calendar variety — 11+ festivals, refreshed year-round</li>
+            <li>WhatsApp Story, Instagram Post &amp; Facebook / square sizes</li>
+            <li>Fully editable offer text, headline &amp; subtext</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="container">
+        <div class="section-head"><h2>Everything you need</h2><p>Built for shop owners &amp; small businesses.</p></div>
+        <div class="feature-grid">
+          <div class="feature"><div class="fi">🏪</div><h3>Auto brand bar</h3><p class="text-muted">Your logo, name, phone &amp; address composited onto every single poster.</p></div>
+          <div class="feature"><div class="fi">🗓️</div><h3>Festival variety</h3><p class="text-muted">Diwali, Holi, Eid, Raksha Bandhan, New Year, Christmas, generic sale &amp; more.</p></div>
+          <div class="feature"><div class="fi">📱</div><h3>All the sizes</h3><p class="text-muted">Instagram Post, WhatsApp Story &amp; square — one click to switch.</p></div>
+          <div class="feature"><div class="fi">✍️</div><h3>Editable offers</h3><p class="text-muted">Change the headline, offer badge and subtext to match your promotion.</p></div>
+          <div class="feature"><div class="fi">🎨</div><h3>Festive themes</h3><p class="text-muted">Hand-picked colour palettes, motifs and accent colours per festival.</p></div>
+          <div class="feature"><div class="fi">💸</div><h3>Pay once</h3><p class="text-muted">₹299 one-time — not a yearly subscription like the big apps.</p></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="pricing">
+      <div class="container">
+        <div class="section-head" style="text-align:center"><h2>Simple, one-time price</h2><p>Preview free. Pay only when you're happy.</p></div>
+        <div class="price-card">
+          <div><span class="amt">₹299</span><span class="was">₹999</span></div>
+          <p class="text-muted" style="margin:6px 0 0">One-time · a year of festival templates</p>
+          <ul>
+            <li>All festival poster designs unlocked</li>
+            <li>Auto logo / shop-name / phone placement</li>
+            <li>Instagram, WhatsApp &amp; Facebook sizes</li>
+            <li>Watermark-free PNG export</li>
+            <li>Instant license key by email</li>
+          </ul>
+          <a href="/festival/editor" class="btn btn-primary btn-lg" style="width:100%">Start creating →</a>
+          <p class="text-muted" style="margin:12px 0 0;font-size:13px">vs ₹2,000–3,500/year on AdBanao &amp; Brands.live</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="faq">
+      <div class="container" style="max-width:760px">
+        <div class="section-head"><h2>Questions</h2></div>
+        <details><summary>Do I need to pay before I see it?</summary><p class="text-muted">No. Build and preview your poster for free. You only pay ₹299 to download it without a watermark and to unlock all designs.</p></details>
+        <details><summary>Is it a subscription?</summary><p class="text-muted">No — it's a one-time ₹299 payment. Apps like AdBanao and Brands.live charge ₹2,000–3,500 every year for the same thing.</p></details>
+        <details><summary>How does the auto brand placement work?</summary><p class="text-muted">Enter your logo, shop name, phone and address once in the editor. Every poster you make — across any festival — automatically shows a brand bar with those details.</p></details>
+        <details><summary>What sizes can I export?</summary><p class="text-muted">Instagram Post (1080×1350), Square (1080×1080) and WhatsApp Story (1080×1920) — all high-resolution PNG.</p></details>
+        <details><summary>Can I come back later?</summary><p class="text-muted">Yes. Your license key stays valid forever. Lost it? Recover it by email right in the editor.</p></details>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <div class="brand"><span class="logo"></span> <span id="brandFooter">DropDash</span></div>
+      <p class="text-muted mt-8">Festival offer poster maker · Pay securely via UPI, cards &amp; netbanking.</p>
+    </div>
+  </footer>
+  <script>
+    fetch('/api/site-info').then(r=>r.json()).then(i=>{document.querySelectorAll('#brandName,#brandFooter').forEach(n=>n.textContent=i.site_name)}).catch(()=>{});
+  </script>
+</body>
+</html>

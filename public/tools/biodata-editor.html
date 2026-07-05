@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Biodata Editor</title>
+  <link rel="stylesheet" href="/css/styles.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&family=Playfair+Display:wght@500;600;700&family=Cinzel:wght@600;700&family=Noto+Serif+Devanagari:wght@500;600&family=Tiro+Devanagari+Hindi&display=swap" rel="stylesheet">
+  <style>
+    body{min-height:100vh}
+    .ed-top{position:sticky;top:0;z-index:40;background:rgba(8,11,22,.82);backdrop-filter:blur(12px);border-bottom:1px solid var(--border-soft)}
+    .ed-top .row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:11px 18px;flex-wrap:wrap}
+    .ed-top .brand{font-size:17px}
+    .ed-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+    .lic-pill{font-size:12.5px;color:var(--muted);padding:5px 10px;border:1px solid var(--border);border-radius:999px}
+    .ed-main{display:grid;grid-template-columns:minmax(300px,380px) 1fr;gap:0;height:calc(100vh - 56px)}
+    @media(max-width:880px){.ed-main{grid-template-columns:1fr;height:auto}}
+    .form-panel{overflow-y:auto;padding:18px;border-right:1px solid var(--border-soft)}
+    .preview-wrap{overflow:auto;display:flex;align-items:flex-start;justify-content:center;padding:24px;background:radial-gradient(1000px 600px at 50% -10%,rgba(109,107,255,.10),transparent 60%)}
+    .doc-scale{transform-origin:top center}
+    .fp-group{margin-bottom:18px}
+    .fp-group h4{margin:0 0 9px;font-size:13px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+    .fld{display:grid;grid-template-columns:1fr 1fr auto;gap:6px;margin-bottom:6px;align-items:center}
+    .fld input{padding:8px 9px;border-radius:8px;border:1px solid var(--border);background:var(--bg-soft);color:var(--text);font-size:13px;font-family:inherit;width:100%}
+    .fld input:focus{outline:none;border-color:var(--primary)}
+    .fld .del{background:none;border:none;color:var(--muted);cursor:pointer;font-size:16px;padding:2px 6px}
+    .fld .del:hover{color:var(--danger)}
+    .add-fld{background:none;border:1px dashed var(--border);color:var(--muted);border-radius:8px;padding:6px 10px;font-size:12.5px;cursor:pointer;width:100%;margin-top:4px}
+    .add-fld:hover{color:var(--text);border-color:var(--primary)}
+    .sec-head{display:flex;align-items:center;gap:8px}
+    .sec-head input{flex:1;font-weight:600}
+    .swatches{display:flex;flex-wrap:wrap;gap:8px}
+    .sw{width:34px;height:34px;border-radius:9px;cursor:pointer;border:2px solid transparent;box-shadow:inset 0 0 0 1px rgba(0,0,0,.2)}
+    .sw.active{border-color:var(--primary)}
+    .ctl-row{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}
+    .ctl-row label{font-size:13px;color:var(--muted)}
+    .ctl-row select,.ctl-row input[type=text]{padding:7px 9px;border-radius:8px;border:1px solid var(--border);background:var(--bg-soft);color:var(--text);font-size:13px;font-family:inherit}
+    .ctl-row input[type=color]{width:34px;height:30px;border:1px solid var(--border);border-radius:8px;background:none;padding:2px}
+    .photo-drop{border:1px dashed var(--border);border-radius:10px;padding:14px;text-align:center;color:var(--muted);cursor:pointer;font-size:13px}
+    .photo-drop img{max-height:80px;margin:0 auto;border-radius:8px}
+    .gallery-overlay{position:fixed;inset:0;background:rgba(4,7,15,.9);backdrop-filter:blur(8px);z-index:60;display:none;flex-direction:column;padding:22px}
+    .gallery-overlay.open{display:flex}
+    .gal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+    .chips{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+    .chip{padding:6px 13px;border-radius:999px;border:1px solid var(--border);background:var(--surface);color:var(--muted);cursor:pointer;font-size:13px}
+    .chip.active{background:var(--primary);color:#fff;border-color:var(--primary)}
+    .gal-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:16px;overflow-y:auto;padding-bottom:20px}
+    .gal-card{border-radius:12px;border:1px solid var(--border);overflow:hidden;cursor:pointer;background:var(--surface);transition:transform .12s}
+    .gal-card:hover{transform:translateY(-3px)}
+    .gal-thumb{height:200px;padding:14px;display:flex;flex-direction:column;gap:5px}
+    .gal-thumb .gh{text-align:center;font-size:10px;font-family:'Cinzel',serif}
+    .gal-thumb .gt{text-align:center;font-weight:700;font-size:14px;font-family:'Playfair Display',serif}
+    .gal-thumb .gr{height:5px;border-radius:3px;background:rgba(0,0,0,.12)}
+    .gal-body{padding:10px 12px;display:flex;align-items:center;justify-content:space-between}
+    .gal-name{font-size:13.5px;font-weight:600}
+    .badge-free{font-size:10px;font-weight:700;color:var(--success);border:1px solid var(--success);border-radius:6px;padding:1px 6px}
+    .badge-pro{font-size:10px;font-weight:700;color:var(--gold);border:1px solid var(--gold);border-radius:6px;padding:1px 6px}
+    .alert{border-radius:10px;padding:10px 12px;font-size:13px}
+    .alert.error{background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.4);color:#fecaca}
+  </style>
+</head>
+<body>
+  <div class="ed-top">
+    <div class="row">
+      <a class="brand" href="/biodata"><span class="logo"></span> Biodata Maker</a>
+      <div class="ed-actions">
+        <span class="lic-pill" id="licenseStatus">Free preview</span>
+        <button class="btn btn-sm" id="changeDesign">Change design</button>
+        <button class="btn btn-sm" id="btnUnlock">Unlock (₹59)</button>
+        <button class="btn btn-sm" id="exportPng">Download PNG</button>
+        <button class="btn btn-sm btn-primary" id="exportPdf">Download PDF</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="ed-main">
+    <div class="form-panel" id="formPanel"><!-- populated by JS --></div>
+    <div class="preview-wrap" id="previewWrap">
+      <div class="doc-scale" id="docScale"><div id="docPreview"></div></div>
+    </div>
+  </div>
+
+  <div class="gallery-overlay" id="galleryOverlay">
+    <div class="gal-head">
+      <h3 style="margin:0">Choose a biodata design</h3>
+      <button class="btn btn-sm" id="galleryClose">Close</button>
+    </div>
+    <div class="chips" id="catChips"></div>
+    <div class="gal-grid" id="galleryGrid"></div>
+  </div>
+
+  <script src="/js/checkout-lib.js"></script>
+  <script src="/js/tool-kit.js"></script>
+  <script src="/js/biodata-editor.js"></script>
+</body>
+</html>

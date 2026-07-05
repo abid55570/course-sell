@@ -39,8 +39,8 @@
 
     if (!rz.configured) {
       try {
-        await verify({ razorpay_order_id: rz.order_id, razorpay_payment_id: 'dev', razorpay_signature: 'dev' });
-        onSuccess && onSuccess();
+        const r = await verify({ razorpay_order_id: rz.order_id, razorpay_payment_id: 'dev', razorpay_signature: 'dev' });
+        onSuccess && onSuccess(r);
       } catch (e) { onError && onError(e); }
       return;
     }
@@ -59,7 +59,7 @@
       prefill: rz.prefill || {},
       theme: { color: '#4f46e5' },
       handler: async (resp) => {
-        try { await verify(resp); onSuccess && onSuccess(); }
+        try { const r = await verify(resp); onSuccess && onSuccess(r); }
         catch (e) { onError && onError(e); }
       },
       modal: { ondismiss: () => onDismiss && onDismiss() },

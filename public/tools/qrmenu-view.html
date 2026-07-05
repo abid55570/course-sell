@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Menu</title>
+  <meta name="description" content="Digital menu">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&family=Playfair+Display:wght@500;600;700&family=Cinzel:wght@600;700&family=Poppins:wght@500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *{box-sizing:border-box}
+    html,body{margin:0;padding:0}
+    body{font-family:'Inter',sans-serif;background:#f3f4f6;color:#1f2937;-webkit-font-smoothing:antialiased;min-height:100vh}
+    .wrap{max-width:560px;margin:0 auto;min-height:100vh}
+    .menu-shell{min-height:100vh;padding:30px 20px 60px}
+    .head{text-align:center;margin-bottom:26px}
+    .shop{font-weight:700;font-size:30px;line-height:1.15;margin:0}
+    .tag{font-size:14px;opacity:.85;margin-top:8px;font-style:italic}
+    .cat{margin-bottom:26px}
+    .cat-name{font-size:20px;font-weight:700;padding-bottom:8px;margin:0 0 12px;border-bottom:2px solid;letter-spacing:.02em}
+    .item{display:flex;gap:12px;padding:11px 12px;border-radius:12px;margin-bottom:9px;box-shadow:0 1px 3px rgba(0,0,0,.05)}
+    .dot{flex:none;width:15px;height:15px;border:2px solid;border-radius:3px;display:flex;align-items:center;justify-content:center;margin-top:3px}
+    .dot i{width:7px;height:7px;border-radius:50%;display:block}
+    .item-main{flex:1;min-width:0}
+    .item-top{display:flex;justify-content:space-between;gap:12px;align-items:baseline}
+    .item-name{font-weight:600;font-size:16px}
+    .item-price{font-weight:700;font-size:15px;white-space:nowrap}
+    .item-desc{font-size:13px;opacity:.75;margin-top:3px;line-height:1.4}
+    .foot{text-align:center;margin-top:34px;font-size:12px;opacity:.55}
+    .foot a{color:inherit}
+    /* states */
+    .state{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:40px 24px;color:#4b5563}
+    .state .emoji{font-size:56px;margin-bottom:14px}
+    .state h1{font-size:22px;margin:0 0 8px;color:#1f2937}
+    .state p{margin:0;font-size:15px;max-width:340px}
+    .spinner{width:34px;height:34px;border:3px solid #d1d5db;border-top-color:#6366f1;border-radius:50%;animation:spin .8s linear infinite}
+    @keyframes spin{to{transform:rotate(360deg)}}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div id="root">
+      <div class="state"><div class="spinner"></div></div>
+    </div>
+  </div>
+
+  <script>
+  (function () {
+    'use strict';
+    var esc = function (s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]; }); };
+    var root = document.getElementById('root');
+
+    function showState(emoji, title, msg) {
+      root.innerHTML = '<div class="state"><div class="emoji">' + emoji + '</div><h1>' + esc(title) + '</h1><p>' + esc(msg) + '</p></div>';
+    }
+
+    function render(shopName, data) {
+      data = data || {};
+      var t = data.theme || {};
+      var cur = data.currency || 'Rs';
+      var accent = t.accent || '#111827';
+      var bg = t.bg || '#ffffff';
+      var bg2 = t.bg2 || '#f3f4f6';
+      var text = t.text || '#1f2937';
+      var cardBg = t.cardBg || '#ffffff';
+      var headFont = t.headingFont || 'Poppins';
+
+      document.title = shopName ? shopName + ' — Menu' : 'Menu';
+      document.body.style.background = bg2;
+
+      var html = '';
+      html += '<div class="menu-shell" style="background:linear-gradient(170deg,' + esc(bg) + ',' + esc(bg2) + ');color:' + esc(text) + '">';
+      html += '<div class="head">';
+      html += '<h1 class="shop" style="font-family:\'' + esc(headFont) + '\',sans-serif;color:' + esc(accent) + '">' + esc(shopName || 'Menu') + '</h1>';
+      if (data.tagline) html += '<div class="tag">' + esc(data.tagline) + '</div>';
+      html += '</div>';
+
+      var cats = data.categories || [];
+      if (!cats.length) {
+        html += '<div style="text-align:center;opacity:.6;padding:30px 0">This menu has no items yet.</div>';
+      }
+      cats.forEach(function (cat) {
+        html += '<div class="cat">';
+        html += '<h2 class="cat-name" style="font-family:\'' + esc(headFont) + '\',sans-serif;color:' + esc(accent) + ';border-color:' + esc(accent) + '55">' + esc(cat.name || 'Category') + '</h2>';
+        (cat.items || []).forEach(function (it) {
+          var dot = it.veg ? '#16a34a' : '#dc2626';
+          html += '<div class="item" style="background:' + esc(cardBg) + '">';
+          html += '<span class="dot" style="border-color:' + dot + '"><i style="background:' + dot + '"></i></span>';
+          html += '<div class="item-main">';
+          html += '<div class="item-top"><span class="item-name">' + esc(it.name || 'Item') + '</span><span class="item-price" style="color:' + esc(accent) + '">' + esc(cur) + ' ' + esc(it.price || '') + '</span></div>';
+          if (it.desc) html += '<div class="item-desc">' + esc(it.desc) + '</div>';
+          html += '</div></div>';
+        });
+        html += '</div>';
+      });
+
+      html += '<div class="foot">Menu powered by <a href="/qrmenu">QR Menu Maker</a></div>';
+      html += '</div>';
+      root.innerHTML = html;
+    }
+
+    function publicId() {
+      var parts = location.pathname.split('/').filter(Boolean);
+      return parts.length ? parts[parts.length - 1] : '';
+    }
+
+    var pid = publicId();
+    if (!pid) { showState('🍽️', 'Menu not found', 'This menu link looks incomplete. Ask the shop for a fresh QR code.'); return; }
+
+    fetch('/api/tools/qrmenu/menu/' + encodeURIComponent(pid), { credentials: 'include' })
+      .then(function (r) {
+        if (r.status === 404) throw new Error('notfound');
+        if (!r.ok) throw new Error('failed');
+        return r.json();
+      })
+      .then(function (d) { render(d.shop_name, d.data); })
+      .catch(function (e) {
+        if (e.message === 'notfound') showState('🍽️', 'Menu not found', 'This menu may have been removed, or the link is incorrect. Please ask the shop for a fresh QR code.');
+        else showState('😕', 'Could not load the menu', 'Something went wrong. Please check your connection and try again.');
+      });
+  })();
+  </script>
+</body>
+</html>

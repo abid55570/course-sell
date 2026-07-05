@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>QR Menu & Price List Maker — a live QR menu, pay ₹699 once</title>
+  <meta name="description" content="Create a live, scannable QR menu for your cafe, restaurant or shop. Update prices anytime from your phone. Pay ₹699 once — no monthly SaaS fees, ever.">
+  <link rel="stylesheet" href="/css/styles.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&family=Poppins:wght@500;600;700&display=swap" rel="stylesheet">
+  <style>
+    .tool-hero{padding:56px 0 30px;text-align:center}
+    .tool-hero .eyebrow{display:inline-flex;gap:8px;align-items:center;background:var(--gold-soft);color:var(--gold);border:1px solid rgba(230,193,90,.3);padding:6px 13px;border-radius:999px;font-size:13px;font-weight:600;margin-bottom:16px}
+    .tool-hero h1{font-size:clamp(32px,5vw,52px);margin:0 0 14px;line-height:1.08}
+    .tool-hero p.lead{max-width:660px;margin:0 auto 22px;color:var(--muted);font-size:18px}
+    .hero-cta{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+    .hero-visual{display:flex;gap:22px;justify-content:center;align-items:center;flex-wrap:wrap;margin:40px 0 10px}
+    .mini-phone{width:200px;background:#0b0e18;border:8px solid #05070d;border-radius:30px;overflow:hidden;box-shadow:var(--shadow-sm)}
+    .mini-phone .top{height:20px;background:#05070d}
+    .mini-screen{padding:16px 14px 24px;background:linear-gradient(170deg,#fdf6ee,#f6e7d3);color:#4a382a;text-align:left}
+    .mini-screen .mtitle{text-align:center;font-family:'Poppins',sans-serif;font-weight:700;font-size:18px;color:#b06a2c}
+    .mini-screen .mtag{text-align:center;font-size:10px;font-style:italic;opacity:.8;margin-bottom:12px}
+    .mini-screen .msec{font-weight:700;font-size:12px;color:#b06a2c;border-bottom:2px solid #b06a2c55;padding-bottom:3px;margin:10px 0 6px}
+    .mini-screen .mitem{display:flex;justify-content:space-between;font-size:11px;padding:3px 0;gap:6px}
+    .mini-screen .mdot{color:#16a34a}
+    .qr-visual{text-align:center}
+    .qr-box{width:150px;height:150px;background:#fff;border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:70px;box-shadow:var(--shadow-sm);margin:0 auto 10px}
+    .qr-visual span{color:var(--muted);font-size:13px}
+    .steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:18px}
+    .step{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:22px}
+    .step .n{width:34px;height:34px;border-radius:10px;background:linear-gradient(120deg,var(--primary),var(--primary-2));display:flex;align-items:center;justify-content:center;font-weight:700;margin-bottom:12px}
+    .feature-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px}
+    .feature{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px}
+    .feature .fi{font-size:24px;margin-bottom:8px}
+    .compare{display:grid;grid-template-columns:1fr 1fr;gap:16px;max-width:760px;margin:0 auto}
+    @media(max-width:640px){.compare{grid-template-columns:1fr}}
+    .compare-card{border-radius:var(--radius);padding:22px;border:1px solid var(--border)}
+    .compare-card h3{margin:0 0 12px;font-size:18px}
+    .compare-card ul{list-style:none;padding:0;margin:0}
+    .compare-card li{padding:6px 0 6px 24px;position:relative;font-size:14.5px;color:var(--muted)}
+    .compare-them{background:var(--surface)}
+    .compare-them li::before{content:'✕';position:absolute;left:0;color:var(--danger)}
+    .compare-us{background:linear-gradient(180deg,var(--surface),var(--bg-soft));border-color:rgba(230,193,90,.35)}
+    .compare-us li::before{content:'✓';position:absolute;left:0;color:var(--success);font-weight:700}
+    .price-card{max-width:420px;margin:0 auto;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:30px;text-align:center;box-shadow:var(--shadow)}
+    .price-card .amt{font-size:48px;font-weight:800;font-family:var(--font-display)}
+    .price-card .was{color:var(--muted);text-decoration:line-through;margin-left:8px;font-size:20px;font-weight:400}
+    .price-card ul{list-style:none;padding:0;margin:18px 0;text-align:left}
+    .price-card li{padding:7px 0 7px 26px;position:relative}
+    .price-card li::before{content:'✓';position:absolute;left:0;color:var(--success);font-weight:700}
+    .faq details{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px 18px;margin-bottom:10px}
+    .faq summary{cursor:pointer;font-weight:600}
+    section{padding:34px 0}
+    .section-head h2{font-size:28px;margin:0 0 6px}
+    .section-head p{color:var(--muted);margin:0 0 22px}
+  </style>
+</head>
+<body>
+  <header class="site-header">
+    <div class="container nav">
+      <a class="brand" href="/"><span class="logo"></span> <span id="brandName">DropDash</span></a>
+      <nav class="nav-links">
+        <a href="/#products">Products</a>
+        <a href="/qrmenu" class="nav-new">QR Menu Maker</a>
+        <a href="/qrmenu/editor" class="btn btn-sm btn-primary">Open editor</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <section class="tool-hero">
+      <div class="container">
+        <span class="eyebrow">🍽️ QR Menu &amp; Price List Maker</span>
+        <h1>A live, scannable QR menu —<br><span class="grad">update prices anytime</span></h1>
+        <p class="lead">Build your menu, publish it, and print one QR for your tables. Change a price? Edit and re-publish — the same QR updates instantly. Pay ₹699 once. No monthly SaaS fees, ever.</p>
+        <div class="hero-cta">
+          <a href="/qrmenu/editor" class="btn btn-primary btn-lg">Build your QR menu →</a>
+          <a href="#pricing" class="btn btn-lg">See pricing</a>
+        </div>
+        <div class="hero-visual">
+          <div class="mini-phone">
+            <div class="top"></div>
+            <div class="mini-screen">
+              <div class="mtitle">Sunrise Cafe</div>
+              <div class="mtag">Freshly brewed, every day</div>
+              <div class="msec">Coffee</div>
+              <div class="mitem"><span><span class="mdot">●</span> Cappuccino</span><span>Rs 120</span></div>
+              <div class="mitem"><span><span class="mdot">●</span> Cold Brew</span><span>Rs 150</span></div>
+              <div class="msec">Bites</div>
+              <div class="mitem"><span><span class="mdot">●</span> Veg Sandwich</span><span>Rs 110</span></div>
+            </div>
+          </div>
+          <div class="qr-visual">
+            <div class="qr-box">▦</div>
+            <span>Scan → live menu</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="container">
+        <div class="section-head"><h2>How it works</h2><p>Live in five minutes — no app, no printing new menus.</p></div>
+        <div class="steps">
+          <div class="step"><div class="n">1</div><h3>Build your menu</h3><p class="text-muted">Pick a theme, add categories and items with prices and veg/non-veg dots.</p></div>
+          <div class="step"><div class="n">2</div><h3>Publish live</h3><p class="text-muted">Pay once and go live. We host your menu and generate your QR code.</p></div>
+          <div class="step"><div class="n">3</div><h3>Print the QR</h3><p class="text-muted">Put it on tables, the counter or a poster. Customers scan and browse.</p></div>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="container">
+        <div class="section-head"><h2>Everything you need</h2><p>Made for cafes, restaurants, bakeries and bars.</p></div>
+        <div class="feature-grid">
+          <div class="feature"><div class="fi">📱</div><h3>Hosted &amp; scannable</h3><p class="text-muted">Your menu lives on a real web link with a ready-to-print QR code.</p></div>
+          <div class="feature"><div class="fi">✏️</div><h3>Update anytime</h3><p class="text-muted">Change a price or add a dish and re-publish — the same QR updates.</p></div>
+          <div class="feature"><div class="fi">🥗</div><h3>Veg &amp; non-veg dots</h3><p class="text-muted">Clear green/red markers on every item, just like a real menu card.</p></div>
+          <div class="feature"><div class="fi">🎨</div><h3>Beautiful themes</h3><p class="text-muted">Cafe, restaurant dark, bakery pastel, bar neon and minimal styles.</p></div>
+          <div class="feature"><div class="fi">📴</div><h3>No app to install</h3><p class="text-muted">Customers just scan and browse in their phone browser — nothing to download.</p></div>
+          <div class="feature"><div class="fi">💸</div><h3>Pay once</h3><p class="text-muted">₹699 one-time. No monthly subscription like other QR-menu tools.</p></div>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="container">
+        <div class="section-head" style="text-align:center"><h2>Why pay once instead of every month?</h2><p>Most QR-menu apps charge you forever. This one doesn't.</p></div>
+        <div class="compare">
+          <div class="compare-card compare-them">
+            <h3>Subscription QR-menu apps</h3>
+            <ul>
+              <li>₹200–₹800 <strong>every month</strong></li>
+              <li>Menu goes dark if you stop paying</li>
+              <li>Locked into their dashboard</li>
+              <li>Upsells and ads on your menu</li>
+            </ul>
+          </div>
+          <div class="compare-card compare-us">
+            <h3>QR Menu Maker</h3>
+            <ul>
+              <li><strong>₹699 once</strong> — then it's yours</li>
+              <li>Your menu stays live, hosted for you</li>
+              <li>Update prices anytime, same QR</li>
+              <li>Clean menu — no ads, no upsells</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="pricing">
+      <div class="container">
+        <div class="section-head" style="text-align:center"><h2>Simple, one-time price</h2><p>Build and preview free. Pay only to publish your live menu.</p></div>
+        <div class="price-card">
+          <div><span class="amt">₹699</span><span class="was">₹1,999</span></div>
+          <p class="text-muted" style="margin:6px 0 0">One-time · lifetime access · no monthly fees</p>
+          <ul>
+            <li>Live, hosted QR menu on a real link</li>
+            <li>Ready-to-print QR code (PNG)</li>
+            <li>Unlimited categories &amp; items</li>
+            <li>Update prices anytime — same QR</li>
+            <li>All themes &amp; veg/non-veg dots</li>
+            <li>Instant license key by email</li>
+          </ul>
+          <a href="/qrmenu/editor" class="btn btn-primary btn-lg" style="width:100%">Build your QR menu →</a>
+        </div>
+      </div>
+    </section>
+
+    <section class="faq">
+      <div class="container" style="max-width:760px">
+        <div class="section-head"><h2>Questions</h2></div>
+        <details><summary>Do I need to pay before I see it?</summary><p class="text-muted">No. Build and preview your entire menu for free in the editor. You only pay ₹699 when you're ready to publish the live, scannable QR menu.</p></details>
+        <details><summary>Is it a monthly subscription?</summary><p class="text-muted">No — it's a one-time ₹699 payment. Unlike other QR-menu apps, there are no recurring fees. Your menu stays hosted and live.</p></details>
+        <details><summary>Can I change prices later?</summary><p class="text-muted">Yes. Open the editor anytime, edit your menu, and hit publish again. The same QR code updates instantly — you never have to reprint it.</p></details>
+        <details><summary>Do my customers need an app?</summary><p class="text-muted">No. They just point their phone camera at the QR and your menu opens in their browser. Nothing to install.</p></details>
+        <details><summary>Lost my license key?</summary><p class="text-muted">You can recover it by email right inside the editor's unlock window.</p></details>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <div class="brand"><span class="logo"></span> <span id="brandFooter">DropDash</span></div>
+      <p class="text-muted mt-8">QR menu &amp; price list maker · Pay securely via UPI, cards &amp; netbanking.</p>
+    </div>
+  </footer>
+  <script>
+    fetch('/api/site-info').then(r=>r.json()).then(i=>{document.querySelectorAll('#brandName,#brandFooter').forEach(n=>n.textContent=i.site_name)}).catch(()=>{});
+  </script>
+</body>
+</html>

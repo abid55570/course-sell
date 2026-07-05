@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Carousel Editor — DropDash</title>
+  <link rel="stylesheet" href="/css/styles.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@400;500;600;700&family=Playfair+Display:wght@400;700;900&family=DM+Sans:wght@400;500;700&family=Poppins:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    .editor-shell { display: grid; grid-template-columns: 280px 1fr 300px; min-height: 100vh; }
+    .editor-sidebar { background: var(--bg-soft); border-right: 1px solid var(--border-soft); overflow-y: auto; padding: 16px; }
+    .editor-canvas-area { display: flex; align-items: center; justify-content: center; padding: 30px; background: var(--bg); position: relative; overflow: auto; }
+    .editor-props { background: var(--bg-soft); border-left: 1px solid var(--border-soft); overflow-y: auto; padding: 16px; }
+
+    .slide-strip { display: flex; flex-direction: column; gap: 10px; }
+    .slide-thumb { border: 2px solid var(--border); border-radius: 10px; cursor: pointer; overflow: hidden; transition: border-color .15s; position: relative; }
+    .slide-thumb:hover { border-color: var(--primary); }
+    .slide-thumb.active { border-color: var(--primary); box-shadow: 0 0 0 2px rgba(109,107,255,0.35); }
+    .slide-thumb-inner { aspect-ratio: 4/5; display: flex; align-items: center; justify-content: center; padding: 8px; font-size: 9px; text-align: center; color: #fff; position: relative; overflow: hidden; }
+    .slide-thumb .slide-num { position: absolute; top: 4px; left: 6px; font-size: 10px; font-weight: 700; color: rgba(255,255,255,0.5); }
+
+    .canvas-frame { width: 400px; aspect-ratio: 4/5; border-radius: 12px; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,0.5); position: relative; }
+    .canvas-slide { width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px 36px; text-align: center; position: relative; box-sizing: border-box; overflow: hidden; }
+
+    .canvas-slide .el-text { cursor: text; outline: none; border: 1px solid transparent; border-radius: 4px; padding: 2px 4px; transition: border-color .15s; min-width: 40px; word-break: break-word; }
+    .canvas-slide .el-text:hover { border-color: rgba(109,107,255,0.3); }
+    .canvas-slide .el-text:focus { border-color: var(--primary); background: rgba(0,0,0,0.15); }
+
+    .props-section { margin-bottom: 20px; }
+    .props-section h4 { font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin: 0 0 10px; }
+    .prop-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+    .prop-label { font-size: 13px; color: var(--muted); min-width: 60px; }
+    .prop-input { flex: 1; padding: 7px 10px; border-radius: 8px; border: 1px solid var(--border); background: rgba(255,255,255,0.04); color: var(--text); font-size: 13px; font-family: inherit; }
+    .prop-input:focus { outline: none; border-color: var(--primary); }
+    .prop-color { width: 32px; height: 32px; border-radius: 8px; border: 2px solid var(--border); cursor: pointer; padding: 0; }
+
+    .palette-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+    .palette-swatch { aspect-ratio: 1; border-radius: 8px; cursor: pointer; border: 2px solid transparent; transition: all .12s; position: relative; }
+    .palette-swatch:hover { transform: scale(1.1); }
+    .palette-swatch.active { border-color: #fff; box-shadow: 0 0 0 2px var(--primary); }
+
+    .export-bar { position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); display: flex; gap: 10px; z-index: 10; }
+
+    .gallery-overlay { position: fixed; inset: 0; background: var(--bg); z-index: 200; overflow-y: auto; }
+    .gallery-header { position: sticky; top: 0; z-index: 10; background: rgba(8,11,22,0.92); backdrop-filter: blur(12px); border-bottom: 1px solid var(--border-soft); padding: 16px 22px; display: flex; align-items: center; justify-content: space-between; }
+    .gallery-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 18px; padding: 22px; max-width: 1100px; margin: 0 auto; }
+    .gallery-card { border: 2px solid var(--border); border-radius: 12px; overflow: hidden; cursor: pointer; transition: all .18s; }
+    .gallery-card:hover { border-color: var(--primary); transform: translateY(-3px); box-shadow: var(--shadow); }
+    .gallery-card .g-thumb { aspect-ratio: 4/5; display: flex; align-items: center; justify-content: center; color: #fff; text-align: center; padding: 16px; position: relative; }
+    .gallery-card .g-body { padding: 12px; background: var(--surface); }
+    .gallery-card .g-name { font-weight: 700; font-size: 14px; }
+    .gallery-card .g-meta { font-size: 12px; color: var(--muted); margin-top: 4px; }
+    .gallery-card .g-free { position: absolute; top: 8px; right: 8px; background: #22c55e; color: #fff; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 999px; }
+    .gallery-card .g-lock { position: absolute; top: 8px; right: 8px; background: rgba(0,0,0,0.5); color: #fcd34d; font-size: 10px; font-weight: 600; padding: 2px 8px; border-radius: 999px; }
+
+    .license-modal { position: fixed; inset: 0; background: rgba(2,6,23,0.8); display: flex; align-items: center; justify-content: center; z-index: 300; backdrop-filter: blur(4px); }
+    .license-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 30px; max-width: 440px; width: 100%; box-shadow: var(--shadow); }
+
+    .logo-upload-area { border: 2px dashed var(--border); border-radius: 10px; padding: 16px; text-align: center; cursor: pointer; color: var(--muted); font-size: 13px; transition: border-color .15s; }
+    .logo-upload-area:hover { border-color: var(--primary); }
+    .logo-upload-area img { max-width: 80px; max-height: 60px; margin: 0 auto; display: block; }
+
+    .offscreen-render { position: absolute; left: -9999px; top: -9999px; pointer-events: none; }
+
+    @media (max-width: 1000px) {
+      .editor-shell { grid-template-columns: 1fr; }
+      .editor-sidebar { display: none; }
+      .editor-props { display: none; }
+      .canvas-frame { width: 90vw; max-width: 400px; }
+    }
+  </style>
+</head>
+<body>
+  <!-- GALLERY (shown first, hidden when editing) -->
+  <div id="gallery" class="gallery-overlay">
+    <div class="gallery-header">
+      <div style="display:flex;align-items:center;gap:12px">
+        <a href="/carousel" style="color:var(--muted);font-size:14px">← Back</a>
+        <h3 style="margin:0;font-size:18px">Choose a template</h3>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <span id="licenseStatus" style="font-size:13px;color:var(--muted)"></span>
+        <button id="licenseBtn" class="btn btn-sm">Enter license key</button>
+      </div>
+    </div>
+    <div class="chips" style="padding:0 22px" id="categoryChips"></div>
+    <div class="gallery-grid" id="galleryGrid"></div>
+  </div>
+
+  <!-- EDITOR -->
+  <div id="editorView" class="editor-shell" style="display:none">
+    <aside class="editor-sidebar">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+        <button id="backToGallery" class="btn btn-sm btn-ghost" style="padding:6px 10px">← Templates</button>
+      </div>
+      <h4 style="font-size:13px;color:var(--muted);margin:0 0 10px">Slides</h4>
+      <div id="slideStrip" class="slide-strip"></div>
+    </aside>
+
+    <div class="editor-canvas-area">
+      <div id="canvasFrame" class="canvas-frame">
+        <div id="canvasSlide" class="canvas-slide"></div>
+      </div>
+      <div class="export-bar">
+        <button id="prevSlide" class="btn btn-sm">← Prev</button>
+        <span id="slideCounter" style="font-size:13px;color:var(--muted);align-self:center;min-width:60px;text-align:center"></span>
+        <button id="nextSlide" class="btn btn-sm">Next →</button>
+        <button id="exportSlide" class="btn btn-sm btn-primary">Export slide</button>
+        <button id="exportAll" class="btn btn-sm btn-gold">Export all</button>
+      </div>
+    </div>
+
+    <aside class="editor-props">
+      <div class="props-section">
+        <h4>Colors</h4>
+        <div id="paletteGrid" class="palette-grid"></div>
+        <div class="prop-row mt-8">
+          <span class="prop-label">Custom</span>
+          <input type="color" id="customBg1" class="prop-color" title="Background start">
+          <input type="color" id="customBg2" class="prop-color" title="Background end">
+          <input type="color" id="customAccent" class="prop-color" title="Accent color">
+        </div>
+      </div>
+
+      <div class="props-section">
+        <h4>Text</h4>
+        <div id="textProps"></div>
+      </div>
+
+      <div class="props-section">
+        <h4>Logo</h4>
+        <div id="logoArea" class="logo-upload-area">
+          Click or drag to upload your logo
+          <input type="file" id="logoInput" accept="image/*" style="display:none">
+        </div>
+        <button id="removeLogo" class="btn btn-sm btn-ghost mt-8" style="display:none">Remove logo</button>
+      </div>
+
+      <div class="props-section">
+        <h4>Slide background</h4>
+        <div class="prop-row">
+          <span class="prop-label">Type</span>
+          <select id="bgType" class="prop-input" style="max-width:140px">
+            <option value="gradient">Gradient</option>
+            <option value="solid">Solid</option>
+          </select>
+        </div>
+      </div>
+    </aside>
+  </div>
+
+  <!-- LICENSE MODAL -->
+  <div id="licenseModal" class="license-modal" style="display:none">
+    <div class="license-card">
+      <h3 style="margin:0 0 6px">Unlock all templates</h3>
+      <p style="color:var(--muted);margin:0 0 18px;font-size:14px">Enter your license key to access 100+ premium templates and unlimited exports.</p>
+      <div class="form">
+        <input id="licenseInput" type="text" class="prop-input" placeholder="CRS-XXXXXX-XXXXXX-XXXXXX-XXXXXX" style="font-family:monospace;font-size:15px;text-align:center;letter-spacing:1px;padding:14px">
+        <div id="licenseAlert" class="alert hidden"></div>
+        <div style="display:flex;gap:10px;margin-top:8px">
+          <button id="licenseSubmit" class="btn btn-primary" style="flex:1">Activate</button>
+          <button id="licenseBuy" class="btn btn-gold" style="flex:1">Buy for ₹499</button>
+        </div>
+        <div style="text-align:center;margin-top:10px">
+          <button id="licenseRecover" class="btn btn-ghost btn-sm">Lost your key? Recover via email</button>
+        </div>
+        <button id="licenseClose" class="btn btn-ghost btn-sm" style="width:100%;margin-top:4px">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- RECOVER MODAL -->
+  <div id="recoverModal" class="license-modal" style="display:none">
+    <div class="license-card">
+      <h3 style="margin:0 0 6px">Recover your license</h3>
+      <p style="color:var(--muted);margin:0 0 18px;font-size:14px">Enter the email you used when purchasing.</p>
+      <div class="form">
+        <input id="recoverEmail" type="email" class="prop-input" placeholder="you@example.com">
+        <div id="recoverAlert" class="alert hidden"></div>
+        <div style="display:flex;gap:10px;margin-top:8px">
+          <button id="recoverSubmit" class="btn btn-primary" style="flex:1">Find my key</button>
+          <button id="recoverCancel" class="btn btn-ghost" style="flex:1">Cancel</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CHECKOUT MODAL -->
+  <div id="checkoutModal" class="license-modal" style="display:none">
+    <div class="license-card" style="max-width:480px">
+      <h3 style="margin:0 0 6px">Get lifetime access — ₹499</h3>
+      <p style="color:var(--muted);margin:0 0 18px;font-size:14px">One-time payment. All templates. Unlimited exports. No subscription.</p>
+      <div class="form">
+        <div><label>Name</label><input id="buyName" type="text" class="prop-input" required></div>
+        <div><label>Email</label><input id="buyEmail" type="email" class="prop-input" required></div>
+        <div><label>Phone (optional)</label><input id="buyPhone" type="tel" class="prop-input"></div>
+        <div id="buyAlert" class="alert hidden"></div>
+        <button id="buySubmit" class="btn btn-primary btn-lg" style="width:100%;margin-top:8px">Pay ₹499 & get license key</button>
+        <button id="buyCancel" class="btn btn-ghost btn-sm" style="width:100%;margin-top:4px">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="offscreenRender" class="offscreen-render"></div>
+
+  <script src="/js/checkout-lib.js"></script>
+  <script src="/js/carousel-editor.js"></script>
+</body>
+</html>

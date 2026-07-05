@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Rent Receipt Generator for HRA — 12 receipts + agreement in minutes</title>
+  <meta name="description" content="Generate 12 months of HRA-ready rent receipts plus a leave-and-license rent agreement as print-ready PDFs. Pay ₹99 once — cheaper than a single CA visit.">
+  <link rel="stylesheet" href="/css/styles.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+  <style>
+    .tool-hero{padding:56px 0 30px;text-align:center}
+    .tool-hero .eyebrow{display:inline-flex;gap:8px;align-items:center;background:var(--gold-soft);color:var(--gold);border:1px solid rgba(230,193,90,.3);padding:6px 13px;border-radius:999px;font-size:13px;font-weight:600;margin-bottom:16px}
+    .tool-hero h1{font-size:clamp(32px,5vw,52px);margin:0 0 14px;line-height:1.08}
+    .tool-hero p.lead{max-width:660px;margin:0 auto 22px;color:var(--muted);font-size:18px}
+    .hero-cta{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+    .sample-strip{display:flex;justify-content:center;margin:38px 0 10px}
+    .sample{width:300px;background:#fff;color:#1c2430;border-radius:12px;box-shadow:var(--shadow-sm);padding:20px 22px;text-align:left}
+    .sample .sh{text-align:center;font-family:'Space Grotesk',sans-serif;font-weight:700;letter-spacing:.14em;color:#2f6b4f;font-size:15px}
+    .sample .srule{height:2px;background:#2f6b4f;margin:8px 0 12px}
+    .sample .smeta{display:flex;justify-content:space-between;font-size:10.5px;color:#6b7280;margin-bottom:10px}
+    .sample .srow{height:6px;border-radius:3px;background:#e3e6ec;margin-bottom:6px}
+    .sample .srow.s2{width:82%}.sample .srow.s3{width:64%}
+    .sample .ssign{height:6px;width:42%;border-radius:3px;background:#c8cdd6;margin:26px 0 0 auto}
+    .steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:18px}
+    .step{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:22px}
+    .step .n{width:34px;height:34px;border-radius:10px;background:linear-gradient(120deg,var(--primary),var(--primary-2));display:flex;align-items:center;justify-content:center;font-weight:700;margin-bottom:12px}
+    .feature-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px}
+    .feature{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px}
+    .feature .fi{font-size:24px;margin-bottom:8px}
+    .price-card{max-width:420px;margin:0 auto;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:30px;text-align:center;box-shadow:var(--shadow)}
+    .price-card .amt{font-size:48px;font-weight:800;font-family:var(--font-display)}
+    .price-card .was{color:var(--muted);text-decoration:line-through;margin-left:8px;font-size:20px;font-weight:400}
+    .price-card ul{list-style:none;padding:0;margin:18px 0;text-align:left}
+    .price-card li{padding:7px 0 7px 26px;position:relative}
+    .price-card li::before{content:'✓';position:absolute;left:0;color:var(--success);font-weight:700}
+    .faq details{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px 18px;margin-bottom:10px}
+    .faq summary{cursor:pointer;font-weight:600}
+    section{padding:34px 0}
+    .section-head h2{font-size:28px;margin:0 0 6px}
+    .section-head p{color:var(--muted);margin:0 0 22px}
+  </style>
+</head>
+<body>
+  <header class="site-header">
+    <div class="container nav">
+      <a class="brand" href="/"><span class="logo"></span> <span id="brandName">DropDash</span></a>
+      <nav class="nav-links">
+        <a href="/#products">Products</a>
+        <a href="/rentreceipt" class="nav-new">Rent Receipts</a>
+        <a href="/rentreceipt/editor" class="btn btn-sm btn-primary">Open editor</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <section class="tool-hero">
+      <div class="container">
+        <span class="eyebrow">🏠 Rent Receipt Generator for HRA</span>
+        <h1>12 months of HRA receipts<br>+ a rent agreement, in <span class="grad">minutes</span></h1>
+        <p class="lead">Fill your details once and download all 12 HRA-ready rent receipts as a single print-ready PDF — plus a proper 11-month leave-and-license rent agreement. Pay once, cheaper than a single CA visit.</p>
+        <div class="hero-cta">
+          <a href="/rentreceipt/editor" class="btn btn-primary btn-lg">Generate receipts →</a>
+          <a href="#pricing" class="btn btn-lg">See pricing</a>
+        </div>
+        <div class="sample-strip">
+          <div class="sample">
+            <div class="sh">RENT RECEIPT</div>
+            <div class="srule"></div>
+            <div class="smeta"><span>Receipt No: RR-202504</span><span>Date: 05 Apr 2025</span></div>
+            <div class="srow"></div><div class="srow s2"></div><div class="srow"></div><div class="srow s3"></div>
+            <div class="ssign"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="container">
+        <div class="section-head"><h2>How it works</h2><p>Faster and more polished than the free generators.</p></div>
+        <div class="steps">
+          <div class="step"><div class="n">1</div><h3>Enter details once</h3><p class="text-muted">Tenant, landlord, address, rent, start month and payment mode.</p></div>
+          <div class="step"><div class="n">2</div><h3>Preview instantly</h3><p class="text-muted">See the first receipt render live as you type — pick a style.</p></div>
+          <div class="step"><div class="n">3</div><h3>Download the bundle</h3><p class="text-muted">All 12 receipts in one PDF, plus a ready-to-sign rent agreement.</p></div>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="container">
+        <div class="section-head"><h2>Why pay ₹99 when free tools exist?</h2><p>Because the free ones make you build receipts one at a time — and none give you the agreement.</p></div>
+        <div class="feature-grid">
+          <div class="feature"><div class="fi">📄</div><h3>All 12 in one click</h3><p class="text-muted">One receipt per page for every month — no re-typing, no copy-paste.</p></div>
+          <div class="feature"><div class="fi">🧾</div><h3>Bundled rent agreement</h3><p class="text-muted">A clean 11-month leave-and-license agreement, pre-filled with your details.</p></div>
+          <div class="feature"><div class="fi">✅</div><h3>HRA-ready</h3><p class="text-muted">Section 10(13A) heading, landlord PAN line, and the revenue-stamp note for cash.</p></div>
+          <div class="feature"><div class="fi">🔢</div><h3>Amount in words</h3><p class="text-muted">Rupees converted to words automatically, exactly how HR wants it.</p></div>
+          <div class="feature"><div class="fi">🎨</div><h3>Clean styles</h3><p class="text-muted">Simple, Bordered and Classic looks — professional, print-ready output.</p></div>
+          <div class="feature"><div class="fi">💸</div><h3>Pay once</h3><p class="text-muted">₹99 one-time — cheaper than a single CA visit. No subscription.</p></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="pricing">
+      <div class="container">
+        <div class="section-head" style="text-align:center"><h2>Simple, one-time price</h2><p>Preview the first month free. Pay only when you're ready to download everything.</p></div>
+        <div class="price-card">
+          <div><span class="amt">₹99</span><span class="was">₹299</span></div>
+          <p class="text-muted" style="margin:6px 0 0">One-time · lifetime access</p>
+          <ul>
+            <li>All 12 rent receipts in one PDF</li>
+            <li>Bundled 11-month rent agreement</li>
+            <li>Watermark-free, print-ready output</li>
+            <li>Landlord PAN & revenue-stamp note</li>
+            <li>Amount auto-converted to words</li>
+            <li>Instant license key by email</li>
+          </ul>
+          <a href="/rentreceipt/editor" class="btn btn-primary btn-lg" style="width:100%">Generate receipts →</a>
+        </div>
+      </div>
+    </section>
+
+    <section class="faq">
+      <div class="container" style="max-width:760px">
+        <div class="section-head"><h2>Questions</h2></div>
+        <details><summary>Do I need to pay before I see it?</summary><p class="text-muted">No. Build and preview the first month's receipt for free. You pay ₹99 once to download all 12 receipts (without a watermark) and the rent agreement.</p></details>
+        <details><summary>Are these valid for HRA exemption?</summary><p class="text-muted">Yes — the receipts include the Section 10(13A) heading, an optional landlord PAN line (required if annual rent exceeds ₹1,00,000), and a revenue-stamp reminder for cash payments over ₹5,000. Sign them and submit to your employer.</p></details>
+        <details><summary>Is it a subscription?</summary><p class="text-muted">No — it's a one-time ₹99 payment. You get a license key that unlocks the tool forever.</p></details>
+        <details><summary>What's in the rent agreement?</summary><p class="text-muted">A standard 11-month leave-and-license agreement pre-filled with the parties, address, rent, term and the usual clauses — deposit, use, maintenance, and termination.</p></details>
+        <details><summary>Lost my key?</summary><p class="text-muted">Recover it by email from inside the editor — your license stays valid forever.</p></details>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <div class="brand"><span class="logo"></span> <span id="brandFooter">DropDash</span></div>
+      <p class="text-muted mt-8">Rent receipt generator for HRA · Pay securely via UPI, cards &amp; netbanking.</p>
+    </div>
+  </footer>
+  <script>
+    fetch('/api/site-info').then(r=>r.json()).then(i=>{document.querySelectorAll('#brandName,#brandFooter').forEach(n=>n.textContent=i.site_name)}).catch(()=>{});
+  </script>
+</body>
+</html>

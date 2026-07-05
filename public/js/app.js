@@ -23,6 +23,21 @@ function fmtPrice(n) {
   return Number(n || 0).toLocaleString('en-IN', { maximumFractionDigits: 0 });
 }
 
+// Tool products live in the courses table (kind='product') but open their own
+// interactive landing page instead of the generic /course/:slug checkout.
+const TOOL_LANDINGS = {
+  'carousel-editor': '/carousel',
+  biodata: '/biodata',
+  festival: '/festival',
+  certificate: '/certificate',
+  idcard: '/idcard',
+  qrmenu: '/qrmenu',
+  rentreceipt: '/rentreceipt',
+};
+function productHref(slug) {
+  return TOOL_LANDINGS[slug] || `/course/${encodeURIComponent(slug)}`;
+}
+
 function escapeHtml(str) {
   return String(str || '').replace(/[&<>"']/g, (c) => ({
     '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
@@ -53,7 +68,7 @@ function renderCourseCard(c) {
     ? `<img src="${escapeHtml(c.thumbnail)}" alt="${escapeHtml(c.title)}">`
     : `<div class="placeholder">${escapeHtml((c.title || 'C').slice(0,1).toUpperCase())}</div>`;
   return `
-    <a class="card" href="/course/${encodeURIComponent(c.slug)}">
+    <a class="card" href="${productHref(c.slug)}">
       <div class="thumb">${thumb}</div>
       <div class="body">
         <div class="title">${escapeHtml(c.title)}</div>
@@ -86,7 +101,60 @@ async function loadStoreSection(kind, gridId, sectionId) {
   }
 }
 function loadCourseList() { return loadStoreSection('course', 'coursesGrid', 'courses'); }
-function loadProductList() { return loadStoreSection('product', 'productsGrid', 'products'); }
+// Products grid excludes the interactive tools (they get their own Tools grid).
+async function loadProductList() {
+  const grid = document.getElementById('productsGrid');
+  if (!grid) return;
+  const section = document.getElementById('products');
+  try {
+    const list = (await api.get('/api/courses?kind=product')).filter((c) => !TOOL_LANDINGS[c.slug]);
+    if (!list.length) { if (section) section.classList.add('hidden'); return; }
+    grid.innerHTML = list.map(renderCourseCard).join('');
+  } catch (e) { if (section) section.classList.add('hidden'); }
+}
+
+// Curated "one-time tools" grid. Prices come from the live product rows so the
+// admin panel stays the single source of truth; emoji/order are set here.
+const TOOL_META = {
+  'carousel-editor': { emoji: '✨', order: 1 },
+  festival: { emoji: '🪔', order: 2 },
+  biodata: { emoji: '💑', order: 3 },
+  certificate: { emoji: '📜', order: 4 },
+  idcard: { emoji: '🪪', order: 5 },
+  qrmenu: { emoji: '🍽️', order: 6 },
+  rentreceipt: { emoji: '🏠', order: 7 },
+};
+function renderToolCard(c) {
+  const meta = TOOL_META[c.slug] || { emoji: '🧰' };
+  const off = Number(c.original_price) > Number(c.discounted_price)
+    ? Math.round((1 - Number(c.discounted_price) / Number(c.original_price)) * 100) : 0;
+  return `
+    <a class="card" href="${productHref(c.slug)}">
+      <div class="thumb" style="display:flex;align-items:center;justify-content:center;font-size:54px;background:linear-gradient(150deg,rgba(109,107,255,.18),rgba(230,193,90,.12))">${meta.emoji}</div>
+      <div class="body">
+        <div class="title">${escapeHtml(c.title)}</div>
+        <div class="desc">${escapeHtml(c.short_description || '')}</div>
+        <div class="price-row">
+          <span class="price-now">₹${fmtPrice(c.discounted_price)}</span>
+          ${Number(c.original_price) > Number(c.discounted_price) ? `<span class="price-was">₹${fmtPrice(c.original_price)}</span>` : ''}
+          ${off > 0 ? `<span class="price-off">${off}% OFF</span>` : ''}
+          <span class="tag" style="margin-left:auto">One-time</span>
+        </div>
+      </div>
+    </a>`;
+}
+async function loadToolsSection() {
+  const grid = document.getElementById('toolsGrid');
+  if (!grid) return;
+  const section = document.getElementById('tools');
+  try {
+    const list = (await api.get('/api/courses?kind=product'))
+      .filter((c) => TOOL_META[c.slug])
+      .sort((a, b) => (TOOL_META[a.slug].order || 99) - (TOOL_META[b.slug].order || 99));
+    if (!list.length) { if (section) section.classList.add('hidden'); return; }
+    grid.innerHTML = list.map(renderToolCard).join('');
+  } catch (e) { if (section) section.classList.add('hidden'); }
+}
 
 // Invite-landing pricing plans.
 async function loadPlans() {
@@ -293,11 +361,33 @@ async function loadOrderPage() {
     const o = await api.get(`/api/orders/${orderId}`);
     const statusBadge = `<span class="badge ${o.status}">${o.status}</span>`;
     const isVideo = o.product_type === 'video';
+    const isCarousel = o.product_type === 'carousel';
+    const isTool = !!o.tool;
     const titleRow = isVideo
       ? `<p><strong>Product:</strong> ${escapeHtml(o.title || 'Invite video')}</p>`
+      : (isCarousel || isTool)
+      ? `<p><strong>Product:</strong> ${escapeHtml(o.title || 'Tool')}</p>`
       : `<p><strong>Course:</strong> ${escapeHtml(o.course_title || '')}</p>`;
     const accessHtml = isVideo
       ? videoAccessHtml(o)
+      : isTool
+      ? (o.status === 'completed' && o.tool
+        ? `<div class="alert success mt-16">
+            <strong>License key delivered</strong>
+            <p style="margin:8px 0">Your full license key was emailed to you. Check your inbox for the email with your license key.</p>
+            ${o.tool.license_key_hint ? `<div style="background:rgba(109,107,255,0.1);border:1px solid var(--border);border-radius:10px;padding:14px;font-family:monospace;font-size:14px;letter-spacing:1px;margin:8px 0;color:var(--muted)">${escapeHtml(o.tool.license_key_hint)}</div>` : ''}
+            ${o.tool.editor_path ? `<p style="margin:8px 0 0"><a href="${escapeHtml(o.tool.editor_path)}" class="btn btn-primary">Open the tool →</a></p>` : ''}
+          </div>`
+        : `<div class="alert warning mt-16">Awaiting payment. Your license key will be emailed once confirmed.</div>`)
+      : isCarousel
+      ? (o.status === 'completed' && o.carousel
+        ? `<div class="alert success mt-16">
+            <strong>License key delivered</strong>
+            <p style="margin:8px 0">Your full license key was emailed to you. Check your inbox for the email with subject "Your Carousel Editor license key".</p>
+            ${o.carousel.license_key_hint ? `<div style="background:rgba(109,107,255,0.1);border:1px solid var(--border);border-radius:10px;padding:14px;font-family:monospace;font-size:14px;letter-spacing:1px;margin:8px 0;color:var(--muted)">${escapeHtml(o.carousel.license_key_hint)}</div>` : ''}
+            <p style="margin:8px 0 0"><a href="/carousel/editor" class="btn btn-primary">Open Carousel Editor →</a></p>
+          </div>`
+        : `<div class="alert warning mt-16">Awaiting payment. Your license key will be emailed once confirmed.</div>`)
       : (o.status === 'completed'
         ? `<div class="alert success mt-16">
             <strong>Access granted.</strong>
@@ -332,6 +422,7 @@ document.addEventListener('DOMContentLoaded', () => {
   loadSiteInfo();
   loadHomeShowcase();
   loadPlans();
+  loadToolsSection();
   loadCourseList();
   loadProductList();
   loadCourseDetail();

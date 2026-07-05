@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ID Card Generator — CSV in, print-ready ID cards out</title>
+  <meta name="description" content="Upload a CSV of students or staff and get print-ready ID cards as an A4 PDF grid. For schools, colleges & institutes. Pay ₹149 once — unlimited cards, no subscription.">
+  <link rel="stylesheet" href="/css/styles.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+  <style>
+    .tool-hero{padding:56px 0 30px;text-align:center}
+    .tool-hero .eyebrow{display:inline-flex;gap:8px;align-items:center;background:var(--gold-soft);color:var(--gold);border:1px solid rgba(230,193,90,.3);padding:6px 13px;border-radius:999px;font-size:13px;font-weight:600;margin-bottom:16px}
+    .tool-hero h1{font-size:clamp(32px,5vw,52px);margin:0 0 14px;line-height:1.08}
+    .tool-hero p.lead{max-width:640px;margin:0 auto 22px;color:var(--muted);font-size:18px}
+    .hero-cta{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+    .sample-strip{display:flex;gap:18px;justify-content:center;flex-wrap:wrap;margin:38px 0 10px}
+    .idc{width:172px;height:273px;border-radius:12px;border:1px solid var(--border);box-shadow:var(--shadow-sm);overflow:hidden;display:flex;flex-direction:column;align-items:center}
+    .idc .iband{width:100%;color:#fff;font-size:11px;font-weight:700;text-align:center;padding:12px 8px;box-sizing:border-box}
+    .idc .iphoto{width:64px;height:80px;border-radius:8px;border:2px solid;background:#ffffffcc;margin:16px 0 10px}
+    .idc .iname{font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:15px}
+    .idc .irow{height:5px;border-radius:3px;width:70%;margin-top:7px}
+    .steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:18px}
+    .step{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:22px}
+    .step .n{width:34px;height:34px;border-radius:10px;background:linear-gradient(120deg,var(--primary),var(--primary-2));display:flex;align-items:center;justify-content:center;font-weight:700;margin-bottom:12px}
+    .feature-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px}
+    .feature{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px}
+    .feature .fi{font-size:24px;margin-bottom:8px}
+    .price-card{max-width:420px;margin:0 auto;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:30px;text-align:center;box-shadow:var(--shadow)}
+    .price-card .amt{font-size:48px;font-weight:800;font-family:var(--font-display)}
+    .price-card .was{color:var(--muted);text-decoration:line-through;margin-left:8px;font-size:20px;font-weight:400}
+    .price-card ul{list-style:none;padding:0;margin:18px 0;text-align:left}
+    .price-card li{padding:7px 0 7px 26px;position:relative}
+    .price-card li::before{content:'✓';position:absolute;left:0;color:var(--success);font-weight:700}
+    .faq details{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px 18px;margin-bottom:10px}
+    .faq summary{cursor:pointer;font-weight:600}
+    section{padding:34px 0}
+    .section-head h2{font-size:28px;margin:0 0 6px}
+    .section-head p{color:var(--muted);margin:0 0 22px}
+  </style>
+</head>
+<body>
+  <header class="site-header">
+    <div class="container nav">
+      <a class="brand" href="/"><span class="logo"></span> <span id="brandName">DropDash</span></a>
+      <nav class="nav-links">
+        <a href="/#products">Products</a>
+        <a href="/idcard" class="nav-new">ID Card Generator</a>
+        <a href="/idcard/editor" class="btn btn-sm btn-primary">Open editor</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <section class="tool-hero">
+      <div class="container">
+        <span class="eyebrow">🪪 ID Card Generator</span>
+        <h1>CSV in, print-ready<br>ID cards <span class="grad">out</span></h1>
+        <p class="lead">For schools, colleges & institutes. Pick a template, upload a CSV of names and IDs, and download a print-ready A4 sheet of ID cards. Pay ₹149 once — unlimited cards, no subscription.</p>
+        <div class="hero-cta">
+          <a href="/idcard/editor" class="btn btn-primary btn-lg">Make ID cards →</a>
+          <a href="#pricing" class="btn btn-lg">See pricing</a>
+        </div>
+        <div class="sample-strip">
+          <div class="idc" style="background:#f4f8ff">
+            <div class="iband" style="background:#1e5bd6">Greenfield Public School</div>
+            <div class="iphoto" style="border-color:#1e5bd6"></div>
+            <div class="iname" style="color:#1e5bd6">Aarav Sharma</div>
+            <div class="irow" style="background:#1e5bd633"></div><div class="irow" style="background:#1e5bd622"></div>
+          </div>
+          <div class="idc" style="background:#f5f6f8">
+            <div class="iband" style="background:#111418">Acme Corporation</div>
+            <div class="iphoto" style="border-color:#111418"></div>
+            <div class="iname" style="color:#111418">Priya Nair</div>
+            <div class="irow" style="background:#11141833"></div><div class="irow" style="background:#11141822"></div>
+          </div>
+          <div class="idc" style="background:#f2fbf5">
+            <div class="iband" style="background:#178a55">St. Xaviers College</div>
+            <div class="iphoto" style="border-color:#178a55"></div>
+            <div class="iname" style="color:#178a55">Rohan Das</div>
+            <div class="irow" style="background:#178a5533"></div><div class="irow" style="background:#178a5522"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="container">
+        <div class="section-head"><h2>How it works</h2><p>Hundreds of cards without touching a design tool.</p></div>
+        <div class="steps">
+          <div class="step"><div class="n">1</div><h3>Pick a template</h3><p class="text-muted">School, corporate, college, event or gym — with photo, logo & fields.</p></div>
+          <div class="step"><div class="n">2</div><h3>Upload your CSV</h3><p class="text-muted">Columns match the card fields (name, id, class, blood…). Add a logo.</p></div>
+          <div class="step"><div class="n">3</div><h3>Download the sheet</h3><p class="text-muted">Get a print-ready A4 PDF grid — or a single card as a PNG.</p></div>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="container">
+        <div class="section-head"><h2>Everything you need</h2><p>Built for schools & institutes that print in bulk.</p></div>
+        <div class="feature-grid">
+          <div class="feature"><div class="fi">📇</div><h3>CR80 ID cards</h3><p class="text-muted">Standard portrait card size — photo box, header band, fields and footer.</p></div>
+          <div class="feature"><div class="fi">📄</div><h3>CSV bulk import</h3><p class="text-muted">Upload one CSV and generate a card for every row automatically.</p></div>
+          <div class="feature"><div class="fi">🖼️</div><h3>Your logo & photos</h3><p class="text-muted">Add your institution logo, and photo URLs per person from the CSV.</p></div>
+          <div class="feature"><div class="fi">🖨️</div><h3>Print-ready A4 grid</h3><p class="text-muted">Cards arranged 3-across on A4, full resolution, ready to print & cut.</p></div>
+          <div class="feature"><div class="fi">🎨</div><h3>Editable fields</h3><p class="text-muted">Rename labels, toggle fields, change the accent colour to match your brand.</p></div>
+          <div class="feature"><div class="fi">💸</div><h3>Pay once</h3><p class="text-muted">₹149 one-time for unlimited cards. No monthly fees, no watermark.</p></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="pricing">
+      <div class="container">
+        <div class="section-head" style="text-align:center"><h2>Simple, one-time price</h2><p>Preview 3 cards free. Pay only when you're ready to print.</p></div>
+        <div class="price-card">
+          <div><span class="amt">₹149</span><span class="was">₹599</span></div>
+          <p class="text-muted" style="margin:6px 0 0">One-time · unlimited cards</p>
+          <ul>
+            <li>All ID card templates unlocked</li>
+            <li>Unlimited cards from your CSV</li>
+            <li>Watermark-free A4 PDF & PNG export</li>
+            <li>Your logo, photos & custom fields</li>
+            <li>Instant license key by email</li>
+          </ul>
+          <a href="/idcard/editor" class="btn btn-primary btn-lg" style="width:100%">Start making cards →</a>
+        </div>
+      </div>
+    </section>
+
+    <section class="faq">
+      <div class="container" style="max-width:760px">
+        <div class="section-head"><h2>Questions</h2></div>
+        <details><summary>Do I need to pay before I see it?</summary><p class="text-muted">No. Pick a template, upload your CSV and preview for free. The free tier exports up to 3 cards with a watermark; pay ₹149 once for unlimited, watermark-free cards.</p></details>
+        <details><summary>What columns should my CSV have?</summary><p class="text-muted">Column headers should match the card field keys — for a school card that's name, id, class, blood. You can also add a `photo` column with an image URL for each person.</p></details>
+        <details><summary>Is it a subscription?</summary><p class="text-muted">No — it's a one-time ₹149 payment. You get a license key that unlocks the tool forever.</p></details>
+        <details><summary>What format do I get?</summary><p class="text-muted">A print-ready A4 PDF with cards arranged in a grid, plus the option to download any single card as a high-resolution PNG.</p></details>
+        <details><summary>Lost my license key?</summary><p class="text-muted">Recover it by email right inside the editor — click Unlock, then "Lost your key?".</p></details>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <div class="brand"><span class="logo"></span> <span id="brandFooter">DropDash</span></div>
+      <p class="text-muted mt-8">ID card generator for schools & institutes · Pay securely via UPI, cards &amp; netbanking.</p>
+    </div>
+  </footer>
+  <script>
+    fetch('/api/site-info').then(r=>r.json()).then(i=>{document.querySelectorAll('#brandName,#brandFooter').forEach(n=>n.textContent=i.site_name)}).catch(()=>{});
+  </script>
+</body>
+</html>

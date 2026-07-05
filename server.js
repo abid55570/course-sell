@@ -20,6 +20,8 @@ app.use('/api/auth', require('./routes/auth'));
 app.use('/api/courses', require('./routes/courses'));
 app.use('/api/orders', require('./routes/orders'));
 app.use('/api/video', require('./routes/video'));
+app.use('/api/carousel', require('./routes/carousel'));
+app.use('/api/tools', require('./routes/tools'));
 app.use('/api/admin', require('./routes/admin'));
 app.use('/api/admin/video', require('./routes/admin-video'));
 
@@ -54,6 +56,28 @@ app.get('/generator/:slug', (req, res) => {
 app.get('/order/:orderId', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'order.html'));
 });
+app.get('/carousel', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'carousel.html'));
+});
+app.get('/carousel/editor', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'carousel-editor.html'));
+});
+
+// One-time creator tools: /<key> serves the landing, /<key>/editor the tool.
+const toolProducts = require('./services/tool-products');
+for (const tool of toolProducts.list()) {
+  app.get(tool.landingPath, (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'tools', `${tool.key}.html`));
+  });
+  app.get(tool.editorPath, (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'tools', `${tool.key}-editor.html`));
+  });
+}
+// Public hosted QR menu (customers scan the QR to reach this).
+app.get('/m/:publicId', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'tools', 'qrmenu-view.html'));
+});
+
 app.get('/admin', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'admin', 'login.html'));
 });

@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bulk Certificate Generator — hundreds of personalised certificate PDFs from a CSV</title>
+  <meta name="description" content="Upload a CSV of names and get hundreds of personalised certificate PDFs — for webinars, college fests and training batches. Pay ₹149 once. No per-certificate fee, no subscription.">
+  <link rel="stylesheet" href="/css/styles.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&family=Playfair+Display:wght@500;600;700&family=Cinzel:wght@600;700&display=swap" rel="stylesheet">
+  <style>
+    .tool-hero{padding:56px 0 30px;text-align:center}
+    .tool-hero .eyebrow{display:inline-flex;gap:8px;align-items:center;background:var(--gold-soft);color:var(--gold);border:1px solid rgba(230,193,90,.3);padding:6px 13px;border-radius:999px;font-size:13px;font-weight:600;margin-bottom:16px}
+    .tool-hero h1{font-size:clamp(32px,5vw,52px);margin:0 0 14px;line-height:1.08}
+    .tool-hero p.lead{max-width:660px;margin:0 auto 22px;color:var(--muted);font-size:18px}
+    .hero-cta{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+    .sample-strip{display:flex;gap:18px;justify-content:center;flex-wrap:wrap;margin:38px 0 10px}
+    .sample{width:300px;height:212px;border-radius:12px;border:1px solid var(--border);box-shadow:var(--shadow-sm);padding:16px;display:flex;overflow:hidden}
+    .sample .cframe{flex:1;border:2px solid;border-radius:6px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;text-align:center;padding:8px}
+    .sample .ctitle{font-family:'Playfair Display',serif;font-weight:700;font-size:18px}
+    .sample .crule{height:3px;width:64px;border-radius:2px}
+    .sample .cname{font-family:'Playfair Display',serif;font-weight:700;font-size:15px}
+    .sample .crow{height:5px;width:70%;border-radius:3px}
+    .steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:18px}
+    .step{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:22px}
+    .step .n{width:34px;height:34px;border-radius:10px;background:linear-gradient(120deg,var(--primary),var(--primary-2));display:flex;align-items:center;justify-content:center;font-weight:700;margin-bottom:12px}
+    .feature-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px}
+    .feature{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px}
+    .feature .fi{font-size:24px;margin-bottom:8px}
+    .price-card{max-width:420px;margin:0 auto;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:30px;text-align:center;box-shadow:var(--shadow)}
+    .price-card .amt{font-size:48px;font-weight:800;font-family:var(--font-display)}
+    .price-card .was{color:var(--muted);text-decoration:line-through;margin-left:8px;font-size:20px;font-weight:400}
+    .price-card ul{list-style:none;padding:0;margin:18px 0;text-align:left}
+    .price-card li{padding:7px 0 7px 26px;position:relative}
+    .price-card li::before{content:'✓';position:absolute;left:0;color:var(--success);font-weight:700}
+    .faq details{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px 18px;margin-bottom:10px}
+    .faq summary{cursor:pointer;font-weight:600}
+    section{padding:34px 0}
+    .section-head h2{font-size:28px;margin:0 0 6px}
+    .section-head p{color:var(--muted);margin:0 0 22px}
+  </style>
+</head>
+<body>
+  <header class="site-header">
+    <div class="container nav">
+      <a class="brand" href="/"><span class="logo"></span> <span id="brandName">DropDash</span></a>
+      <nav class="nav-links">
+        <a href="/#products">Products</a>
+        <a href="/certificate" class="nav-new">Certificate Generator</a>
+        <a href="/certificate/editor" class="btn btn-sm btn-primary">Open editor</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <section class="tool-hero">
+      <div class="container">
+        <span class="eyebrow">📜 Bulk Certificate Generator</span>
+        <h1>Upload a CSV of names,<br>get <span class="grad">hundreds of certificates</span></h1>
+        <p class="lead">Personalised certificate PDFs for webinars, college fests and training batches. Pick a design, upload your list, and download a combined PDF or a ZIP with one PDF per person. Pay ₹149 once — no per-certificate fee, no subscription.</p>
+        <div class="hero-cta">
+          <a href="/certificate/editor" class="btn btn-primary btn-lg">Generate certificates →</a>
+          <a href="#pricing" class="btn btn-lg">See pricing</a>
+        </div>
+        <div class="sample-strip">
+          <div class="sample" style="background:linear-gradient(135deg,#fffdf5,#f7edcf)">
+            <div class="cframe" style="border-color:#b08d2f;color:#5b4a2a">
+              <div class="ctitle" style="color:#a5842f">Certificate</div>
+              <div class="crule" style="background:#a5842f"></div>
+              <div class="cname">Priya Sharma</div>
+              <div class="crow" style="background:#a5842f33"></div>
+            </div>
+          </div>
+          <div class="sample" style="background:linear-gradient(135deg,#f5f9ff,#dde9fb)">
+            <div class="cframe" style="border-color:#3a5bbf;color:#2f3f6b">
+              <div class="ctitle" style="color:#3a5bbf">Certificate</div>
+              <div class="crule" style="background:#3a5bbf"></div>
+              <div class="cname">Rahul Verma</div>
+              <div class="crow" style="background:#3a5bbf33"></div>
+            </div>
+          </div>
+          <div class="sample" style="background:linear-gradient(135deg,#f2fbfa,#d3efec)">
+            <div class="cframe" style="border-color:#0f7c72;color:#204a46">
+              <div class="ctitle" style="color:#0f7c72">Certificate</div>
+              <div class="crule" style="background:#0f7c72"></div>
+              <div class="cname">Anita Desai</div>
+              <div class="crow" style="background:#0f7c7233"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="container">
+        <div class="section-head"><h2>How it works</h2><p>From a list of names to a stack of PDFs in minutes.</p></div>
+        <div class="steps">
+          <div class="step"><div class="n">1</div><h3>Pick a design</h3><p class="text-muted">Choose from classic gold, navy, teal and modern minimal templates.</p></div>
+          <div class="step"><div class="n">2</div><h3>Upload your CSV</h3><p class="text-muted">One name per line, or a CSV with name, course and date columns.</p></div>
+          <div class="step"><div class="n">3</div><h3>Download in bulk</h3><p class="text-muted">Get one combined PDF, or a ZIP with a separate PDF per recipient.</p></div>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="container">
+        <div class="section-head"><h2>Built for bulk</h2><p>Made for organisers who need many certificates fast.</p></div>
+        <div class="feature-grid">
+          <div class="feature"><div class="fi">📄</div><h3>CSV in, PDFs out</h3><p class="text-muted">Map a name column and personalise {{name}}, {{course}} and {{date}} for everyone.</p></div>
+          <div class="feature"><div class="fi">🎨</div><h3>Elegant templates</h3><p class="text-muted">Ornate borders, seals and refined fonts — landscape, print-ready A4.</p></div>
+          <div class="feature"><div class="fi">🏷️</div><h3>Your branding</h3><p class="text-muted">Add your organisation logo, signatory and official seal.</p></div>
+          <div class="feature"><div class="fi">🗂️</div><h3>Combined or ZIP</h3><p class="text-muted">One multi-page PDF, or a ZIP with a single PDF named per recipient.</p></div>
+          <div class="feature"><div class="fi">♾️</div><h3>No per-cert fee</h3><p class="text-muted">Generate 10 or 10,000 — one price, unlimited certificates.</p></div>
+          <div class="feature"><div class="fi">💸</div><h3>Pay once</h3><p class="text-muted">₹149 one-time. No monthly fees, no watermark on your exports.</p></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="pricing">
+      <div class="container">
+        <div class="section-head" style="text-align:center"><h2>Simple, one-time price</h2><p>Preview 3 free. Pay only when you're ready to go big.</p></div>
+        <div class="price-card">
+          <div><span class="amt">₹149</span><span class="was">₹599</span></div>
+          <p class="text-muted" style="margin:6px 0 0">One-time · lifetime access</p>
+          <ul>
+            <li>Unlimited certificates — no per-certificate fee</li>
+            <li>Watermark-free combined PDF &amp; ZIP export</li>
+            <li>All certificate designs unlocked</li>
+            <li>CSV bulk import with course &amp; date columns</li>
+            <li>Your logo, signatory &amp; official seal</li>
+            <li>Instant license key by email</li>
+          </ul>
+          <a href="/certificate/editor" class="btn btn-primary btn-lg" style="width:100%">Start generating →</a>
+        </div>
+      </div>
+    </section>
+
+    <section class="faq">
+      <div class="container" style="max-width:760px">
+        <div class="section-head"><h2>Questions</h2></div>
+        <details><summary>Is there a per-certificate charge?</summary><p class="text-muted">No. Pay ₹149 once and generate as many certificates as you like — 50 for a webinar or 5,000 for a fest, same price.</p></details>
+        <details><summary>Can I preview before paying?</summary><p class="text-muted">Yes. Build and preview for free. The free tier exports the first 3 certificates with a watermark so you can check the result. Unlock to remove the cap and watermark.</p></details>
+        <details><summary>What does my CSV need?</summary><p class="text-muted">A column named "name". You can also add "course" and "date" columns to personalise each certificate. No headers? Just paste one name per line instead.</p></details>
+        <details><summary>How do I get the files?</summary><p class="text-muted">Two ways: a single combined PDF (one landscape A4 page per person), or a ZIP with a separate PDF for each recipient named by their name.</p></details>
+        <details><summary>Is it a subscription?</summary><p class="text-muted">No — it's a one-time ₹149 payment. You get a license key that unlocks the tool forever. Lost it? Recover it by email in the editor.</p></details>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <div class="brand"><span class="logo"></span> <span id="brandFooter">DropDash</span></div>
+      <p class="text-muted mt-8">Bulk certificate generator · Pay securely via UPI, cards &amp; netbanking.</p>
+    </div>
+  </footer>
+  <script>
+    fetch('/api/site-info').then(r=>r.json()).then(i=>{document.querySelectorAll('#brandName,#brandFooter').forEach(n=>n.textContent=i.site_name)}).catch(()=>{});
+  </script>
+</body>
+</html>

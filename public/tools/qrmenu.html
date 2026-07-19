@@ -53,6 +53,9 @@
     section{padding:34px 0}
     .section-head h2{font-size:28px;margin:0 0 6px}
     .section-head p{color:var(--muted);margin:0 0 22px}
+      /* This page reuses .hero-visual but not the index hero — kill the
+       inherited 340px blurred blob that spilled past the mobile viewport. */
+    .hero-visual::before { display: none; }
   </style>
 </head>
 <body>

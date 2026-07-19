@@ -54,6 +54,16 @@
     .price-tag { text-align:center; margin:14px 0; }
     .price-tag .now { font-size:26px; font-weight:700; }
     .price-tag .was { text-decoration:line-through; color:var(--muted,#8a90a6); margin-left:8px; }
+      @media (max-width: 600px) {
+      /* Custom-text row: let the input shrink + wrap so it never overflows. */
+      .ctext-row { flex-wrap: wrap; }
+      .ctext-row input { flex: 1 1 100%; min-width: 0; }
+      .ctext-row select { width: 100%; flex: 1 1 auto; }
+      /* Bigger tap targets + readable plan text. */
+      .swatch { width: 44px; height: 44px; }
+      .plan-card ul { font-size: 12.5px; }
+      .plan-card .pwas { font-size: 12px; }
+    }
   </style>
 </head>
 <body>

@@ -58,6 +58,12 @@
     .badge-pro{font-size:10px;font-weight:700;color:var(--gold);border:1px solid var(--gold);border-radius:6px;padding:1px 6px}
     .alert{border-radius:10px;padding:10px 12px;font-size:13px}
     .alert.error{background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.4);color:#fecaca}
+      @media (max-width: 600px) {
+      /* Let the two field inputs shrink instead of overflowing the panel. */
+      .fld input { min-width: 0; }
+      .sw { width: 40px; height: 40px; }
+      .del { min-width: 40px; min-height: 40px; }
+    }
   </style>
 </head>
 <body>

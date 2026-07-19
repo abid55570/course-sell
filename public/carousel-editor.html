@@ -66,9 +66,26 @@
 
     @media (max-width: 1000px) {
       .editor-shell { grid-template-columns: 1fr; }
-      .editor-sidebar { display: none; }
-      .editor-props { display: none; }
-      .canvas-frame { width: 90vw; max-width: 400px; }
+      /* Stack the panels BELOW the canvas rather than hiding them — otherwise
+         the palette / logo / background / text controls are unreachable on a
+         phone (the editor becomes a canvas + export bar only). */
+      .editor-canvas-area { order: -1; flex-direction: column; gap: 14px; padding: 14px; }
+      .editor-sidebar, .editor-props {
+        border-left: none; border-right: none; border-top: 1px solid var(--border-soft);
+      }
+      .canvas-frame { width: min(90vw, 400px); }
+      /* Slide thumbnails become a horizontal filmstrip on mobile. */
+      .slide-strip { flex-direction: row; flex-wrap: wrap; }
+      .slide-thumb { width: 72px; }
+      /* Export controls flow under the canvas and wrap instead of spilling
+         off-screen from an absolute-centered bar. */
+      .export-bar {
+        position: static; transform: none; left: auto; bottom: auto;
+        flex-wrap: wrap; justify-content: center;
+      }
+      .export-bar .btn { padding: 10px 16px; font-size: 14px; }
+      .gallery-header { flex-wrap: wrap; gap: 10px; }
+      .license-modal { padding: 20px; }
     }
   </style>
 </head>

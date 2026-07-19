@@ -345,3 +345,24 @@ section { padding: 54px 0; }
   .hero { padding: 34px 0 24px; }
   section { padding: 40px 0; }
 }
+
+/* ---------- Mobile refinements ---------- */
+/* Long unbroken URLs / emails / license keys on the order page must wrap so
+   they don't force horizontal page scroll. */
+#orderBody { overflow-wrap: anywhere; }
+#orderBody a { word-break: break-all; }
+
+@media (max-width: 600px) {
+  /* Comfortable ~40px tap targets for the small buttons used across the
+     editors and the header nav. */
+  .btn-sm { padding: 10px 14px; min-height: 40px; }
+  .nav .btn-sm, .nav-links > a { min-height: 40px; display: inline-flex; align-items: center; }
+
+  /* Admin data tables: scroll the table inside its container div, not the
+     whole page. The tables are injected into these #…Table containers. */
+  #ordersTable, #transactionsTable, #coursesTable, #productsTable, #templatesTable {
+    overflow-x: auto; -webkit-overflow-scrolling: touch;
+  }
+  #ordersTable .table, #transactionsTable .table, #coursesTable .table,
+  #productsTable .table, #templatesTable .table { min-width: 640px; }
+}

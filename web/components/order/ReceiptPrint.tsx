@@ -49,8 +49,11 @@ export default function ReceiptPrint({
       setPhase('printed');
       return;
     }
-    const id = requestAnimationFrame(() => setPhase('printed'));
-    return () => cancelAnimationFrame(id);
+    // Matches the 2500ms of .receipt-paper.is-feeding. The tear button stays
+    // disabled and the status light stays busy for the whole feed, because
+    // offering to tear paper that is still coming out is nonsense.
+    const id = window.setTimeout(() => setPhase('printed'), 2500);
+    return () => window.clearTimeout(id);
   }, []);
 
   const tear = useCallback(() => {
@@ -158,7 +161,7 @@ export default function ReceiptPrint({
         </div>
 
         <div
-          className={`receipt-paper${phase !== 'printing' ? ' is-printed' : ''}${
+          className={`receipt-paper${phase === 'printing' ? ' is-feeding' : ''}${
             phase === 'tearing' ? ' is-tearing' : ''
           }${phase === 'torn' ? ' is-gone' : ''}`}
           aria-hidden="true"
@@ -186,7 +189,7 @@ export default function ReceiptPrint({
           disabled={phase !== 'printed'}
           className="inline-flex min-h-[44px] items-center border border-ink/25 px-5 font-mono text-[11px] font-semibold uppercase tracking-[0.15em] text-ink disabled:opacity-40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
         >
-          {phase === 'torn' ? 'Torn off' : 'Tear it off'}
+          {phase === 'printing' ? 'Printing…' : phase === 'torn' ? 'Torn off' : 'Tear it off'}
         </button>
       </div>
 

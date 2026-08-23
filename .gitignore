@@ -1,25 +1,13 @@
-node_modules/
-.env
-public/uploads/pdfs/*
-public/uploads/thumbnails/*
-!public/uploads/pdfs/.gitkeep
-!public/uploads/thumbnails/.gitkeep
-.DS_Store
-*.log
-data/
-.claude/
-/.claude_cache/
-.claude_sessions/
-.claude_temp/
-.claude_uploads/
-.claude_downloads/
-.claude_logs/
-.claude_backups/
+node_modules
+node_modules
+node_modules
 
-# video generator generated media (served only via gated endpoints)
-storage/renders/*
-storage/photos/*
-!storage/**/.gitkeep
+# Browser automation snapshots and console logs
+.playwright-mcp/
 
-# PM2 logs
-logs/
+# Debug screenshots taken during development
+*.png
+*.jpeg
+
+# ...but product and blog artwork is real content
+!web/public/**/*.png

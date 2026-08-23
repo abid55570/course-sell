@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { formatRupees } from '@/lib/format';
+import { buildReceiptPdf } from '@/lib/receipt-pdf';
 
 /**
  * The order receipt, printed and tearable.
@@ -72,6 +73,33 @@ export default function ReceiptPrint({
     tearButtonRef.current?.focus();
   }, []);
 
+  const date = paidAt ? new Date(paidAt) : new Date();
+  const stamp = date
+    .toLocaleString('en-IN', {
+      day: '2-digit', month: 'short', year: 'numeric',
+      hour: '2-digit', minute: '2-digit', hour12: false,
+    })
+    .toUpperCase();
+
+  // A real file, not a print dialog. Built in the browser rather than fetched,
+  // so it works from the confirmation page even while the API is unreachable —
+  // which is exactly when a buyer most wants proof they paid.
+  const download = useCallback(() => {
+    const bytes = buildReceiptPdf({ productTitle, amount, orderId, buyerEmail, stamp });
+    const url = URL.createObjectURL(new Blob([bytes], { type: 'application/pdf' }));
+
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `Dropdesk-receipt-${orderId}.pdf`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+
+    // Revoked on the next task, not immediately: revoking synchronously can
+    // cancel the download in some browsers before it has read the blob.
+    window.setTimeout(() => URL.revokeObjectURL(url), 10_000);
+  }, [productTitle, amount, orderId, buyerEmail, stamp]);
+
   // The torn receipt opens in a dialog, so it takes the keyboard with it.
   useEffect(() => {
     if (phase !== 'torn') return;
@@ -108,14 +136,6 @@ export default function ReceiptPrint({
       document.body.style.overflow = overflow;
     };
   }, [phase, close]);
-
-  const date = paidAt ? new Date(paidAt) : new Date();
-  const stamp = date
-    .toLocaleString('en-IN', {
-      day: '2-digit', month: 'short', year: 'numeric',
-      hour: '2-digit', minute: '2-digit', hour12: false,
-    })
-    .toUpperCase();
 
   const receipt = (
     <div className="receipt-body">
@@ -177,7 +197,7 @@ export default function ReceiptPrint({
       <div className="mt-6 flex flex-wrap justify-center gap-3">
         <button
           type="button"
-          onClick={() => window.print()}
+          onClick={download}
           className="inline-flex min-h-[44px] items-center bg-ink px-5 font-mono text-[11px] font-semibold uppercase tracking-[0.15em] text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
         >
           Download receipt
@@ -218,7 +238,7 @@ export default function ReceiptPrint({
             <div className="mt-5 flex flex-wrap justify-center gap-3">
               <button
                 type="button"
-                onClick={() => window.print()}
+                onClick={download}
                 className="inline-flex min-h-[44px] items-center bg-primary px-5 font-mono text-[11px] font-semibold uppercase tracking-[0.15em] text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
               >
                 Download receipt

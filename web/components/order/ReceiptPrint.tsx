@@ -140,7 +140,22 @@ export default function ReceiptPrint({
   return (
     <>
       <div className="receipt-stage">
-        <div className="receipt-slot" aria-hidden="true" />
+        {/* The machine. Square and matte, in the store's ink, rather than the
+            glossy metallic housing the source animation used: this has to sit
+            on the same page as the register grounds and the ticket tears. */}
+        <div className="receipt-printer" aria-hidden="true">
+          <div className="receipt-printer-face">
+            <span className="receipt-printer-mark">Dropdesk</span>
+            <span
+              className={`receipt-printer-led${phase === 'printing' ? ' is-busy' : ''}`}
+            />
+          </div>
+          <div className="receipt-printer-slot">
+            <span className="receipt-printer-lip" />
+          </div>
+          <span className="receipt-printer-foot receipt-printer-foot-l" />
+          <span className="receipt-printer-foot receipt-printer-foot-r" />
+        </div>
 
         <div
           className={`receipt-paper${phase !== 'printing' ? ' is-printed' : ''}${

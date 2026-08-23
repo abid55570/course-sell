@@ -1,0 +1,448 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-sans);
+  --font-mono: var(--font-geist-mono);
+  --font-heading: var(--font-sans);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+}
+
+/* Dropdesk storefront tokens. Names avoid shadcn's namespace on purpose:
+   shadcn's `muted` is a near-white background, ours is body text. */
+@theme {
+  --color-canvas: #FFFFFF;
+  --color-canvas-2: #F6F8FC;
+  --color-ink: #0B1020;
+  --color-ink-soft: #5A6480;
+  /* Was #FF5A1F. The brand primary below is now a vermilion red -- only 13
+     degrees of hue from the old urgent orange, close enough that a
+     "payment not confirmed yet" badge could read as another piece of brand
+     chrome. Moved to an amber/ochre (36 degrees of hue away) that still
+     reads as caution, not as the storefront's own colour. */
+  --color-urgent: #8F5500;
+  --color-proof: #12B981;
+
+  --font-display: var(--font-big-shoulders), system-ui, sans-serif;
+  --font-body: var(--font-instrument), system-ui, sans-serif;
+  --font-deva: var(--font-noto-deva), var(--font-instrument), sans-serif;
+
+  --radius-card: 16px;
+}
+
+:root {
+  --background: #FFFFFF;
+  --foreground: #0B1020;
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.145 0 0);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.145 0 0);
+  --primary: #C42B22;
+  --primary-foreground: #FFFFFF;
+  --secondary: oklch(0.97 0 0);
+  --secondary-foreground: oklch(0.205 0 0);
+  --muted: oklch(0.97 0 0);
+  --muted-foreground: oklch(0.556 0 0);
+  --accent: oklch(0.97 0 0);
+  --accent-foreground: oklch(0.205 0 0);
+  /* shadcn's default destructive red (#E7000B) sits 6 degrees of hue from
+     the brand vermilion below -- nearly the same red, which would make the
+     checkout/order pages' real "payment failed" alerts read as more brand
+     chrome instead of an error. Shifted to a crimson/raspberry red, 21
+     degrees of hue away, that still reads unambiguously as "danger" without
+     borrowing the brand's own hue. */
+  --destructive: #C11B4E;
+  --border: oklch(0.922 0 0);
+  --input: oklch(0.922 0 0);
+  --ring: oklch(0.708 0 0);
+  --chart-1: oklch(0.87 0 0);
+  --chart-2: oklch(0.556 0 0);
+  --chart-3: oklch(0.439 0 0);
+  --chart-4: oklch(0.371 0 0);
+  --chart-5: oklch(0.269 0 0);
+  --radius: 0.625rem;
+  --sidebar: oklch(0.985 0 0);
+  --sidebar-foreground: oklch(0.145 0 0);
+  --sidebar-primary: oklch(0.205 0 0);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.97 0 0);
+  --sidebar-accent-foreground: oklch(0.205 0 0);
+  --sidebar-border: oklch(0.922 0 0);
+  --sidebar-ring: oklch(0.708 0 0);
+}
+
+.dark {
+  --background: oklch(0.145 0 0);
+  --foreground: oklch(0.985 0 0);
+  --card: oklch(0.205 0 0);
+  --card-foreground: oklch(0.985 0 0);
+  --popover: oklch(0.205 0 0);
+  --popover-foreground: oklch(0.985 0 0);
+  --primary: oklch(0.922 0 0);
+  --primary-foreground: oklch(0.205 0 0);
+  --secondary: oklch(0.269 0 0);
+  --secondary-foreground: oklch(0.985 0 0);
+  --muted: oklch(0.269 0 0);
+  --muted-foreground: oklch(0.708 0 0);
+  --accent: oklch(0.269 0 0);
+  --accent-foreground: oklch(0.985 0 0);
+  --destructive: oklch(0.704 0.191 22.216);
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 15%);
+  --ring: oklch(0.556 0 0);
+  --chart-1: oklch(0.87 0 0);
+  --chart-2: oklch(0.556 0 0);
+  --chart-3: oklch(0.439 0 0);
+  --chart-4: oklch(0.371 0 0);
+  --chart-5: oklch(0.269 0 0);
+  --sidebar: oklch(0.205 0 0);
+  --sidebar-foreground: oklch(0.985 0 0);
+  --sidebar-primary: oklch(0.488 0.243 264.376);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.269 0 0);
+  --sidebar-accent-foreground: oklch(0.985 0 0);
+  --sidebar-border: oklch(1 0 0 / 10%);
+  --sidebar-ring: oklch(0.556 0 0);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+  html {
+    @apply font-sans;
+  }
+}
+
+/* shadcn's @layer base applies `font-sans` to <html>, and its @theme inline
+   maps --font-sans to a variable nothing defines yet. Point it at Instrument
+   Sans so shadcn components and storefront markup share one body face. */
+:root { --font-sans: var(--font-instrument); }
+
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  background: var(--color-canvas);
+  color: var(--color-ink);
+  font-family: var(--font-body);
+}
+
+/* Hindi and Hinglish set at the same weight and size as English. */
+:lang(hi), .deva { font-family: var(--font-deva); }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+/* Hero field: reservation-chart rules over a vertical depth gradient.
+   Rules are horizontal only. A square grid reads as a generic grid hero.
+   Stamp-ink vermilion, not the old brand blue. All three stops are kept
+   inside a narrow, deliberately dark band: white/90 body text measured
+   4.71-6.79:1 against them (see design-brief.md's palette section for the
+   full measurement), so the paragraph clears WCAG AA (4.5:1) wherever the
+   text happens to fall in the gradient, not just at one lucky scroll
+   position. */
+.hero-field {
+  background-color: #C42B22;
+  background-image:
+    repeating-linear-gradient(to bottom,
+      rgba(255,255,255,0.07) 0 1px,
+      transparent 1px 44px),
+    linear-gradient(180deg, #C62E23 0%, #C42B22 45%, #9A2119 100%);
+}
+
+/* Perforated counterfoil tear. 24px tile, 7px semicircle holes; the page
+   colour behind shows through the punched holes. If mask is unsupported the
+   strip renders as a solid bar, which is a harmless straight edge. */
+.tear {
+  height: 16px;
+  -webkit-mask-size: 24px 16px;
+  mask-size: 24px 16px;
+  -webkit-mask-repeat: repeat-x;
+  mask-repeat: repeat-x;
+}
+.tear-hero { /* vermilion above, white page below: holes punch the bottom edge */
+  background: #9A2119; /* must equal the hero gradient's 100% stop */
+  -webkit-mask-image: radial-gradient(circle 7px at 12px 16px, transparent 6.5px, black 7px);
+  mask-image: radial-gradient(circle 7px at 12px 16px, transparent 6.5px, black 7px);
+}
+.tear-footer { /* white page above, ink stub below: holes punch the top edge */
+  background: #0B1020;
+  -webkit-mask-image: radial-gradient(circle 7px at 12px 0px, transparent 6.5px, black 7px);
+  mask-image: radial-gradient(circle 7px at 12px 0px, transparent 6.5px, black 7px);
+}
+
+/* Departure-board strip: duplicated track, translateX loop. */
+.dep-track { animation: dep-scroll 36s linear infinite; }
+@keyframes dep-scroll { to { transform: translateX(-50%); } }
+@media (prefers-reduced-motion: reduce) {
+  .dep-track { animation: none !important; transform: none !important; }
+}
+
+/* Chart paper: the hero's 44px reservation ruling carried onto the page in
+   faint ink. background-image only, so each product band keeps its own
+   alternating tone from its utility class; the rule is unlayered on purpose,
+   which lets it apply over Tailwind's layered bg-* utilities without editing
+   the grid component. The covers are opaque ink cards and sit on top. */
+.ground-chart section {
+  background-image: repeating-linear-gradient(to bottom,
+    rgba(11,16,32,0.05) 0 1px,
+    transparent 1px 44px);
+}
+
+/* Carbon-copy slip: the install steps on vermilion-tinted copy paper, the
+   same 44px ruling struck in the primary's own hue. ink-soft text clears
+   4.5:1 on both the tint (5.20) and the rule line over it (4.67). */
+.band-carbon {
+  background-color: #FBEEEC;
+  background-image: repeating-linear-gradient(to bottom,
+    rgba(196,43,34,0.07) 0 1px,
+    transparent 1px 44px);
+}
+.tear-carbon { /* chart paper above, carbon slip below: holes punch the top edge */
+  background: #FBEEEC;
+  -webkit-mask-image: radial-gradient(circle 7px at 12px 0px, transparent 6.5px, black 7px);
+  mask-image: radial-gradient(circle 7px at 12px 0px, transparent 6.5px, black 7px);
+}
+
+/* Dotted-leader sheet: the footer's fill-in leader rows opened up into a
+   ground for the bundles. Dot rows keep the 44px rhythm; 12% ink keeps
+   ink-soft text above 4.5:1 even across a dot row. */
+.band-leaders {
+  background-color: var(--color-canvas);
+  background-image: radial-gradient(circle at 1px 22px, rgba(11,16,32,0.12) 1px, transparent 1.6px);
+  background-size: 9px 44px;
+}
+
+/* Ruled register paper for the pricing band: exercise-book double margin
+   line in the brand vermilion -- the classic red margin rule down the side
+   of real ledger paper -- sitting inside the 20px mobile gutter, plus 40px
+   horizontal rules. Was the old urgent orange; now that the brand itself is
+   a register red, tying this decorative rule to the primary reads as more
+   authentic ledger paper, not less. */
+.band-register {
+  background-color: var(--color-canvas-2);
+  background-image:
+    linear-gradient(to right,
+      transparent 0 12px,
+      rgba(196,43,34,0.28) 12px 13px,
+      transparent 13px 17px,
+      rgba(196,43,34,0.28) 17px 18px,
+      transparent 18px),
+    repeating-linear-gradient(to bottom,
+      rgba(11,16,32,0.05) 0 1px,
+      transparent 1px 40px);
+}
+
+/* ---------------------------------------------------------------------------
+   Scrollbar. The platform default is a grey slab that belongs to no design.
+   This one is a thin square-edged rule, matching a system that has no rounded
+   corners anywhere else. The thumb is ink rather than the brand vermilion so
+   it stays legible over both the white body and the red hero field, and it
+   picks up vermilion on hover. Kept at a usable width and never hidden: this
+   page is long, and the bar is how people navigate it.
+   --------------------------------------------------------------------------- */
+html {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-ink) rgba(11, 16, 32, 0.07);
+}
+
+::-webkit-scrollbar {
+  width: 11px;
+  height: 11px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(11, 16, 32, 0.07);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-ink);
+  /* Transparent border + content-box clip insets the thumb, so it reads as a
+     rule sitting in a channel rather than filling the whole gutter. */
+  border: 3px solid transparent;
+  background-clip: content-box;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-primary);
+  background-clip: content-box;
+}
+
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+/* ---------------------------------------------------------------------------
+   Site header and mobile drawer.
+
+   The header is sticky, so any in-page anchor jump would land with its heading
+   hidden underneath it. scroll-margin-top on every anchor target pushes the
+   landing point down by the header's height. Without this, tapping a category
+   chip on /products scrolls the heading you asked for behind the header.
+   --------------------------------------------------------------------------- */
+:target,
+[id^='category-'],
+section[id] {
+  scroll-margin-top: calc(3.5rem + 0.75rem);
+}
+
+/* The drawer slides in from the left. Under reduced motion it simply appears,
+   with no transform to animate through. */
+.drawer-panel {
+  animation: drawer-in 220ms cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 24px 0 60px -24px rgba(11, 16, 32, 0.5);
+}
+
+@keyframes drawer-in {
+  from { transform: translateX(-100%); }
+  to   { transform: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .drawer-panel { animation: none; }
+}
+
+/* ---------------------------------------------------------------------------
+   Reading path on a blog post.
+
+   Both fills are driven by a single --read custom property written from a
+   scroll handler, and both animate with scaleX/scaleY rather than width or
+   height. Width and height changes force layout on every frame; a transform
+   is composited on the GPU and costs nothing. The earlier version animated
+   height with a CSS transition while a rAF loop rewrote that same height each
+   frame, so every frame restarted a transition it never finished.
+
+   No transition is declared here on purpose. The value updates once per frame
+   already, which IS the animation; adding easing on top makes it lag behind
+   the finger.
+   --------------------------------------------------------------------------- */
+.reading-rail {
+  background-image: repeating-linear-gradient(
+    to bottom,
+    var(--color-ink) 0 4px,
+    transparent 4px 9px
+  );
+  opacity: 0.22;
+}
+
+.reading-rail-fill {
+  transform: scaleY(var(--read, 0));
+  will-change: transform;
+}
+
+.reading-bar-fill {
+  transform: scaleX(var(--read, 0));
+  will-change: transform;
+}
+
+/* Active stop. Toggled by class rather than by re-rendering React. */
+.reading-dot {
+  transition: background-color 150ms ease, border-color 150ms ease;
+}
+.reading-dot.is-on {
+  background-color: var(--color-primary);
+  border-color: var(--color-primary);
+}
+.reading-link.is-on {
+  color: var(--color-ink);
+  font-weight: 600;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reading-dot { transition: none; }
+}
+
+/* ---------------------------------------------------------------------------
+   Hero headline reveal.
+
+   Replaces a GSAP tween that cost ~26KB gzipped and a hydration boundary on the
+   most important paint on the site. The motion is the same: each line rises
+   0.35em and fades, staggered by 70ms via an inline animation-delay.
+
+   `backwards` fill matters. Without it a line sits at its FINAL state during
+   its delay and then snaps to the start before animating, which flickers.
+   --------------------------------------------------------------------------- */
+.hero-line {
+  animation: hero-line-in 700ms cubic-bezier(0.16, 1, 0.3, 1) backwards;
+  will-change: transform, opacity;
+}
+
+@keyframes hero-line-in {
+  from { opacity: 0; transform: translateY(0.35em); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* The reveal is decoration, so it goes entirely rather than being shortened.
+   The line renders in its final state, and because no JavaScript is involved
+   it can never be stranded at opacity 0. */
+@media (prefers-reduced-motion: reduce) {
+  .hero-line {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   Product cover parallax.
+
+   --parallax runs -1 to 1 and is written once per frame by a scroll handler
+   that never reads layout. 20px of travel each way, composited, no library.
+   Replaces GSAP + ScrollTrigger, which were the largest lazy chunks on the site
+   and existed to move one image.
+   --------------------------------------------------------------------------- */
+.parallax-layer {
+  transform: translate3d(0, calc(var(--parallax, 0) * 20px), 0);
+  will-change: transform;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .parallax-layer { transform: none; }
+}

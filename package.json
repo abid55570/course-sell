@@ -1,38 +1,16 @@
 {
-  "name": "course-platform",
+  "name": "dropdesk",
+  "private": true,
   "version": "1.0.0",
-  "description": "Digital product platform: courses + personalised invite-video generator, Razorpay payments, admin panel, email delivery",
-  "main": "server.js",
+  "description": "Dropdesk — digital products store",
   "scripts": {
-    "start": "node server.js",
-    "dev": "nodemon server.js",
-    "init-admin": "node scripts/init-admin.js",
-    "migrate": "node scripts/migrate.js",
-    "seed:demo": "node scripts/seed-demo.js",
-    "seed:video": "node scripts/seed-video.js",
-    "seed:carousel": "node scripts/seed-carousel.js",
-    "seed:tools": "node scripts/seed-tools.js",
-    "test": "node --test tests/unit tests/e2e",
-    "test:unit": "node --test tests/unit",
-    "test:e2e": "node --test tests/e2e"
-  },
-  "dependencies": {
-    "bcryptjs": "^2.4.3",
-    "cookie-parser": "^1.4.6",
-    "cors": "^2.8.5",
-    "dotenv": "^16.4.5",
-    "express": "^4.21.0",
-    "express-rate-limit": "^7.4.0",
-    "ffmpeg-static": "^5.3.0",
-    "jsonwebtoken": "^9.0.2",
-    "multer": "^1.4.5-lts.1",
-    "nodemailer": "^6.9.15",
-    "pg": "^8.13.0",
-    "qrcode": "^1.5.4",
-    "razorpay": "^2.9.6",
-    "uuid": "^10.0.0"
+    "dev:api": "npm --prefix api run dev",
+    "dev:web": "npm --prefix web run dev",
+    "dev": "concurrently -n api,web -c blue,magenta \"npm run dev:api\" \"npm run dev:web\"",
+    "test": "npm --prefix api test",
+    "migrate": "npm --prefix api run migrate"
   },
   "devDependencies": {
-    "nodemon": "^3.1.7"
+    "concurrently": "^9.1.0"
   }
 }

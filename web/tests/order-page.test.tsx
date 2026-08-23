@@ -77,7 +77,16 @@ describe('order page download link', () => {
     render(<OrderStatusPage />);
     await screen.findByText(/payment confirmed/i);
     expect(screen.queryByRole('link', { name: /download now/i })).not.toBeInTheDocument();
-    expect(screen.getByText(/no download file is attached to this order yet/i)).toBeInTheDocument();
+
+    // Say the payment landed, say the file is not ready, and give a route to it.
+    expect(screen.getByText(/payment went through/i)).toBeInTheDocument();
+    expect(screen.getByText(/not ready to download/i)).toBeInTheDocument();
+    expect(screen.getByText(/will not be charged again/i)).toBeInTheDocument();
+
+    // The page used to promise "we sent you a link to download it" and then,
+    // in the next breath, admit no file was attached. Both, to someone who had
+    // just paid. It must never claim a link was sent when none exists.
+    expect(screen.queryByText(/link to download it/i)).not.toBeInTheDocument();
   });
 
   it('a completed non-course order (video/carousel/tool) shows no download link and no "no file" message -- those deliver differently', async () => {

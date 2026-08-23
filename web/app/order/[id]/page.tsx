@@ -7,6 +7,7 @@ import { getOrder, type OrderStatusResponse } from '@/lib/orders';
 import { formatRupees } from '@/lib/format';
 import { SUPPORT_EMAIL } from '@/lib/catalog';
 import { PUBLIC_API_BASE } from '@/lib/env';
+import ReceiptPrint from '@/components/order/ReceiptPrint';
 import Footer from '@/components/landing/Footer';
 
 type LoadState =
@@ -129,27 +130,59 @@ export default function OrderStatusPage() {
     <Shell>
       {order.status === 'completed' ? (
         <>
-          <span className="mb-3 inline-block rounded-full bg-proof/15 px-3 py-1 text-xs font-semibold text-proof">
+          {/* The receipt is decorative and aria-hidden, so the confirmation
+              itself must live outside it. Without this, a screen-reader user
+              reaches this page after paying and is told nothing at all. */}
+          <p className="sr-only" role="status">
+            Your payment for {title} went through. Order {order.order_id}.
+          </p>
+
+          <ReceiptPrint
+            productTitle={title}
+            amount={Number(order.amount)}
+            orderId={order.order_id}
+            buyerEmail={order.buyer_email}
+          />
+
+          <span className="mt-8 inline-block bg-proof/15 px-3 py-1 text-xs font-semibold text-proof">
             Payment confirmed
           </span>
-          <h1 className="font-display text-2xl font-bold text-ink sm:text-3xl">{title}</h1>
-          <p className="mt-3 text-ink-soft">
-            We&rsquo;ve sent an email to <strong>{order.buyer_email}</strong> with a link to download it. Check your
-            inbox — and your spam folder, just in case.
-          </p>
+          <h1 className="mt-3 font-display text-2xl font-bold text-ink sm:text-3xl">{title}</h1>
+
+          {/* The page used to promise "we sent you a link" and then, directly
+              beneath, admit no file was attached. A buyer who has just paid was
+              told both at once. The message now matches what actually happened. */}
           {downloadLink ? (
-            <a
-              href={downloadLink}
-              className="mt-6 inline-block rounded-lg bg-primary px-6 py-3 text-sm font-semibold uppercase tracking-wide text-primary-foreground"
-            >
-              Download now
-            </a>
+            <>
+              <p className="mt-3 text-ink-soft">
+                We&rsquo;ve emailed <strong>{order.buyer_email}</strong> a download link as well. Check your spam
+                folder if it has not arrived.
+              </p>
+              <a
+                href={downloadLink}
+                className="mt-6 inline-block bg-primary px-6 py-3 text-sm font-semibold uppercase tracking-wide text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+              >
+                Download now
+              </a>
+            </>
           ) : noFileAttachedYet ? (
-            <p className="mt-6 text-sm text-ink-soft">
-              No download file is attached to this order yet. Email {SUPPORT_EMAIL} with order ID{' '}
-              <strong>{order.order_id}</strong> and we&rsquo;ll send it to you directly.
+            <>
+              <p className="mt-3 text-ink-soft">
+                Your payment went through and the order is recorded. The file is not ready to download
+                yet, so it is not in your inbox either.
+              </p>
+              <p className="mt-4 border-l-2 border-primary bg-canvas-2 p-4 text-sm text-ink">
+                Email <a className="font-semibold text-primary underline decoration-2 underline-offset-4" href={`mailto:${SUPPORT_EMAIL}?subject=Order%20${order.order_id}`}>{SUPPORT_EMAIL}</a>{' '}
+                quoting order <strong>{order.order_id}</strong> and we will send it to you directly.
+                You will not be charged again.
+              </p>
+            </>
+          ) : (
+            <p className="mt-3 text-ink-soft">
+              We&rsquo;ve emailed <strong>{order.buyer_email}</strong> with everything you need. Check your spam
+              folder if it has not arrived.
             </p>
-          ) : null}
+          )}
         </>
       ) : order.status === 'pending' || order.status === 'submitted' ? (
         <>
@@ -159,7 +192,7 @@ export default function OrderStatusPage() {
           <h1 className="font-display text-2xl font-bold text-ink sm:text-3xl">{title}</h1>
           <p className="mt-3 text-ink-soft">
             If you just paid, this can take a few seconds to update. If it stays like this, email {SUPPORT_EMAIL}{' '}
-            with order ID <strong>{order.order_id}</strong> — don&rsquo;t pay a second time.
+            with order ID <strong>{order.order_id}</strong>. Do not pay a second time.
           </p>
           <button
             type="button"

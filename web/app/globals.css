@@ -446,3 +446,164 @@ section[id] {
 @media (prefers-reduced-motion: reduce) {
   .parallax-layer { transform: none; }
 }
+
+/* ---------------------------------------------------------------------------
+   Order receipt, printed.
+
+   Adapted from the supplied thermal-printer animation. The motion is a single
+   transform on one element: paper starts retracted behind a slot, rotated back
+   in Z, and settles flat. Transform only, so it composites on the GPU and does
+   not touch layout on any frame.
+
+   The 2.5s original was tuned for a demo where watching the print IS the
+   content. Here it sits between someone paying and someone reading their order
+   number, so it runs at 1.4s.
+   --------------------------------------------------------------------------- */
+.receipt-stage {
+  position: relative;
+  margin: 0 auto;
+  max-width: 22rem;
+  padding-top: 0.75rem;
+  perspective: 900px;
+  overflow: hidden;
+}
+
+/* The slot the paper comes out of. */
+.receipt-slot {
+  position: relative;
+  z-index: 2;
+  height: 10px;
+  border-radius: 2px;
+  background: var(--color-ink);
+  box-shadow: 0 6px 14px -6px rgba(11, 16, 32, 0.55);
+}
+
+.receipt-paper {
+  position: relative;
+  z-index: 1;
+  transform-origin: top center;
+  transform-style: preserve-3d;
+  transform: translateY(-101%) rotateX(-14deg) translateZ(-22px);
+  transition: transform 1400ms cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: transform;
+}
+
+.receipt-paper.is-printed {
+  transform: translateY(0) rotateX(0deg) translateZ(0);
+}
+
+.receipt-body {
+  background: var(--color-canvas);
+  border: 1px solid var(--color-ink);
+  border-top: none;
+  border-bottom: none;
+  padding: 1.15rem 1.25rem 1.4rem;
+  box-shadow: 0 22px 40px -26px rgba(11, 16, 32, 0.5);
+  /* Faint thermal ruling, matching the register grounds used site-wide. */
+  background-image: repeating-linear-gradient(
+    to bottom, rgba(11, 16, 32, 0.035) 0 1px, transparent 1px 26px
+  );
+}
+
+.receipt-head {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 1.35rem;
+  line-height: 1;
+  text-transform: uppercase;
+  text-align: center;
+  color: var(--color-ink);
+}
+
+.receipt-sub {
+  margin: 0.35rem 0 0;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  text-align: center;
+  color: var(--color-ink-soft);
+}
+
+.receipt-rule {
+  height: 0;
+  margin: 0.85rem 0;
+  border-top: 1px dashed rgba(11, 16, 32, 0.28);
+}
+
+.receipt-line {
+  margin: 0;
+  font-size: 0.85rem;
+  line-height: 1.4;
+  color: var(--color-ink);
+}
+
+.receipt-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin: 0 0 0.3rem;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-ink);
+  font-variant-numeric: tabular-nums;
+}
+
+.receipt-meta { color: var(--color-ink-soft); }
+
+.receipt-amount {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 1.2rem;
+  letter-spacing: 0;
+}
+
+.receipt-trunc {
+  max-width: 12rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Rubber stamp, set at an angle the way a real one lands crooked. */
+.receipt-stamp {
+  margin: 0.15rem 0 0;
+  padding: 0.3rem 0;
+  border: 2px solid var(--color-primary);
+  color: var(--color-primary);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  text-align: center;
+  transform: rotate(-1.6deg);
+  opacity: 0.9;
+}
+
+/* Serrated bottom edge. The base .tear only sets sizing and repeat; each
+   variant supplies its own mask, so this needs one of its own. The circles sit
+   at the top of the tile and the paper is white, which cuts a row of notches
+   out of the receipt's bottom edge the way a thermal cutter leaves them. */
+.receipt-tear {
+  height: 14px;
+  background: var(--color-canvas);
+  -webkit-mask-size: 20px 14px;
+  mask-size: 20px 14px;
+  -webkit-mask-repeat: repeat-x;
+  mask-repeat: repeat-x;
+  -webkit-mask-image: radial-gradient(circle 6px at 10px 14px, transparent 5.5px, black 6px);
+  mask-image: radial-gradient(circle 6px at 10px 14px, transparent 5.5px, black 6px);
+  filter: drop-shadow(0 1px 0 rgba(11, 16, 32, 0.25));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .receipt-paper {
+    transition: none;
+    transform: none;
+  }
+}

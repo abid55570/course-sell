@@ -11,3 +11,15 @@ node_modules
 
 # ...but product and blog artwork is real content
 !web/public/**/*.png
+
+# Secrets. .env carries the SMTP password, JWT/session secrets and API keys.
+# It was previously absent from this file, and a `git add -A` committed it.
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# Local scratch that must never ship
+_archive/
+.superpowers/
+*_stdout.log

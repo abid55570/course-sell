@@ -60,13 +60,19 @@ test('buildResourcesBlock: omits Drive when flag off', () => {
   assert.match(html, /Download PDF/);
 });
 
-test('buildResourcesBlock: omits both when nothing to send', () => {
+test('buildResourcesBlock: a buyer with nothing to download is told what happens next', () => {
   const html = buildResourcesBlock(
     { ...mockCourse, pdf_file: null, drive_link: null },
     mockOrder,
     { includePdf: true, includeDrive: true }
   );
-  assert.match(html, /No additional resources/);
+  // This reaches someone who has already been charged. It used to read "No
+  // additional resources are attached", which leaves a paying customer to work
+  // out what that means. It must confirm the payment landed and give them a
+  // route to the file.
+  assert.match(html, /not ready yet/i);
+  assert.match(html, /payment went through/i);
+  assert.match(html, /reply to this email/i);
 });
 
 test('renderCompletedEmail: default template includes course title and order id', () => {
@@ -106,5 +112,18 @@ test('renderCompletedEmail: blank custom template falls back to default', () => 
     includePdf: true, includeDrive: true,
     customTemplate: '   ',
   });
-  assert.match(html, /Payment confirmed/);
+  // Marker from the default template, so this still proves the fallback ran.
+  assert.match(html, /Payment received/);
+});
+
+test('renderCompletedEmail: calls it a product, never a course', () => {
+  // The store sells 84 digital products and zero courses. The email used to
+  // say "your course is ready" and sign off "Happy learning!", which was wrong
+  // on every order placed.
+  const html = renderCompletedEmail({
+    course: mockCourse, order: mockOrder,
+    includePdf: true, includeDrive: true,
+  });
+  assert.doesNotMatch(html, /course/i);
+  assert.doesNotMatch(html, /happy learning/i);
 });

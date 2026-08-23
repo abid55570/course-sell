@@ -1,24 +1,27 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { formatRupees } from '@/lib/format';
 
 /**
- * The order receipt, printed.
+ * The order receipt, printed and tearable.
  *
- * Adapted from the thermal-printer animation the owner supplied. What was kept
- * is the part that matters: paper rolling out of a slot on a 3D transform,
- * settling with an ease-out. What was dropped, and why:
+ * Adapted from the thermal-printer animation the owner supplied. Kept: paper
+ * rolling out of a slot on a 3D transform, and a cutter tear the buyer
+ * triggers. Dropped, deliberately:
  *
  * - The Web Audio printer sound. Browsers block audio without a user gesture,
- *   so it would not play on arrival anyway, and a store that makes noise at
- *   someone who has just paid is a store they remember for the wrong reason.
- * - The mode switcher, sample presets and customizer drawer. Demo controls.
- * - A 60-line clip-path polygon for the serrated edge. The site already draws
- *   tear edges with a radial-gradient mask; reusing it keeps one technique.
+ *   so it would not play on arrival, and a store that makes noise at someone
+ *   who just paid is remembered for the wrong reason. The tear is a real
+ *   gesture, so a sound there would work; it is still omitted, because a
+ *   confirmation page is not the place to be startled.
+ * - Mode switcher, sample presets and customizer drawer. Demo controls.
  *
- * The receipt shows the real order. Nothing here is decorative text.
+ * Everything on the receipt is the real order.
  */
+
+type Phase = 'printing' | 'printed' | 'tearing' | 'torn';
+
 export default function ReceiptPrint({
   productTitle,
   amount,
@@ -32,21 +35,76 @@ export default function ReceiptPrint({
   buyerEmail?: string;
   paidAt?: string;
 }) {
-  const [printed, setPrinted] = useState(false);
-  const paperRef = useRef<HTMLDivElement>(null);
+  const [phase, setPhase] = useState<Phase>('printing');
+  const [reduced, setReduced] = useState(false);
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const tearButtonRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
-    // Reduced motion gets the receipt already printed. The receipt is the
-    // confirmation, so it must never be withheld pending an animation.
-    if (typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches) {
-      setPrinted(true);
+    const prefersReduced =
+      typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
+    setReduced(prefersReduced);
+
+    if (prefersReduced) {
+      setPhase('printed');
       return;
     }
-    // One frame's delay so the browser paints the retracted state first,
-    // otherwise the transition has nothing to animate from.
-    const id = requestAnimationFrame(() => setPrinted(true));
+    const id = requestAnimationFrame(() => setPhase('printed'));
     return () => cancelAnimationFrame(id);
   }, []);
+
+  const tear = useCallback(() => {
+    if (phase !== 'printed') return;
+    if (reduced) {
+      setPhase('torn');
+      return;
+    }
+    setPhase('tearing');
+    // Matches .receipt-paper.is-tearing in globals.css.
+    window.setTimeout(() => setPhase('torn'), 620);
+  }, [phase, reduced]);
+
+  const close = useCallback(() => {
+    setPhase('printed');
+    tearButtonRef.current?.focus();
+  }, []);
+
+  // The torn receipt opens in a dialog, so it takes the keyboard with it.
+  useEffect(() => {
+    if (phase !== 'torn') return;
+
+    const panel = dialogRef.current;
+    panel?.querySelector<HTMLElement>('button, a[href]')?.focus();
+
+    const { overflow } = document.body.style;
+    document.body.style.overflow = 'hidden';
+
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        close();
+        return;
+      }
+      if (event.key !== 'Tab' || !panel) return;
+      const nodes = panel.querySelectorAll<HTMLElement>('button, a[href]');
+      if (nodes.length === 0) return;
+      const first = nodes[0];
+      const last = nodes[nodes.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    }
+
+    document.addEventListener('keydown', onKeyDown);
+    return () => {
+      document.removeEventListener('keydown', onKeyDown);
+      document.body.style.overflow = overflow;
+    };
+  }, [phase, close]);
 
   const date = paidAt ? new Date(paidAt) : new Date();
   const stamp = date
@@ -56,50 +114,108 @@ export default function ReceiptPrint({
     })
     .toUpperCase();
 
+  const receipt = (
+    <div className="receipt-body">
+      <p className="receipt-head">Dropdesk</p>
+      <p className="receipt-sub">Digital products &middot; Instant download</p>
+      <div className="receipt-rule" />
+      <p className="receipt-line">{productTitle}</p>
+      <div className="receipt-rule" />
+      <p className="receipt-row">
+        <span>Paid</span>
+        <span className="receipt-amount">{formatRupees(amount)}</span>
+      </p>
+      <p className="receipt-row receipt-meta"><span>Order</span><span>{orderId}</span></p>
+      {buyerEmail ? (
+        <p className="receipt-row receipt-meta">
+          <span>Sent to</span><span className="receipt-trunc">{buyerEmail}</span>
+        </p>
+      ) : null}
+      <p className="receipt-row receipt-meta"><span>Date</span><span>{stamp}</span></p>
+      <div className="receipt-rule" />
+      <p className="receipt-stamp">Payment received</p>
+    </div>
+  );
+
   return (
-    <div className="receipt-stage" aria-hidden="true">
-      {/* The slot the paper emerges from. */}
-      <div className="receipt-slot" />
+    <>
+      <div className="receipt-stage">
+        <div className="receipt-slot" aria-hidden="true" />
 
-      <div ref={paperRef} className={`receipt-paper${printed ? ' is-printed' : ''}`}>
-        <div className="receipt-body">
-          <p className="receipt-head">Dropdesk</p>
-          <p className="receipt-sub">Digital products &middot; Instant download</p>
-
-          <div className="receipt-rule" />
-
-          <p className="receipt-line">
-            <span>{productTitle}</span>
-          </p>
-
-          <div className="receipt-rule" />
-
-          <p className="receipt-row">
-            <span>Paid</span>
-            <span className="receipt-amount">{formatRupees(amount)}</span>
-          </p>
-          <p className="receipt-row receipt-meta">
-            <span>Order</span>
-            <span>{orderId}</span>
-          </p>
-          {buyerEmail ? (
-            <p className="receipt-row receipt-meta">
-              <span>Sent to</span>
-              <span className="receipt-trunc">{buyerEmail}</span>
-            </p>
-          ) : null}
-          <p className="receipt-row receipt-meta">
-            <span>Date</span>
-            <span>{stamp}</span>
-          </p>
-
-          <div className="receipt-rule" />
-          <p className="receipt-stamp">Payment received</p>
+        <div
+          className={`receipt-paper${phase !== 'printing' ? ' is-printed' : ''}${
+            phase === 'tearing' ? ' is-tearing' : ''
+          }${phase === 'torn' ? ' is-gone' : ''}`}
+          aria-hidden="true"
+        >
+          {receipt}
+          <div className="receipt-tear" />
         </div>
 
-        {/* Serrated edge, drawn with the same mask the rest of the site uses. */}
-        <div className="receipt-tear" />
+        {/* The blade flash the cutter leaves behind. */}
+        {phase === 'tearing' ? <span className="receipt-blade" aria-hidden="true" /> : null}
       </div>
-    </div>
+
+      <div className="mt-6 flex flex-wrap justify-center gap-3">
+        <button
+          type="button"
+          onClick={() => window.print()}
+          className="inline-flex min-h-[44px] items-center bg-ink px-5 font-mono text-[11px] font-semibold uppercase tracking-[0.15em] text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+        >
+          Download receipt
+        </button>
+        <button
+          ref={tearButtonRef}
+          type="button"
+          onClick={tear}
+          disabled={phase !== 'printed'}
+          className="inline-flex min-h-[44px] items-center border border-ink/25 px-5 font-mono text-[11px] font-semibold uppercase tracking-[0.15em] text-ink disabled:opacity-40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+        >
+          {phase === 'torn' ? 'Torn off' : 'Tear it off'}
+        </button>
+      </div>
+
+      {phase === 'torn' ? (
+        <div className="receipt-modal">
+          <button
+            type="button"
+            aria-label="Close receipt"
+            tabIndex={-1}
+            onClick={close}
+            className="receipt-modal-backdrop"
+          />
+          <div
+            ref={dialogRef}
+            role="dialog"
+            aria-modal="true"
+            aria-label={`Receipt for order ${orderId}`}
+            className="receipt-modal-panel"
+          >
+            <div className="receipt-torn">
+              <div className="receipt-tear receipt-tear-top" aria-hidden="true" />
+              {receipt}
+              <div className="receipt-tear" aria-hidden="true" />
+            </div>
+
+            <div className="mt-5 flex flex-wrap justify-center gap-3">
+              <button
+                type="button"
+                onClick={() => window.print()}
+                className="inline-flex min-h-[44px] items-center bg-primary px-5 font-mono text-[11px] font-semibold uppercase tracking-[0.15em] text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+              >
+                Download receipt
+              </button>
+              <button
+                type="button"
+                onClick={close}
+                className="inline-flex min-h-[44px] items-center border border-white/30 px-5 font-mono text-[11px] font-semibold uppercase tracking-[0.15em] text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+    </>
   );
 }

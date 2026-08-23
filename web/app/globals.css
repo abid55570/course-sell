@@ -607,3 +607,99 @@ section[id] {
     transform: none;
   }
 }
+
+/* ---------------------------------------------------------------------------
+   Receipt: tear, blade flash, and the torn copy in a dialog.
+   --------------------------------------------------------------------------- */
+
+/* The cut. Paper drops away and rotates slightly, the way a torn strip falls
+   rather than sliding straight down. Transform and opacity only. */
+.receipt-paper.is-tearing {
+  animation: receipt-tear-off 620ms cubic-bezier(0.36, 0, 0.66, -0.24) forwards;
+}
+
+@keyframes receipt-tear-off {
+  0%   { transform: translateY(0) rotate(0deg); opacity: 1; }
+  18%  { transform: translateY(-6px) rotate(-0.8deg); opacity: 1; }
+  100% { transform: translateY(120%) rotate(4deg); opacity: 0; }
+}
+
+/* Once torn, the strip is in the dialog, so the printer is left empty. */
+.receipt-paper.is-gone { opacity: 0; pointer-events: none; }
+
+/* The cutter blade, flashing across the slot as it cuts. */
+.receipt-blade {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0.75rem;
+  height: 10px;
+  z-index: 3;
+  background: linear-gradient(90deg, transparent, #fff 45%, #fff 55%, transparent);
+  animation: receipt-blade-flash 300ms ease-out forwards;
+  pointer-events: none;
+}
+
+@keyframes receipt-blade-flash {
+  0%   { opacity: 0; transform: scaleX(0.1); }
+  45%  { opacity: 0.95; transform: scaleX(1); }
+  100% { opacity: 0; transform: scaleX(1); }
+}
+
+/* The torn strip, held up for a proper look. */
+.receipt-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.25rem;
+}
+
+.receipt-modal-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(11, 16, 32, 0.72);
+  border: 0;
+}
+
+.receipt-modal-panel {
+  position: relative;
+  width: 100%;
+  max-width: 22rem;
+  max-height: 92vh;
+  overflow-y: auto;
+}
+
+.receipt-torn {
+  animation: receipt-land 420ms cubic-bezier(0.16, 1, 0.3, 1) backwards;
+  filter: drop-shadow(0 26px 40px rgba(0, 0, 0, 0.45));
+}
+
+@keyframes receipt-land {
+  from { transform: translateY(-14px) rotate(-2.5deg); opacity: 0; }
+  to   { transform: none; opacity: 1; }
+}
+
+/* The top edge is now also torn, because it was cut from the roll. */
+.receipt-tear-top { transform: scaleY(-1); }
+
+@media (prefers-reduced-motion: reduce) {
+  .receipt-paper.is-tearing { animation: none; opacity: 0; }
+  .receipt-blade { animation: none; opacity: 0; }
+  .receipt-torn { animation: none; }
+}
+
+/* Printing the page gives the buyer a paper copy, so the chrome goes away and
+   only the receipt survives. This is what "Download receipt" produces. */
+@media print {
+  body * { visibility: hidden; }
+  .receipt-modal-panel, .receipt-modal-panel *,
+  .receipt-stage, .receipt-stage * { visibility: visible; }
+  .receipt-modal-backdrop, .receipt-blade, .receipt-slot { display: none; }
+  .receipt-modal { position: static; padding: 0; }
+  .receipt-modal-panel { max-width: none; max-height: none; overflow: visible; }
+  .receipt-paper { transform: none !important; animation: none !important; opacity: 1 !important; }
+  .receipt-torn { animation: none; filter: none; }
+}

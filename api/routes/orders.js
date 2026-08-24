@@ -239,15 +239,48 @@ router.get('/:orderId/pdf', async (req, res, next) => {
        JOIN courses c ON c.id = o.course_id WHERE o.order_id = $1`,
       [req.params.orderId]
     );
-    if (!order) return res.status(404).send('Not found');
-    if (order.status !== 'completed') return res.status(403).send('Payment not yet confirmed');
-    if (!order.send_pdf_in_email) return res.status(403).send('PDF download disabled for this course');
-    if (!order.pdf_file) return res.status(404).send('No PDF for this course');
+    if (!order) return res.status(404).type('html').send(
+      downloadProblem('We cannot find that order', 'Check the link in your email, or reply to it and we will look the order up for you.')
+    );
+    if (order.status !== 'completed') return res.status(403).type('html').send(
+      downloadProblem('This payment has not been confirmed yet', 'If you have just paid, wait a moment and open the link again. If it was declined, nothing was charged.')
+    );
+    if (!order.send_pdf_in_email) return res.status(403).type('html').send(
+      downloadProblem('This download is not switched on yet', 'Your payment is recorded. Reply to your order email and we will send the file straight to you.')
+    );
+    if (!order.pdf_file) return res.status(404).type('html').send(
+      downloadProblem('There is no file attached to this order yet', 'Your payment is recorded. Reply to your order email and we will send the file straight to you.')
+    );
     const abs = path.join(__dirname, '..', '..', 'public', order.pdf_file);
-    if (!fs.existsSync(abs)) return res.status(404).send('PDF missing');
+    if (!fs.existsSync(abs)) return res.status(404).type('html').send(
+      downloadProblem('That file has gone missing', 'This is our fault, not yours. Reply to your order email and we will get it to you.')
+    );
     res.download(abs, `${order.title.replace(/[^a-z0-9]+/gi, '_')}.pdf`);
   } catch (e) { next(e); }
 });
+
+/**
+ * A download that fails still has a paying customer on the other end of it.
+ * These used to return two words of plain text ("PDF missing"), which reads as
+ * a broken site rather than a problem with a fix. Each message now says what
+ * happened and what the buyer should do next.
+ */
+function downloadProblem(title, advice) {
+  const esc = (v) => String(v).replace(/[&<>"']/g, (c) => (
+    { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]
+  ));
+  return `<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>${esc(title)}</title></head>
+<body style="margin:0;font-family:Arial,Helvetica,sans-serif;background:#fff;color:#0b1020">
+  <main style="max-width:34rem;margin:0 auto;padding:3rem 1.25rem">
+    <p style="margin:0 0 .5rem;font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:#5a6480">Dropdesk</p>
+    <h1 style="margin:0 0 .75rem;font-size:1.6rem;line-height:1.2">${esc(title)}</h1>
+    <p style="margin:0 0 1.5rem;color:#5a6480;line-height:1.6">${esc(advice)}</p>
+    <a href="/" style="display:inline-block;padding:.85rem 1.5rem;background:#c42b22;color:#fff;text-decoration:none;font-weight:600">Back to the store</a>
+  </main>
+</body></html>`;
+}
 
 module.exports = router;
 module.exports.resolveProduct = resolveProduct;

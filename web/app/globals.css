@@ -446,3 +446,413 @@ section[id] {
 @media (prefers-reduced-motion: reduce) {
   .parallax-layer { transform: none; }
 }
+
+/* ---------------------------------------------------------------------------
+   Order receipt, printed.
+
+   Adapted from the supplied thermal-printer animation. The motion is a single
+   transform on one element: paper starts retracted behind a slot, rotated back
+   in Z, and settles flat. Transform only, so it composites on the GPU and does
+   not touch layout on any frame.
+
+   The 2.5s original was tuned for a demo where watching the print IS the
+   content. Here it sits between someone paying and someone reading their order
+   number, so it runs at 1.4s.
+   --------------------------------------------------------------------------- */
+.receipt-stage {
+  position: relative;
+  margin: 0 auto;
+  max-width: 23rem;
+  padding-top: 0.5rem;
+  perspective: 900px;
+  overflow: hidden;
+}
+
+/* --- The machine -------------------------------------------------------
+   A counter-top thermal printer, built from four flat layers rather than the
+   glossy metallic housing of the source animation: a face carrying the mark
+   and a status light, a recessed slot, and two feet. Square corners and matte
+   ink, so it belongs beside the register grounds and ticket tears used
+   everywhere else on the site.
+
+   The slot reads as an opening because of the inset shadow, not because it is
+   dark. That is the one technique worth taking from the original. */
+.receipt-printer {
+  position: relative;
+  z-index: 2;
+  border: 1px solid #05070f;
+  background: linear-gradient(180deg, #232c45 0%, #131a2e 42%, #0b1020 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.14),
+    0 14px 26px -14px rgba(11, 16, 32, 0.7);
+}
+
+.receipt-printer-face {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.6rem 0.85rem 0.5rem;
+}
+
+.receipt-printer-mark {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.42);
+}
+
+/* Status light. Vermilion while the motor runs, green once it has stopped,
+   which is the same signal a real one gives. */
+.receipt-printer-led {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--color-proof);
+  box-shadow: 0 0 7px var(--color-proof);
+  transition: background-color 200ms linear, box-shadow 200ms linear;
+}
+
+.receipt-printer-led.is-busy {
+  background: var(--color-primary);
+  box-shadow: 0 0 8px var(--color-primary);
+  animation: receipt-led-pulse 900ms ease-in-out infinite;
+}
+
+@keyframes receipt-led-pulse {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.35; }
+}
+
+/* The mouth. The inset shadow is what sells the depth. */
+.receipt-printer-slot {
+  position: relative;
+  height: 15px;
+  /* No bottom margin: the slot IS the bottom edge, so paper leaves the mouth
+     rather than appearing from under the machine. */
+  margin: 0 0.5rem 0;
+  background: #05070f;
+  box-shadow:
+    inset 0 7px 11px rgba(0, 0, 0, 0.98),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.2);
+}
+
+/* The tear bar across the mouth, where a real one has its serrated strip. */
+.receipt-printer-lip {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -1px;
+  height: 2px;
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.05),
+    rgba(255, 255, 255, 0.3) 20%,
+    rgba(255, 255, 255, 0.3) 80%,
+    rgba(255, 255, 255, 0.05)
+  );
+}
+
+/* Feet, tucked under the outer corners so they frame the mouth instead of
+   crossing the paper on its way out. */
+.receipt-printer-foot {
+  position: absolute;
+  bottom: -5px;
+  width: 26px;
+  height: 5px;
+  background: #05070f;
+  box-shadow: 0 3px 6px -2px rgba(11, 16, 32, 0.6);
+}
+.receipt-printer-foot-l { left: 0; }
+.receipt-printer-foot-r { right: 0; }
+
+.receipt-paper {
+  position: relative;
+  z-index: 1;
+  transform-origin: top center;
+  transform-style: preserve-3d;
+  /* Resting state is the end of the feed, so a sheet that never animates (JS
+     off, reduced motion) is still correctly placed rather than hidden. */
+  transform: translateY(-3px);
+  will-change: transform;
+}
+
+/* The feed.
+   Two things happen at once, and both matter.
+
+   The strip is revealed downward from the slot rather than slid down as a
+   finished block. A printer lays its header down first, so the header has to
+   be the first thing you see; sliding the whole sheet meant the footer cleared
+   the slot first and the header stayed hidden behind the machine for most of
+   the feed, which reads as paper being pulled out rather than printed. Only
+   visible once it was slowed down — at speed nobody could tell.
+
+   And it bows. As it feeds, the strip flexes toward the viewer and then
+   flattens under its own weight, with a small settle at the end. That arc is
+   what reads as paper rather than as a rectangle growing on a page.
+
+   2.5s, matching the source animation. A receipt printing is slow, and the
+   first attempt at 1.4s felt like a slide. */
+.receipt-paper.is-feeding {
+  animation: receipt-feed 2500ms linear forwards;
+}
+
+@keyframes receipt-feed {
+  0% {
+    clip-path: inset(0 0 100% 0);
+    transform: translateY(-3px) rotateX(-9deg) translateZ(-6px);
+  }
+  15% {
+    clip-path: inset(0 0 85% 0);
+    transform: translateY(-3px) rotateX(-5.5deg) translateZ(13px);
+  }
+  45% {
+    clip-path: inset(0 0 54% 0);
+    transform: translateY(-3px) rotateX(-3deg) translateZ(18px);
+  }
+  75% {
+    clip-path: inset(0 0 24% 0);
+    transform: translateY(-3px) rotateX(-1.5deg) translateZ(10px);
+  }
+  /* Eases out of the last stretch, the way a feed motor winds down. */
+  92% {
+    animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+    clip-path: inset(0 0 5% 0);
+    transform: translateY(-1px) rotateX(-0.4deg) translateZ(3px);
+  }
+  100% {
+    clip-path: inset(0 0 0 0);
+    transform: translateY(-3px) rotateX(0) translateZ(0);
+  }
+}
+
+/* Stepper judder, on the inner sheet rather than the wrapper.
+   The source put this on the same element as the feed, where the second
+   `animation` declaration silently replaced the first and the paper never
+   arced at all. Keeping them on separate elements lets both run. */
+.receipt-paper.is-feeding .receipt-body {
+  animation: receipt-judder 110ms steps(2, end) infinite;
+}
+
+@keyframes receipt-judder {
+  from { transform: translateY(-0.35px); }
+  to   { transform: translateY(0.35px); }
+}
+
+.receipt-body {
+  background: var(--color-canvas);
+  border: 1px solid var(--color-ink);
+  border-top: none;
+  border-bottom: none;
+  padding: 1.15rem 1.25rem 1.4rem;
+  box-shadow: 0 22px 40px -26px rgba(11, 16, 32, 0.5);
+  /* Faint thermal ruling, matching the register grounds used site-wide. */
+  background-image: repeating-linear-gradient(
+    to bottom, rgba(11, 16, 32, 0.035) 0 1px, transparent 1px 26px
+  );
+}
+
+.receipt-head {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 1.35rem;
+  line-height: 1;
+  text-transform: uppercase;
+  text-align: center;
+  color: var(--color-ink);
+}
+
+.receipt-sub {
+  margin: 0.35rem 0 0;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  text-align: center;
+  color: var(--color-ink-soft);
+}
+
+.receipt-rule {
+  height: 0;
+  margin: 0.85rem 0;
+  border-top: 1px dashed rgba(11, 16, 32, 0.28);
+}
+
+.receipt-line {
+  margin: 0;
+  font-size: 0.85rem;
+  line-height: 1.4;
+  color: var(--color-ink);
+}
+
+.receipt-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin: 0 0 0.3rem;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-ink);
+  font-variant-numeric: tabular-nums;
+}
+
+.receipt-meta { color: var(--color-ink-soft); }
+
+.receipt-amount {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 1.2rem;
+  letter-spacing: 0;
+}
+
+.receipt-trunc {
+  max-width: 12rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Rubber stamp, set at an angle the way a real one lands crooked. */
+.receipt-stamp {
+  margin: 0.15rem 0 0;
+  padding: 0.3rem 0;
+  border: 2px solid var(--color-primary);
+  color: var(--color-primary);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  text-align: center;
+  transform: rotate(-1.6deg);
+  opacity: 0.9;
+}
+
+/* Serrated bottom edge. The base .tear only sets sizing and repeat; each
+   variant supplies its own mask, so this needs one of its own. The circles sit
+   at the top of the tile and the paper is white, which cuts a row of notches
+   out of the receipt's bottom edge the way a thermal cutter leaves them. */
+.receipt-tear {
+  height: 14px;
+  background: var(--color-canvas);
+  -webkit-mask-size: 20px 14px;
+  mask-size: 20px 14px;
+  -webkit-mask-repeat: repeat-x;
+  mask-repeat: repeat-x;
+  -webkit-mask-image: radial-gradient(circle 6px at 10px 14px, transparent 5.5px, black 6px);
+  mask-image: radial-gradient(circle 6px at 10px 14px, transparent 5.5px, black 6px);
+  filter: drop-shadow(0 1px 0 rgba(11, 16, 32, 0.25));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* The sheet is simply already out. Kept at the resting offset rather than
+     `transform: none`, so it stays tucked into the mouth here too. */
+  .receipt-paper.is-feeding {
+    animation: none;
+    clip-path: none;
+    transform: translateY(-3px);
+  }
+  .receipt-paper.is-feeding .receipt-body { animation: none; }
+}
+
+/* ---------------------------------------------------------------------------
+   Receipt: tear, blade flash, and the torn copy in a dialog.
+   --------------------------------------------------------------------------- */
+
+/* The cut. Paper drops away and rotates slightly, the way a torn strip falls
+   rather than sliding straight down. Transform and opacity only. */
+.receipt-paper.is-tearing {
+  animation: receipt-tear-off 620ms cubic-bezier(0.36, 0, 0.66, -0.24) forwards;
+}
+
+@keyframes receipt-tear-off {
+  0%   { transform: translateY(0) rotate(0deg); opacity: 1; }
+  18%  { transform: translateY(-6px) rotate(-0.8deg); opacity: 1; }
+  100% { transform: translateY(120%) rotate(4deg); opacity: 0; }
+}
+
+/* Once torn, the strip is in the dialog, so the printer is left empty. */
+.receipt-paper.is-gone { opacity: 0; pointer-events: none; }
+
+/* The cutter blade, flashing across the slot as it cuts. */
+.receipt-blade {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 2.55rem;
+  height: 12px;
+  z-index: 3;
+  background: linear-gradient(90deg, transparent, #fff 45%, #fff 55%, transparent);
+  animation: receipt-blade-flash 300ms ease-out forwards;
+  pointer-events: none;
+}
+
+@keyframes receipt-blade-flash {
+  0%   { opacity: 0; transform: scaleX(0.1); }
+  45%  { opacity: 0.95; transform: scaleX(1); }
+  100% { opacity: 0; transform: scaleX(1); }
+}
+
+/* The torn strip, held up for a proper look. */
+.receipt-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.25rem;
+}
+
+.receipt-modal-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(11, 16, 32, 0.72);
+  border: 0;
+}
+
+.receipt-modal-panel {
+  position: relative;
+  width: 100%;
+  max-width: 22rem;
+  max-height: 92vh;
+  overflow-y: auto;
+}
+
+.receipt-torn {
+  animation: receipt-land 420ms cubic-bezier(0.16, 1, 0.3, 1) backwards;
+  filter: drop-shadow(0 26px 40px rgba(0, 0, 0, 0.45));
+}
+
+@keyframes receipt-land {
+  from { transform: translateY(-14px) rotate(-2.5deg); opacity: 0; }
+  to   { transform: none; opacity: 1; }
+}
+
+/* The top edge is now also torn, because it was cut from the roll. */
+.receipt-tear-top { transform: scaleY(-1); }
+
+@media (prefers-reduced-motion: reduce) {
+  .receipt-paper.is-tearing { animation: none; opacity: 0; }
+  .receipt-blade { animation: none; opacity: 0; }
+  .receipt-torn { animation: none; }
+}
+
+/* Printing the page gives the buyer a paper copy, so the chrome goes away and
+   only the receipt survives. This is what "Download receipt" produces. */
+@media print {
+  body * { visibility: hidden; }
+  .receipt-modal-panel, .receipt-modal-panel *,
+  .receipt-stage, .receipt-stage * { visibility: visible; }
+  .receipt-modal-backdrop, .receipt-blade, .receipt-slot { display: none; }
+  .receipt-modal { position: static; padding: 0; }
+  .receipt-modal-panel { max-width: none; max-height: none; overflow: visible; }
+  .receipt-paper { transform: none !important; animation: none !important; opacity: 1 !important; }
+  .receipt-torn { animation: none; filter: none; }
+}

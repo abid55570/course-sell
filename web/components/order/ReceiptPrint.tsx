@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { formatRupees } from '@/lib/format';
+import { useReducedMotion } from '@/lib/motion/reduced-motion';
 import { buildReceiptPdf } from '@/lib/receipt-pdf';
 
 /**
@@ -37,25 +38,24 @@ export default function ReceiptPrint({
   paidAt?: string;
 }) {
   const [phase, setPhase] = useState<Phase>('printing');
-  const [reduced, setReduced] = useState(false);
+  const reduced = useReducedMotion();
   const dialogRef = useRef<HTMLDivElement>(null);
   const tearButtonRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
-    const prefersReduced =
-      typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
-    setReduced(prefersReduced);
-
-    if (prefersReduced) {
-      setPhase('printed');
-      return;
-    }
     // Matches the 2500ms of .receipt-paper.is-feeding. The tear button stays
     // disabled and the status light stays busy for the whole feed, because
     // offering to tear paper that is still coming out is nonsense.
-    const id = window.setTimeout(() => setPhase('printed'), 2500);
+    //
+    // Under reduced motion that animation is `none`, so the paper is already
+    // fully out and there is nothing to wait for — the wait would only be 2.5
+    // seconds of a disabled button.
+    const id = window.setTimeout(
+      () => setPhase((current) => (current === 'printing' ? 'printed' : current)),
+      reduced ? 0 : 2500
+    );
     return () => window.clearTimeout(id);
-  }, []);
+  }, [reduced]);
 
   const tear = useCallback(() => {
     if (phase !== 'printed') return;

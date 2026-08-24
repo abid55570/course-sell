@@ -42,9 +42,17 @@ export default function MobileDrawer({ categories }: { categories: DrawerCategor
 
   // Route change closes the drawer. Without this a category link leaves the
   // panel sitting open over the page it just navigated to.
-  useEffect(() => {
+  //
+  // Adjusted while rendering rather than in an effect: an effect paints the
+  // open drawer over the new page for one frame before closing it, and React
+  // flags the synchronous setState it needs. This is the documented way to
+  // reset state when a value changes — React re-runs the component before
+  // committing, and `setOpen(false)` on an already-closed drawer bails out.
+  const [routeAtLastRender, setRouteAtLastRender] = useState(pathname);
+  if (pathname !== routeAtLastRender) {
+    setRouteAtLastRender(pathname);
     setOpen(false);
-  }, [pathname]);
+  }
 
   useEffect(() => {
     if (!open) return;

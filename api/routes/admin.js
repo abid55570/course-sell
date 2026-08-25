@@ -5,33 +5,10 @@ const multer = require('multer');
 const db = require('../utils/db');
 const { requireAdmin } = require('../middleware/auth');
 const { slugify } = require('../utils/slug');
+const { revalidateStorefront } = require('../utils/revalidate');
 
 const router = express.Router();
 
-/**
- * Tell the storefront its cached catalog is stale.
- *
- * The storefront renders product pages statically and re-generates them when
- * this fires, so without it an admin's edit would not appear until the cache
- * expired on its own an hour later.
- *
- * Best-effort by design: the save has already committed by the time this runs,
- * so a failed or unconfigured revalidation must not turn a successful save into
- * an error response. It warns and moves on.
- */
-async function revalidateStorefront() {
-  const base = (process.env.SITE_URL || '').replace(/\/$/, '');
-  const secret = process.env.REVALIDATE_SECRET;
-  if (!base || !secret) return;
-  try {
-    await fetch(`${base}/api/revalidate`, {
-      method: 'POST',
-      headers: { 'x-revalidate-secret': secret },
-    });
-  } catch (e) {
-    console.warn('storefront revalidation failed', e.message);
-  }
-}
 
 // public/ stays at the repo root; this route now runs from api/routes/.
 const pdfDir = path.join(__dirname, '..', '..', 'public', 'uploads', 'pdfs');

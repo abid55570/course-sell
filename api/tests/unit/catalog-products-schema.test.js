@@ -5,9 +5,14 @@ const path = require('node:path');
 const { Pool } = require('pg');
 
 const TEST_DATABASE_URL = process.env.TEST_DATABASE_URL || process.env.DATABASE_URL;
-const skipReason = !TEST_DATABASE_URL
-  ? 'TEST_DATABASE_URL/DATABASE_URL not set; skipping pg-backed tests'
-  : '';
+const SKIP = !TEST_DATABASE_URL;
+const skipReason = 'TEST_DATABASE_URL/DATABASE_URL not set; skipping pg-backed tests';
+
+// node:test skips whenever the `skip` option is PRESENT, empty string included,
+// so the options object has to be omitted entirely when we mean to run. Passing
+// `{ skip: '' }` silently skipped all five of these while still reporting
+// green. Same form tests/e2e/api.test.js uses.
+const opts = SKIP ? { skip: skipReason } : {};
 
 async function withSchema(fn) {
   const pool = new Pool({ connectionString: TEST_DATABASE_URL });
@@ -28,7 +33,7 @@ async function withSchema(fn) {
   }
 }
 
-test('011: catalog_products exists with the expected columns', { skip: skipReason }, async () => {
+test('011: catalog_products exists with the expected columns', opts, async () => {
   await withSchema(async (c) => {
     const r = await c.query(
       `SELECT column_name FROM information_schema.columns
@@ -46,7 +51,7 @@ test('011: catalog_products exists with the expected columns', { skip: skipReaso
   });
 });
 
-test('011: kind is constrained to product or bundle', { skip: skipReason }, async () => {
+test('011: kind is constrained to product or bundle', opts, async () => {
   await withSchema(async (c) => {
     await c.query(
       `INSERT INTO catalog_products (slug, kind, title, tagline, price)
@@ -62,7 +67,7 @@ test('011: kind is constrained to product or bundle', { skip: skipReason }, asyn
   });
 });
 
-test('011: slug is unique', { skip: skipReason }, async () => {
+test('011: slug is unique', opts, async () => {
   await withSchema(async (c) => {
     await c.query(
       `INSERT INTO catalog_products (slug, title, tagline, price)
@@ -78,7 +83,7 @@ test('011: slug is unique', { skip: skipReason }, async () => {
   });
 });
 
-test('011: content defaults to an empty object, never null', { skip: skipReason }, async () => {
+test('011: content defaults to an empty object, never null', opts, async () => {
   await withSchema(async (c) => {
     await c.query(
       `INSERT INTO catalog_products (slug, title, tagline, price)
@@ -97,7 +102,7 @@ test('011: content defaults to an empty object, never null', { skip: skipReason 
   });
 });
 
-test('011: an order must reference exactly one product', { skip: skipReason }, async () => {
+test('011: an order must reference exactly one product', opts, async () => {
   await withSchema(async (c) => {
     const cat = await c.query(
       `INSERT INTO catalog_products (slug, title, tagline, price)

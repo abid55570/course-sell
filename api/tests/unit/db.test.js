@@ -6,7 +6,10 @@ const { Pool } = require('pg');
 
 const TEST_DATABASE_URL = process.env.TEST_DATABASE_URL || process.env.DATABASE_URL;
 const SKIP = !TEST_DATABASE_URL;
-const skipReason = SKIP ? 'TEST_DATABASE_URL/DATABASE_URL not set; skipping pg-backed tests' : '';
+const skipReason = 'TEST_DATABASE_URL/DATABASE_URL not set; skipping pg-backed tests';
+// node:test skips whenever the `skip` option is present at all, empty string
+// included, so the options object must be omitted entirely when we mean to run.
+const opts = SKIP ? { skip: skipReason } : {};
 
 function uniqueSchema() {
   return `t_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
@@ -33,7 +36,7 @@ async function dropSchema(pool, schema) {
   await pool.end();
 }
 
-test('schema creates required tables', SKIP ? { skip: skipReason } : {}, async () => {
+test('schema creates required tables', SKIP ? opts : {}, async () => {
   const { pool, schema } = await makeSchema();
   try {
     const r = await pool.query(
@@ -47,7 +50,7 @@ test('schema creates required tables', SKIP ? { skip: skipReason } : {}, async (
   } finally { await dropSchema(pool, schema); }
 });
 
-test('courses table has visibility flag + binary thumbnail columns', SKIP ? { skip: skipReason } : {}, async () => {
+test('courses table has visibility flag + binary thumbnail columns', SKIP ? opts : {}, async () => {
   const { pool, schema } = await makeSchema();
   try {
     const r = await pool.query(
@@ -62,7 +65,7 @@ test('courses table has visibility flag + binary thumbnail columns', SKIP ? { sk
   } finally { await dropSchema(pool, schema); }
 });
 
-test('thumbnail_data accepts and returns bytes round-trip', SKIP ? { skip: skipReason } : {}, async () => {
+test('thumbnail_data accepts and returns bytes round-trip', SKIP ? opts : {}, async () => {
   const { pool, schema } = await makeSchema();
   try {
     const client = await pool.connect();
@@ -82,7 +85,7 @@ test('thumbnail_data accepts and returns bytes round-trip', SKIP ? { skip: skipR
   } finally { await dropSchema(pool, schema); }
 });
 
-test('logTransaction writes a row that joins back to the order', SKIP ? { skip: skipReason } : {}, async () => {
+test('logTransaction writes a row that joins back to the order', SKIP ? opts : {}, async () => {
   const { pool, schema } = await makeSchema();
   try {
     const client = await pool.connect();
@@ -115,7 +118,7 @@ test('logTransaction writes a row that joins back to the order', SKIP ? { skip: 
   } finally { await dropSchema(pool, schema); }
 });
 
-test('orders.status check constraint rejects invalid values', SKIP ? { skip: skipReason } : {}, async () => {
+test('orders.status check constraint rejects invalid values', SKIP ? opts : {}, async () => {
   const { pool, schema } = await makeSchema();
   try {
     const client = await pool.connect();

@@ -6,7 +6,10 @@ const { Pool } = require('pg');
 
 const TEST_DATABASE_URL = process.env.TEST_DATABASE_URL || process.env.DATABASE_URL;
 const SKIP = !TEST_DATABASE_URL;
-const skipReason = SKIP ? 'TEST_DATABASE_URL/DATABASE_URL not set; skipping pg-backed tests' : '';
+const skipReason = 'TEST_DATABASE_URL/DATABASE_URL not set; skipping pg-backed tests';
+// node:test skips whenever the `skip` option is present at all, empty string
+// included, so the options object must be omitted entirely when we mean to run.
+const opts = SKIP ? { skip: skipReason } : {};
 
 async function withSchema(fn) {
   const pool = new Pool({ connectionString: TEST_DATABASE_URL });
@@ -27,7 +30,7 @@ async function withSchema(fn) {
   }
 }
 
-test('010: courses gains the store catalog columns', { skip: skipReason }, async () => {
+test('010: courses gains the store catalog columns', opts, async () => {
   await withSchema(async (c) => {
     const r = await c.query(
       `SELECT column_name FROM information_schema.columns
@@ -40,7 +43,7 @@ test('010: courses gains the store catalog columns', { skip: skipReason }, async
   });
 });
 
-test('010: chapters cascade-delete with their course', { skip: skipReason }, async () => {
+test('010: chapters cascade-delete with their course', opts, async () => {
   await withSchema(async (c) => {
     const ins = await c.query(
       `INSERT INTO courses (slug, title, original_price, discounted_price, kind)
@@ -54,7 +57,7 @@ test('010: chapters cascade-delete with their course', { skip: skipReason }, asy
   });
 });
 
-test('010: leads accepts a row with only whatsapp', { skip: skipReason }, async () => {
+test('010: leads accepts a row with only whatsapp', opts, async () => {
   await withSchema(async (c) => {
     await c.query(`INSERT INTO leads (whatsapp, source) VALUES ('+919000000000', 'reel')`);
     const r = await c.query(`SELECT COUNT(*)::int AS n FROM leads`);

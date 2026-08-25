@@ -23,3 +23,8 @@ node_modules
 _archive/
 .superpowers/
 *_stdout.log
+
+# Runtime artifacts: uploaded photos and rendered video files. The video
+# render e2e test writes here, so they show up as untracked after a test run.
+api/storage/photos/
+api/storage/renders/

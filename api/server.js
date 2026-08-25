@@ -34,6 +34,8 @@ app.use('/api/orders', require('./routes/orders'));
 app.use('/api/video', require('./routes/video'));
 app.use('/api/carousel', require('./routes/carousel'));
 app.use('/api/tools', require('./routes/tools'));
+// Before /api/admin so the catalog routes are not shadowed by it.
+app.use('/api/admin/catalog', require('./routes/admin-catalog'));
 app.use('/api/admin', require('./routes/admin'));
 app.use('/api/admin/video', require('./routes/admin-video'));
 

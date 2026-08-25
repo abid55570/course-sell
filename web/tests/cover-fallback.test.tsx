@@ -184,16 +184,19 @@ describe('the new categories appear across the storefront', () => {
 });
 
 describe('the price ladder reflects the real catalog minimum', () => {
-  it('PricingLadder renders ₹499, not the old flat ₹999, as its lowest tier', async () => {
+  it('PricingLadder renders ₹299, not the old flat ₹999, as its lowest tier', async () => {
     render(<PricingLadder {...LADDER_PROPS} />);
-    expect(screen.getByText(formatRupees(499))).toBeDefined();
+    expect(screen.getByText(formatRupees(299))).toBeDefined();
     expect(screen.queryByText(formatRupees(999))).toBeNull();
-    expect(PRICING_LADDER.single).toBe(499);
+    expect(PRICING_LADDER.single).toBe(299);
   });
 
-  it('₹499 is a real product price (the guides), not an arbitrary number', () => {
-    const guide = getProduct(GUIDE_SLUG)!;
-    expect(guide.price).toBe(499);
-    expect(guide.price).toBe(PRICING_LADDER.single);
+  it('the ladder floor is some real product’s price, not an arbitrary number', () => {
+    // The guides are still ₹499; the floor moved below them when the first
+    // ₹299 tripwire shipped. What matters is that `single` is always a price
+    // some product actually charges, whichever product that happens to be.
+    expect(getProduct(GUIDE_SLUG)!.price).toBe(499);
+    expect(ALL_PRODUCTS.map((p) => p.price)).toContain(PRICING_LADDER.single);
+    expect(getProduct('30-days-of-focus')!.price).toBe(PRICING_LADDER.single);
   });
 });

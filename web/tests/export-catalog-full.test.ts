@@ -26,9 +26,13 @@ describe('export-catalog --full', () => {
     const full = runExport(['--full']);
     expect(full.products).toHaveLength(source.products.length);
     expect(full.bundles).toHaveLength(source.bundles.length);
-    // The four not-yet-available bundles must be present: the storefront
-    // renders them as "coming soon" rather than hiding them.
-    expect(full.bundles.filter((b) => b.availableToday === false)).toHaveLength(4);
+    // --full carries every bundle regardless of availability. All six are
+    // sellable now, but the export must not start filtering on that: the
+    // storefront renders an unavailable bundle as "coming soon" rather than
+    // hiding it, so the database has to hold it either way.
+    expect(full.bundles).toHaveLength(source.bundles.length);
+    expect(full.bundles.filter((b) => b.availableToday === false))
+      .toHaveLength(source.bundles.filter((b) => !b.availableToday).length);
   });
 
   it('preserves each product verbatim, losing no field', () => {
@@ -38,13 +42,15 @@ describe('export-catalog --full', () => {
     }
   });
 
-  it('preserves each bundle verbatim, including inCatalog:false components', () => {
+  it('preserves each bundle verbatim, components included', () => {
     const bySlug = new Map(runExport(['--full']).bundles.map((b) => [b.slug as string, b]));
     for (const bundle of source.bundles) {
       expect(bySlug.get(bundle.slug)).toEqual(JSON.parse(JSON.stringify(bundle)));
     }
-    const withMissing = bySlug.get('the-complete-woman') as { components: Array<{ inCatalog: boolean }> };
-    expect(withMissing.components.some((c) => c.inCatalog === false)).toBe(true);
+    // Every component resolves to a real product now that the pipeline
+    // products are listed, so the export must carry their slugs, not nulls.
+    const woman = bySlug.get('the-complete-woman') as { components: Array<{ slug: string | null }> };
+    expect(woman.components.every((c) => typeof c.slug === 'string')).toBe(true);
   });
 
   it('keeps nested content that the flat mirror shape drops', () => {
@@ -59,7 +65,8 @@ describe('export-catalog --full', () => {
     expect(Object.keys(seed.products[0]).sort()).toEqual(
       ['category', 'description', 'price', 'slug', 'tagline', 'title']
     );
-    // The mirror only ever carried the bundles that are actually on sale.
-    expect(seed.bundles).toHaveLength(2);
+    // The mirror only ever carried the bundles that are actually on sale —
+    // which is now all of them.
+    expect(seed.bundles).toHaveLength(source.bundles.filter((b) => b.availableToday).length);
   });
 });

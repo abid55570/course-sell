@@ -306,7 +306,11 @@ router.get('/:orderId/pdf', async (req, res, next) => {
     if (!fs.existsSync(abs)) return res.status(404).type('html').send(
       downloadProblem('That file has gone missing', 'This is our fault, not yours. Reply to your order email and we will get it to you.')
     );
-    res.download(abs, `${order.title.replace(/[^a-z0-9]+/gi, '_')}.pdf`);
+    // Use the stored file's real extension, not a hardcoded .pdf. Most catalog
+    // deliverables are ZIPs of several PDFs, and naming one "Glow_Up_OS.pdf"
+    // hands the buyer a file their reader refuses to open.
+    const ext = path.extname(order.pdf_file) || '.pdf';
+    res.download(abs, `${order.title.replace(/[^a-z0-9]+/gi, '_')}${ext}`);
   } catch (e) { next(e); }
 });
 

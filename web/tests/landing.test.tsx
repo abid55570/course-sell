@@ -157,13 +157,16 @@ describe('PricingLadder', () => {
 });
 
 describe('BundlesList', () => {
-  it('lists every named bundle and marks the unavailable ones', async () => {
+  it('lists every named bundle, badging exactly the unavailable ones', async () => {
     render(<BundlesList bundles={ALL_BUNDLES} productsBySlug={PRODUCTS_BY_SLUG} />);
     for (const bundle of listBundles()) {
       expect(screen.getAllByText(bundle.title).length).toBeGreaterThan(0);
     }
+    // All six are sellable today, so the badge should appear zero times. The
+    // assertion is against the real count either way, so it keeps holding if a
+    // future bundle ships incomplete.
     const unavailable = listBundles().filter((b) => !b.availableToday);
-    expect(screen.getAllByText('Not available yet').length).toBe(unavailable.length);
+    expect(screen.queryAllByText('Not available yet').length).toBe(unavailable.length);
   });
 });
 

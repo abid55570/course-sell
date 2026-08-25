@@ -22,6 +22,14 @@ import { moneyOs } from './products/money-os';
 import { socialOs } from './products/social-os';
 import { studyOs } from './products/study-os';
 import { careerOs } from './products/career-os';
+// The pipeline products: built and packaged (PRODUCT-PIPELINE/BUILD-STATUS.txt)
+// but not previously listed. The first four unblock the four bundles that were
+// stuck on "coming soon" because these were their missing components.
+import { skinOs } from './products/skin-os';
+import { sleepOs } from './products/sleep-os';
+import { moneyHabitsOs } from './products/money-habits-os';
+import { englishConfidenceOs } from './products/english-confidence-os';
+import { thirtyDaysOfFocus } from './products/thirty-days-of-focus';
 import { allCharacterGuideProducts } from './products/character-guides';
 import { allTalkingToYourParentsProducts } from './products/talking-to-your-parents';
 import { allTheTenSeriesProducts } from './products/the-ten-series';
@@ -43,6 +51,11 @@ export function fixtureCatalog(): { products: Product[]; bundles: Bundle[] } {
       socialOs,
       studyOs,
       careerOs,
+      skinOs,
+      sleepOs,
+      moneyHabitsOs,
+      englishConfidenceOs,
+      thirtyDaysOfFocus,
       ...allCharacterGuideProducts,
       ...allTalkingToYourParentsProducts,
       ...allTheTenSeriesProducts,

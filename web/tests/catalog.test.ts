@@ -55,9 +55,23 @@ const getSetFor = (slug: string) => {
 const LAUNCH_SLUGS: ProductSlug[] = ['glow-up-os', 'aura-os', 'money-os', 'social-os', 'study-os', 'career-os'];
 
 /** The 75 imported guide slugs plus their 3 full-set products, in catalog order. */
+/**
+ * Built in Dashrize-Products/PRODUCT-PIPELINE and listed later than the launch
+ * six. Named explicitly because IMPORTED_SLUGS used to mean "anything that is
+ * not a launch product", which quietly asserted every future product would be
+ * a ₹499 guide.
+ */
+const PIPELINE_SLUGS: ProductSlug[] = [
+  'skin-os',
+  'sleep-os',
+  'money-habits-os',
+  'english-confidence-os',
+  '30-days-of-focus',
+];
+
 const IMPORTED_SLUGS: ProductSlug[] = listProducts()
   .map((p) => p.slug)
-  .filter((slug) => !LAUNCH_SLUGS.includes(slug));
+  .filter((slug) => !LAUNCH_SLUGS.includes(slug) && !PIPELINE_SLUGS.includes(slug));
 
 /** Product-specific phrases the compliance rules require inside the disclaimer text. */
 const REQUIRED_DISCLAIMER_PHRASES: Record<ProductSlug, string[]> = {
@@ -83,14 +97,15 @@ function bundleImageDir(slug: string) {
 }
 
 describe('catalog products', () => {
-  it('loads the six launch products plus the 78 imported SKUs (84 total)', () => {
+  it('loads the six launch products, 78 imported SKUs and 5 pipeline products (89 total)', () => {
     const products = listProducts();
     // 75 individual guides (40 character + 12 parents + 23 ten-series) + 3
     // full-set products (Codex, parents set, ten-series set) = 78 imports.
     expect(IMPORTED_SLUGS).toHaveLength(78);
-    expect(products).toHaveLength(84);
+    expect(PIPELINE_SLUGS).toHaveLength(5);
+    expect(products).toHaveLength(89);
     const slugs = new Set(products.map((p) => p.slug));
-    expect(slugs).toEqual(new Set([...LAUNCH_SLUGS, ...IMPORTED_SLUGS]));
+    expect(slugs).toEqual(new Set([...LAUNCH_SLUGS, ...IMPORTED_SLUGS, ...PIPELINE_SLUGS]));
     // No duplicate slugs across the whole catalog.
     expect(slugs.size).toBe(products.length);
   });
@@ -139,7 +154,9 @@ describe('catalog products', () => {
   it('PRICING_LADDER.single is the real catalog-wide minimum price, not the launch products’ fixed ₹999', () => {
     const min = Math.min(...listProducts().map((p) => p.price));
     expect(PRICING_LADDER.single).toBe(min);
-    expect(PRICING_LADDER.single).toBe(499); // the imported guides are the new floor
+    // 30 Days of Focus is the first Rs 299 tripwire, so it is the new floor.
+    // This is exactly why `single` is computed rather than hardcoded.
+    expect(PRICING_LADDER.single).toBe(299);
     expect(PRICING_LADDER.single).toBeLessThan(999);
   });
 
@@ -249,11 +266,16 @@ describe('catalog bundles', () => {
   });
 
   it.each(['the-complete-woman', 'the-discipline-bundle', 'the-earner-bundle', 'the-student-bundle'] as const)(
-    '%s includes at least one component outside the six-product catalog, and is marked unavailable today',
+    '%s resolves every component to a real catalog product and is sellable',
     (slug) => {
       const bundle = getBundle(slug)!;
-      expect(bundle.components.some((c) => !c.inCatalog)).toBe(true);
-      expect(bundle.availableToday).toBe(false);
+      // These four sat at availableToday: false while their ZIPs were already
+      // complete, because the component products had never been listed.
+      expect(bundle.components.every((c) => c.inCatalog)).toBe(true);
+      expect(bundle.availableToday).toBe(true);
+      for (const component of bundle.components) {
+        expect(getProduct(component.slug as string), `${slug} -> ${component.label}`).toBeDefined();
+      }
     },
   );
 
@@ -334,18 +356,53 @@ describe('catalog categories', () => {
     expect(listProductsByCategory('the-ten-series')).toHaveLength(24);
   });
 
-  it('listProductsByCategory(self-improvement) returns Glow-Up OS, Aura OS and Social OS', () => {
+  it('listProductsByCategory(self-improvement) returns the launch three plus the pipeline additions', () => {
     const slugs = listProductsByCategory('self-improvement').map((p) => p.slug).sort();
-    expect(slugs).toEqual(['aura-os', 'glow-up-os', 'social-os']);
+    expect(slugs).toEqual(['30-days-of-focus', 'aura-os', 'glow-up-os', 'skin-os', 'sleep-os', 'social-os']);
   });
 
-  it('listProductsByCategory(money-and-career) returns Money OS and Career OS', () => {
+  it('listProductsByCategory(money-and-career) returns Money OS, Career OS and Money Habits OS', () => {
     const slugs = listProductsByCategory('money-and-career').map((p) => p.slug).sort();
-    expect(slugs).toEqual(['career-os', 'money-os']);
+    expect(slugs).toEqual(['career-os', 'money-habits-os', 'money-os']);
   });
 
-  it('listProductsByCategory(study-skills) returns only Study OS', () => {
-    expect(listProductsByCategory('study-skills').map((p) => p.slug)).toEqual(['study-os']);
+  it('listProductsByCategory(study-skills) returns Study OS and English Confidence OS', () => {
+    const slugs = listProductsByCategory('study-skills').map((p) => p.slug).sort();
+    expect(slugs).toEqual(['english-confidence-os', 'study-os']);
+  });
+
+  it.each([
+    ['skin-os', ['not medical advice', 'dermatologist', 'steroid']],
+    ['sleep-os', ['not medical advice', 'doctor', '14416']],
+    // The BRIEF marks Money Habits OS the most compliance-sensitive product in
+    // the catalogue: financial-literacy framing only, no product ever named, no
+    // returns figure, everything routed to a SEBI-registered adviser and a CA.
+    ['money-habits-os', ['not investment', 'sebi-registered', 'chartered accountant', 'does not recommend any specific investment']],
+    ['english-confidence-os', ['does not guarantee fluency', 'indian english is a legitimate form of english']],
+    ['30-days-of-focus', ['not psychological', '14416']],
+  ] as const)('%s disclaimer carries its required compliance phrases', (slug, phrases) => {
+    const product = getProduct(slug)!;
+    expect(product.disclaimer).toBeDefined();
+    for (const phrase of phrases) {
+      expect(product.disclaimer!.toLowerCase()).toContain(phrase.toLowerCase());
+    }
+  });
+
+  it('money-habits-os names no specific investment product anywhere in its copy', () => {
+    const product = getProduct('money-habits-os')!;
+    const allCopy = [
+      product.tagline,
+      product.disclaimer ?? '',
+      ...product.bulletPoints,
+      ...product.longDescription.flatMap((sec) => [sec.heading, ...sec.paragraphs]),
+      ...product.faqs.flatMap((f) => [f.question, f.answer]),
+      ...(product.modules ?? []).flatMap((m) => [m.title, ...m.highlights]),
+    ].join(' ').toLowerCase();
+    // Naming a fund, an index or a broker would turn financial literacy into
+    // financial advice, which is exactly what the BRIEF forbids.
+    for (const forbidden of ['nifty', 'sensex', 'zerodha', 'groww', 'sip in ', 'index fund', 'guaranteed return']) {
+      expect(allCopy, `must not mention "${forbidden}"`).not.toContain(forbidden);
+    }
   });
 
   it('returns an empty array, not undefined, for an unknown category slug', () => {

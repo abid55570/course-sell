@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { filterPosts, listTags, listPosts } from '@/lib/blog';
 import PostCard from '@/components/blog/PostCard';
 import Footer from '@/components/landing/Footer';
+import { getFooterData } from '@/lib/catalog/footer-data';
 
 export const metadata: Metadata = {
   title: 'Blog | Dropdesk',
@@ -14,6 +15,7 @@ export default async function BlogIndex({
 }: {
   searchParams: Promise<{ tag?: string; q?: string }>;
 }) {
+  const footer = await getFooterData();
   const { tag = '', q = '' } = await searchParams;
   const query = q.trim();
   const activeTag = tag.trim();
@@ -140,7 +142,7 @@ export default async function BlogIndex({
           )}
         </div>
       </main>
-      <Footer />
+      <Footer {...footer} />
     </>
   );
 }

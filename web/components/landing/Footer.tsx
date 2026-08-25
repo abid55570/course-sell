@@ -1,5 +1,6 @@
 import Link from 'next/link';
-import { SUPPORT_EMAIL, listCategories, listProducts } from '@/lib/catalog';
+import type { Category } from '@/lib/catalog';
+import { SUPPORT_EMAIL } from '@/lib/support';
 
 // inline-flex + min-h gives each link a real 44px tap target without changing
 // how the column reads. Footer links were 20px tall, which is half the mobile
@@ -14,9 +15,25 @@ const LEADER = (
   <span aria-hidden="true" className="h-px flex-1 border-b border-dotted border-white/25" />
 );
 
-export default function Footer() {
-  const products = listProducts();
-  const categories = listCategories();
+/**
+ * Presentational, and deliberately synchronous.
+ *
+ * It used to read the catalog itself. Once the catalog became an async database
+ * read that stopped working here for two reasons: app/order/[id] renders this
+ * from a client component, where an async server component cannot go at all;
+ * and an async component nested inside a page cannot be rendered by the test
+ * suite, which renders pages by awaiting them once at the top.
+ *
+ * So the two catalog-derived values it needs arrive as props from whichever
+ * page is rendering it. Every page that shows a footer already has them.
+ */
+export default function Footer({
+  productCount,
+  categories,
+}: {
+  productCount: number;
+  categories: Category[];
+}) {
 
   return (
     <>
@@ -26,7 +43,7 @@ export default function Footer() {
           <div>
             <div className="font-display text-xl font-bold">Dropdesk</div>
             <p className="mt-2 max-w-xs font-mono text-xs uppercase tracking-[0.1em] text-white/60">
-              {products.length} digital products across {categories.length} categories. Instant download.
+              {productCount} digital products across {categories.length} categories. Instant download.
             </p>
             <p className="mt-2 max-w-xs font-mono text-xs uppercase tracking-[0.1em] text-white/60">
               Payments by Razorpay · UPI · Cards · Netbanking

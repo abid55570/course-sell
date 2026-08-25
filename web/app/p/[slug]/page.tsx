@@ -1,7 +1,15 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
-import { getProduct, getPairFor, getSetFor, listProducts, SUPPORT_EMAIL } from '@/lib/catalog';
+import {
+  getProduct,
+  getPairFor,
+  getSetFor,
+  listProducts,
+  findPairBundle,
+  groupProductsByCategory,
+  SUPPORT_EMAIL,
+} from '@/lib/catalog';
 import { formatRupees, titleLead } from '@/lib/format';
 import ProductCoverParallax from '@/components/landing/ProductCoverParallax';
 import CoverFallback from '@/components/product/CoverFallback';
@@ -17,8 +25,8 @@ import Footer from '@/components/landing/Footer';
 const LINK_ON_INK =
   'text-sm font-semibold uppercase tracking-wide text-white/70 underline underline-offset-4 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white';
 
-export function generateStaticParams() {
-  return listProducts().map((p) => ({ slug: p.slug }));
+export async function generateStaticParams() {
+  return (await listProducts()).map((p) => ({ slug: p.slug }));
 }
 
 export async function generateMetadata({
@@ -27,7 +35,7 @@ export async function generateMetadata({
   params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
   const { slug } = await params;
-  const product = getProduct(slug);
+  const product = await getProduct(slug);
   if (!product) return {};
 
   const cover = product.gallery.find((g) => g.role === 'cover');
@@ -46,11 +54,25 @@ export async function generateMetadata({
 
 export default async function ProductPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const product = getProduct(slug);
+  const product = await getProduct(slug);
   if (!product) notFound();
 
-  const pair = getPairFor(slug);
-  const set = getSetFor(slug);
+  const [pair, set, allProducts] = await Promise.all([
+    getPairFor(slug),
+    getSetFor(slug),
+    listProducts(),
+  ]);
+
+  // Resolved here because CrossSell and SetAnchor are synchronous: only the
+  // page reads the catalog.
+  const pairBundle = pair ? await findPairBundle(product.slug, pair.slug) : undefined;
+  const setGuideCount = set
+    ? allProducts.filter((p) => p.category.slug === set.category.slug).length - 1
+    : 0;
+  const footer = {
+    productCount: allProducts.length,
+    categories: groupProductsByCategory(allProducts),
+  };
   const cover = product.gallery.find((g) => g.role === 'cover');
   const secondaryImages = product.gallery.filter((g) => g.role !== 'cover');
   const name = titleLead(product.title);
@@ -186,7 +208,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
       {pair ? (
         <section className="bg-canvas px-5 py-12 sm:px-10 lg:px-16">
           <div className="mx-auto max-w-3xl">
-            <CrossSell product={product} pair={pair} />
+            <CrossSell product={product} pair={pair} bundle={pairBundle} />
           </div>
         </section>
       ) : null}
@@ -194,7 +216,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
       {set ? (
         <section className="bg-canvas px-5 py-12 sm:px-10 lg:px-16">
           <div className="mx-auto max-w-3xl">
-            <SetAnchor guide={product} set={set} />
+            <SetAnchor guide={product} set={set} guideCount={setGuideCount} />
           </div>
         </section>
       ) : null}
@@ -223,7 +245,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
         </div>
       </section>
 
-      <Footer />
+      <Footer {...footer} />
     </main>
   );
 }

@@ -55,7 +55,11 @@ require.extensions['.ts'] = function compileTs(mod, filename) {
   mod._compile(outputText, filename);
 };
 
-const catalog = require(path.join(__dirname, '..', 'lib', 'catalog', 'index.ts'));
+// Read the product data from fixture-source.ts, not index.ts. index.ts's
+// accessors became async when the database took over as the source of truth,
+// so they no longer hold the catalog; fixture-source.ts is the module that
+// still assembles the TypeScript files this script exists to export.
+const { fixtureCatalog } = require(path.join(__dirname, '..', 'lib', 'catalog', 'fixture-source.ts'));
 
 /** Joins a product/bundle's sectioned long description into one plain-text blob for `courses.description`. */
 function flattenDescription(sections) {
@@ -92,10 +96,23 @@ function mapBundle(b) {
   };
 }
 
-const products = catalog.listProducts().map(mapProduct);
-const bundles = catalog
-  .listBundles()
-  .filter((b) => b.availableToday === true)
-  .map(mapBundle);
+// Two consumers, two shapes.
+//
+// Default: the trimmed rows api/scripts/seed-catalog.js writes into the
+// `courses` mirror that the legacy payment path still reads. Unchanged.
+//
+// --full: every field of Product and Bundle, verbatim, for
+// api/scripts/migrate-catalog.js to load into catalog_products. Unavailable
+// bundles are included here — the storefront renders them as "coming soon"
+// rather than hiding them, so the database has to hold them.
+const source = fixtureCatalog();
 
-process.stdout.write(JSON.stringify({ products, bundles }, null, 2));
+if (process.argv.includes('--full')) {
+  process.stdout.write(JSON.stringify({ products: source.products, bundles: source.bundles }, null, 2));
+} else {
+  const products = source.products.map(mapProduct);
+  const bundles = source.bundles
+    .filter((b) => b.availableToday === true)
+    .map(mapBundle);
+  process.stdout.write(JSON.stringify({ products, bundles }, null, 2));
+}

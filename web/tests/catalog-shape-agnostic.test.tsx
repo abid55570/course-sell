@@ -63,7 +63,7 @@ const { fixtureCategory, fixtureProduct } = vi.hoisted(() => {
 
 vi.mock('@/lib/catalog', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@/lib/catalog')>();
-  const extendedProducts: Product[] = [...actual.listProducts(), fixtureProduct];
+  const extendedProducts: Product[] = [...(await actual.listProducts()), fixtureProduct];
 
   return {
     ...actual,
@@ -109,8 +109,8 @@ describe('a shape-agnostic product on the homepage', () => {
   // link — not that its card renders inline on the homepage itself (the
   // browse-page describe block below still covers that, unchanged, since
   // /products keeps listing every product).
-  it("surfaces the fixture product's new category via the homepage's category-nav grid, with no broken counts", () => {
-    const { container } = render(<Home />);
+  it("surfaces the fixture product's new category via the homepage's category-nav grid, with no broken counts", async () => {
+    const { container } = render(await Home());
     expectNoBrokenCounts(container);
 
     const categoryLink = screen
@@ -122,12 +122,12 @@ describe('a shape-agnostic product on the homepage', () => {
     expect(within(tile).getByText('1 product')).toBeDefined();
   });
 
-  it('keeps the storefront chrome generic even with a non-OS product in the mix', () => {
+  it('keeps the storefront chrome generic even with a non-OS product in the mix', async () => {
     // The real six products' own approved titles/taglines may legitimately
     // say "System" (e.g. Money OS's bracketed descriptor) -- that data is
     // untouched. What must be gone is the *chrome* assuming every product
     // has modules to read before paying, or is itself a "system".
-    render(<Home />);
+    render(await Home());
     expect(screen.getByText('Pick a product')).toBeDefined();
     expect(screen.queryByText('Pick a system')).toBeNull();
     expect(screen.queryByText(/Read the modules before you pay/i)).toBeNull();
@@ -138,8 +138,8 @@ describe('a shape-agnostic product on the homepage', () => {
 });
 
 describe('a shape-agnostic product on the browse page', () => {
-  it('lists the fixture under its own category with a real product count', () => {
-    const { container } = render(<ProductsPage />);
+  it('lists the fixture under its own category with a real product count', async () => {
+    const { container } = render(await ProductsPage());
     expectNoBrokenCounts(container);
     expect(screen.getAllByText(fixtureCategory.label).length).toBeGreaterThanOrEqual(2); // jump nav + section heading
     expect(screen.getByText(fixtureProduct.title)).toBeDefined();

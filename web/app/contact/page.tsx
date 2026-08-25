@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import LegalLayout from '@/components/legal/LegalLayout';
+import { getFooterData } from '@/lib/catalog/footer-data';
 import { SUPPORT_EMAIL } from '@/lib/catalog';
 
 export const metadata: Metadata = {
@@ -8,9 +9,10 @@ export const metadata: Metadata = {
   description: 'How to reach Dropdesk about an order, a product question, or anything else.',
 };
 
-export default function ContactPage() {
+export default async function ContactPage() {
+  const footer = await getFooterData();
   return (
-    <LegalLayout title="Contact" updated="18 August 2026">
+    <LegalLayout footer={footer} title="Contact" updated="18 August 2026">
       <div>
         <p>
           Dropdesk is a small, one-person storefront. Every message goes to the same inbox and

@@ -23,11 +23,31 @@ async function resolveProduct(body) {
     else if (isToolKey(course.slug)) productType = course.slug;
     return { productType, courseId: course.id, amount, title: course.title, course };
   }
-  // Storefront file-catalog products and bundles (web/lib/catalog), seeded
-  // into `courses` by api/scripts/seed-catalog.js and looked up by slug
-  // since the browser only ever knows the catalog slug, never a numeric id.
-  // Price always comes from this row, never from the request body.
+  // A storefront slug. The browser only ever knows the catalog slug, never a
+  // numeric id.
+  //
+  // Look in catalog_products first: that is the row the storefront rendered,
+  // so charging from anywhere else is precisely how an advertised price and a
+  // charged price drift apart. Price always comes from this row, never from
+  // the request body.
   if (course_slug) {
+    const item = await db.get(
+      'SELECT id, slug, kind, title, price FROM catalog_products WHERE slug = $1 AND is_published = TRUE',
+      [course_slug]
+    );
+    if (item) {
+      return {
+        productType: 'catalog',
+        catalogProductId: item.id,
+        amount: Number(item.price) || 0,
+        title: item.title,
+        catalogProduct: item,
+      };
+    }
+
+    // Fall back to the `courses` mirror for the legacy product lines that are
+    // not in catalog_products: the one-time tools, the carousel editor, and
+    // the original courses.
     const course = await db.get('SELECT * FROM courses WHERE slug = $1 AND is_published = TRUE', [course_slug]);
     if (!course) return { error: 'product not found' };
     const amount = Number(course.discounted_price) || Number(course.original_price) || 0;
@@ -69,9 +89,10 @@ router.post('/', async (req, res, next) => {
 
     const orderId = `ORD-${uuidv4().slice(0, 8).toUpperCase()}`;
     await db.run(
-      `INSERT INTO orders (order_id, product_type, course_id, video_project_id, buyer_name, buyer_email, buyer_phone, amount, status)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,'pending')`,
+      `INSERT INTO orders (order_id, product_type, course_id, video_project_id, catalog_product_id, buyer_name, buyer_email, buyer_phone, amount, status)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,'pending')`,
       [orderId, product.productType, product.courseId || null, product.videoProjectId || null,
+        product.catalogProductId || null,
         buyer_name.trim(), buyer_email.trim().toLowerCase(), buyer_phone || null, product.amount]
     );
     await db.logTransaction({ order_id: orderId, event: 'created', actor: 'buyer', amount: product.amount, detail: `product=${product.productType}` });
@@ -219,6 +240,24 @@ router.get('/:orderId', async (req, res, next) => {
       });
     }
 
+    // A storefront catalog order points at catalog_products, not courses, so
+    // reading `courses` alone would leave the buyer's own delivery page with
+    // no product title on it.
+    if (order.catalog_product_id) {
+      const item = await db.get(
+        'SELECT title, slug FROM catalog_products WHERE id = $1',
+        [order.catalog_product_id]);
+      return res.json({
+        ...base,
+        course_title: item ? item.title : null,
+        course_slug: item ? item.slug : null,
+        // No delivery columns on catalog_products yet: no product files ship
+        // with the catalog, so there is nothing to link here.
+        drive_link: null,
+        pdf_file: null,
+      });
+    }
+
     const course = await db.get(
       `SELECT title, slug, drive_link, pdf_file, send_drive_in_email, send_pdf_in_email FROM courses WHERE id = $1`,
       [order.course_id]);
@@ -235,8 +274,13 @@ router.get('/:orderId', async (req, res, next) => {
 router.get('/:orderId/pdf', async (req, res, next) => {
   try {
     const order = await db.get(
-      `SELECT o.status, c.pdf_file, c.send_pdf_in_email, c.title FROM orders o
-       JOIN courses c ON c.id = o.course_id WHERE o.order_id = $1`,
+      // LEFT JOIN: a storefront catalog order has no `courses` row, and an
+      // inner join made it 404 as "we cannot find that order" — untrue, and
+      // alarming for someone who has just paid. Left-joined, it falls through
+      // to the "download is not switched on yet" message below, which is what
+      // is actually the case.
+      `SELECT o.status, o.catalog_product_id, c.pdf_file, c.send_pdf_in_email, c.title FROM orders o
+       LEFT JOIN courses c ON c.id = o.course_id WHERE o.order_id = $1`,
       [req.params.orderId]
     );
     if (!order) return res.status(404).type('html').send(

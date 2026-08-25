@@ -8,6 +8,12 @@ export default defineConfig({
     environment: 'jsdom',
     globals: true,
 
+    // Stubs lib/catalog/loader so the catalog accessors answer from the
+    // TypeScript product files instead of the API. Without it every suite that
+    // renders a page would need a running API and a seeded database. See the
+    // file's own comment for why the seam sits there.
+    setupFiles: ['./tests/setup/catalog-fixture.ts'],
+
     // Several suites failed intermittently in full runs while passing in
     // isolation. The cause was not shared state, as first assumed: the error is
     // "Test timed out in 5000ms". Some of these tests render the whole homepage

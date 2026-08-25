@@ -1,20 +1,22 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import LegalLayout from '@/components/legal/LegalLayout';
-import { SUPPORT_EMAIL, PRICING_LADDER } from '@/lib/catalog';
+import { getFooterData } from '@/lib/catalog/footer-data';
+import { SUPPORT_EMAIL, getPricingLadder } from '@/lib/catalog';
 
 export const metadata: Metadata = {
   title: 'Terms of Service | Dropdesk',
   description: 'The terms that apply when you buy a Dropdesk PDF system.',
 };
 
-export default function TermsPage() {
+export default async function TermsPage() {
+  const [footer, pricingLadder] = await Promise.all([getFooterData(), getPricingLadder()]);
   return (
-    <LegalLayout title="Terms of Service" updated="18 August 2026">
+    <LegalLayout footer={footer} title="Terms of Service" updated="18 August 2026">
       <div>
         <p>
           Dropdesk sells digital products you download after paying once. Prices start at ₹
-          {PRICING_LADDER.single} and vary by product, and some products are also sold together as
+          {pricingLadder.single} and vary by product, and some products are also sold together as
           bundles at a set price. Buying from this site means you agree to the terms below.
         </p>
       </div>

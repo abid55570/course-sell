@@ -1,5 +1,5 @@
 import type { Product } from '@/lib/catalog';
-import { listProductsByCategory } from '@/lib/catalog';
+
 import { formatRupees } from '@/lib/format';
 import ProductCard from './ProductCard';
 
@@ -13,10 +13,9 @@ import ProductCard from './ProductCard';
  * records: this guide's own price and the set's own price. Nothing here is
  * a computed discount or an invented comparison figure.
  */
-export default function SetAnchor({ guide, set }: { guide: Product; set: Product }) {
+export default function SetAnchor({ guide, set, guideCount }: { guide: Product; set: Product; guideCount: number }) {
   // Every product in the set's category except the set product itself is a
   // guide in that set — real catalog data, not a hardcoded "40".
-  const guideCount = listProductsByCategory(set.category.slug).length - 1;
 
   return (
     <div className="border-t border-ink/10 pt-8">

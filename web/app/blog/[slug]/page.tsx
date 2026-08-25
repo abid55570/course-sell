@@ -3,10 +3,11 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { listPosts, getPost, formatPostDate } from '@/lib/blog';
-import { getProduct } from '@/lib/catalog';
+import { listProducts } from '@/lib/catalog';
 import ProductCard from '@/components/product/ProductCard';
 import Footer from '@/components/landing/Footer';
 import ReadingPath, { type PathSection } from '@/components/blog/ReadingPath';
+import { getFooterData } from '@/lib/catalog/footer-data';
 
 export function generateStaticParams() {
   return listPosts().map((post) => ({ slug: post.slug }));
@@ -35,6 +36,7 @@ export async function generateMetadata({
 }
 
 export default async function BlogPostPage({ params }: { params: Promise<{ slug: string }> }) {
+  const footer = await getFooterData();
   const { slug } = await params;
   const post = getPost(slug);
   if (!post) notFound();
@@ -46,8 +48,11 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
     .filter((s) => Boolean(s.heading))
     .map((s) => ({ id: slugify(s.heading as string), heading: s.heading as string }));
 
+  // One catalog read, indexed by slug, rather than an awaited lookup per
+  // related product.
+  const bySlug = new Map((await listProducts()).map((p) => [p.slug, p]));
   const related = (post.relatedProducts ?? [])
-    .map((s) => getProduct(s))
+    .map((s) => bySlug.get(s))
     .filter((p): p is NonNullable<typeof p> => Boolean(p));
 
   return (
@@ -161,7 +166,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
         </aside>
         </div>
       </main>
-      <Footer />
+      <Footer {...footer} />
     </>
   );
 }

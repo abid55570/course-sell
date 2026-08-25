@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import LegalLayout from '@/components/legal/LegalLayout';
+import { getFooterData } from '@/lib/catalog/footer-data';
 import { SUPPORT_EMAIL } from '@/lib/catalog';
 
 export const metadata: Metadata = {
@@ -7,9 +8,10 @@ export const metadata: Metadata = {
   description: 'When a Dropdesk order qualifies for a refund, and how to request one.',
 };
 
-export default function RefundsPage() {
+export default async function RefundsPage() {
+  const footer = await getFooterData();
   return (
-    <LegalLayout title="Refund Policy" updated="18 August 2026">
+    <LegalLayout footer={footer} title="Refund Policy" updated="18 August 2026">
       <div>
         <p>
           Every product on this site is a digital file delivered by download link, sent the moment

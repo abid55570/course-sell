@@ -3,7 +3,15 @@ import '@testing-library/jest-dom/vitest';
 import { render, within } from '@testing-library/react';
 
 import ProductCard from '@/components/product/ProductCard';
-import { listProducts } from '@/lib/catalog';
+import { listProducts as loadProducts } from '@/lib/catalog';
+/**
+ * The catalog accessors are async now that the catalog lives in the database.
+ * This suite iterates the catalog at module scope, so it resolves it once here
+ * with a top-level await and keeps its assertions synchronous. The read path
+ * itself is covered by tests/catalog-loader.test.ts.
+ */
+const ALL_PRODUCTS = await loadProducts();
+const listProducts = () => ALL_PRODUCTS;
 
 const products = listProducts();
 const withCover = products.find((p) => p.gallery.length > 0)!;

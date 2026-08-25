@@ -28,12 +28,47 @@ async function markOrderPaid(orderId, { paymentId = null, actor = 'razorpay' } =
     await fulfilVideo(order);
   } else if (order.product_type === 'carousel') {
     await fulfilCarousel(order);
+  } else if (order.product_type === 'catalog') {
+    await fulfilCatalog(order);
   } else if (isToolKey(order.product_type)) {
     await fulfilTool(order);
   } else {
     await fulfilCourse(order);
   }
   return { ok: true, productType: order.product_type };
+}
+
+/**
+ * Storefront catalog products and bundles.
+ *
+ * These orders carry `catalog_product_id`, not `course_id`, so fulfilCourse
+ * cannot find them — without this branch a paying buyer would get no email at
+ * all, which is worse than the current behaviour.
+ *
+ * catalog_products has no delivery columns yet: no product files ship with the
+ * catalog, so there is no PDF path or Drive link to send. The delivery
+ * template already handles that honestly — with both flags false it tells the
+ * buyer their download is not ready and to reply — so this passes them false
+ * rather than linking a file that does not exist.
+ */
+async function fulfilCatalog(order) {
+  const { sendOrderCompletedEmail } = require('../utils/email');
+  const item = await db.get('SELECT slug, title FROM catalog_products WHERE id = $1', [order.catalog_product_id]);
+  if (!item) return;
+  const courseLike = {
+    slug: item.slug,
+    title: item.title,
+    send_pdf_in_email: false,
+    pdf_file: null,
+    send_drive_in_email: false,
+    drive_link: null,
+    email_template_html: null,
+  };
+  try {
+    await sendOrderCompletedEmail({ ...order, status: 'completed' }, courseLike);
+  } catch (e) {
+    console.warn('catalog email failed', e.message);
+  }
 }
 
 async function fulfilCourse(order) {

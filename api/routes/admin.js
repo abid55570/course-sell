@@ -8,6 +8,31 @@ const { slugify } = require('../utils/slug');
 
 const router = express.Router();
 
+/**
+ * Tell the storefront its cached catalog is stale.
+ *
+ * The storefront renders product pages statically and re-generates them when
+ * this fires, so without it an admin's edit would not appear until the cache
+ * expired on its own an hour later.
+ *
+ * Best-effort by design: the save has already committed by the time this runs,
+ * so a failed or unconfigured revalidation must not turn a successful save into
+ * an error response. It warns and moves on.
+ */
+async function revalidateStorefront() {
+  const base = (process.env.SITE_URL || '').replace(/\/$/, '');
+  const secret = process.env.REVALIDATE_SECRET;
+  if (!base || !secret) return;
+  try {
+    await fetch(`${base}/api/revalidate`, {
+      method: 'POST',
+      headers: { 'x-revalidate-secret': secret },
+    });
+  } catch (e) {
+    console.warn('storefront revalidation failed', e.message);
+  }
+}
+
 // public/ stays at the repo root; this route now runs from api/routes/.
 const pdfDir = path.join(__dirname, '..', '..', 'public', 'uploads', 'pdfs');
 if (!fs.existsSync(pdfDir)) fs.mkdirSync(pdfDir, { recursive: true });
@@ -113,6 +138,7 @@ router.post('/courses', courseUpload, async (req, res, next) => {
         b.kind === 'product' ? 'product' : 'course',
       ]
     );
+    await revalidateStorefront();
     res.json(result.rows[0]);
   } catch (err) { next(err); }
 });
@@ -162,6 +188,7 @@ router.put('/courses/:id', courseUpload, async (req, res, next) => {
         id,
       ]
     );
+    await revalidateStorefront();
     res.json(result.rows[0]);
   } catch (err) { next(err); }
 });
@@ -179,18 +206,26 @@ router.delete('/courses/:id', async (req, res, next) => {
       }
     }
     await db.run('DELETE FROM courses WHERE id = $1', [req.params.id]);
+    await revalidateStorefront();
     res.json({ ok: true });
   } catch (e) { next(e); }
 });
 
 router.get('/orders', async (req, res, next) => {
   try {
-    // LEFT JOIN so video orders (which have no course) are included too.
+    // LEFT JOIN throughout so orders with no course are included too: video
+    // orders, and storefront catalog orders, which point at catalog_products
+    // instead. COALESCE keeps one `course_title` field for the admin UI to
+    // read regardless of which table the product actually lives in — without
+    // it, every catalog order would list with a blank title.
     const rows = await db.all(
-      `SELECT o.*, c.title AS course_title, c.slug AS course_slug,
+      `SELECT o.*,
+              COALESCE(c.title, cp.title) AS course_title,
+              COALESCE(c.slug,  cp.slug)  AS course_slug,
               vt.name AS template_name, vp.public_id AS project_public_id, vp.render_status
        FROM orders o
        LEFT JOIN courses c ON c.id = o.course_id
+       LEFT JOIN catalog_products cp ON cp.id = o.catalog_product_id
        LEFT JOIN video_projects vp ON vp.id = o.video_project_id
        LEFT JOIN video_templates vt ON vt.id = vp.template_id
        ORDER BY o.created_at DESC`

@@ -6,7 +6,16 @@ import path from 'node:path';
 
 import SiteHeader from '@/components/chrome/SiteHeader';
 import MobileDrawer, { type DrawerCategory } from '@/components/chrome/MobileDrawer';
-import { listCategories, listProducts } from '@/lib/catalog';
+import { listCategories as loadCategories, listProducts as loadProducts } from '@/lib/catalog';
+/**
+ * The catalog accessors are async now that the catalog lives in the database.
+ * This suite iterates the catalog at module scope, so it resolves it once here
+ * with a top-level await and keeps its assertions synchronous. The read path
+ * itself is covered by tests/catalog-loader.test.ts.
+ */
+const [ALL_PRODUCTS, ALL_CATEGORIES] = await Promise.all([loadProducts(), loadCategories()]);
+const listProducts = () => ALL_PRODUCTS;
+const listCategories = () => ALL_CATEGORIES;
 
 const CATEGORIES: DrawerCategory[] = [
   { slug: 'character-guides', label: 'Character Guides', hex: '#d6336c', count: 41 },
@@ -14,20 +23,20 @@ const CATEGORIES: DrawerCategory[] = [
 ];
 
 describe('SiteHeader', () => {
-  it('renders a wordmark linking home', () => {
-    render(<SiteHeader />);
+  it('renders a wordmark linking home', async () => {
+    render(await SiteHeader());
     const link = screen.getByRole('link', { name: /dropdesk/i });
     expect(link.getAttribute('href')).toBe('/');
   });
 
-  it('links to the full browse page and to bundles', () => {
-    render(<SiteHeader />);
+  it('links to the full browse page and to bundles', async () => {
+    render(await SiteHeader());
     expect(screen.getByRole('link', { name: /all products/i }).getAttribute('href')).toBe('/products');
     expect(screen.getByRole('link', { name: /^bundles$/i }).getAttribute('href')).toBe('/products#bundles');
   });
 
-  it('passes every category to the drawer with its real product count', () => {
-    render(<SiteHeader />);
+  it('passes every category to the drawer with its real product count', async () => {
+    render(await SiteHeader());
     const trigger = screen.getByRole('button', { name: /open menu/i });
     fireEvent.click(trigger);
 

@@ -68,11 +68,11 @@ function score(product: Product, terms: string[]): number {
 export type SearchResult = { product: Product; score: number };
 
 /** Ranked matches for a query. An empty or whitespace query returns nothing, never everything. */
-export function searchProducts(query: string): SearchResult[] {
+export async function searchProducts(query: string): Promise<SearchResult[]> {
   const terms = tokenize(query ?? '');
   if (terms.length === 0) return [];
 
-  return listProducts()
+  return (await listProducts())
     .map((product) => ({ product, score: score(product, terms) }))
     .filter((r) => r.score > 0)
     .sort((a, b) => b.score - a.score || a.product.title.localeCompare(b.product.title));
@@ -107,6 +107,6 @@ export function sortProducts(products: Product[], key: SortKey): Product[] {
 }
 
 /** Price tiers derived from the prices actually present, never hardcoded bands. */
-export function priceTiers(): number[] {
-  return [...new Set(listProducts().map((p) => p.price))].sort((a, b) => a - b);
+export async function priceTiers(): Promise<number[]> {
+  return [...new Set((await listProducts()).map((p) => p.price))].sort((a, b) => a - b);
 }

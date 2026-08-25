@@ -6,12 +6,13 @@ import PricingLadder from '@/components/landing/PricingLadder';
 import BundlesList from '@/components/landing/BundlesList';
 import Faq, { type FaqItem } from '@/components/landing/Faq';
 import Footer from '@/components/landing/Footer';
-import { getBundle, listFeatured, listCategories, PRICING_LADDER } from '@/lib/catalog';
+import { getBundle, listProducts, listFeatured, listCategories, listBundles, getPricingLadder, groupProductsByCategory } from '@/lib/catalog';
 import { formatRupees } from '@/lib/format';
 
-const everythingBundle = getBundle('everything-bundle');
-
-const FAQ_ITEMS: FaqItem[] = [
+// Built per render rather than declared as a module constant: the prices it
+// quotes come from the catalog, which is a database read now.
+function buildFaqItems(pairPrice: number, everythingBundlePrice?: number): FaqItem[] {
+  return [
   {
     question: 'How do I get my product after I pay?',
     answer: 'The moment your payment clears, we email a download link to the address you used at checkout.',
@@ -26,8 +27,8 @@ const FAQ_ITEMS: FaqItem[] = [
   },
   {
     question: 'Can I buy more than one product?',
-    answer: `Yes. Any pair is ${formatRupees(PRICING_LADDER.pair)}${
-      everythingBundle ? `, and the Everything Bundle is ${formatRupees(everythingBundle.price)}` : ''
+    answer: `Yes. Any pair is ${formatRupees(pairPrice)}${
+      everythingBundlePrice !== undefined ? `, and the Everything Bundle is ${formatRupees(everythingBundlePrice)}` : ''
     }. See the bundles above.`,
   },
   {
@@ -40,9 +41,10 @@ const FAQ_ITEMS: FaqItem[] = [
     answer:
       'No. Products are general information, not professional advice. Where a disclaimer applies, such as for medical, financial or career content, it sits on that product\'s own page. For anything specific to you, talk to a qualified professional in that field.',
   },
-];
+  ];
+}
 
-export default function Home() {
+export default async function Home() {
   // The homepage used to list every product grouped by category
   // (ProductGrid, unfiltered). That doesn't scale: the catalog now holds 84
   // products across 9 categories, and rendering all of them here would make
@@ -54,8 +56,26 @@ export default function Home() {
   // category-nav grid that hands visitors straight to whichever category
   // they want. Both are still fully catalog-derived — nothing here is a
   // fixed list — so this keeps working unchanged if the catalog grows again.
-  const featured = listFeatured();
-  const categories = listCategories();
+  const [products, featured, categories, bundles, pricingLadder, everythingBundle, pairBundle] =
+    await Promise.all([
+      listProducts(),
+      listFeatured(),
+      listCategories(),
+      listBundles(),
+      getPricingLadder(),
+      getBundle('everything-bundle'),
+      getBundle('the-complete-man'),
+    ]);
+  const faqItems = buildFaqItems(pricingLadder.pair, everythingBundle?.price);
+
+  // Resolved once here and handed down: the children are synchronous, so the
+  // page is the only place allowed to touch the catalog.
+  const productsBySlug = new Map(products.map((product) => [product.slug, product]));
+  const countBySlug = new Map<string, number>();
+  for (const product of products) {
+    countBySlug.set(product.category.slug, (countBySlug.get(product.category.slug) ?? 0) + 1);
+  }
+  const footer = { productCount: products.length, categories: groupProductsByCategory(products) };
 
   return (
     <>
@@ -71,13 +91,13 @@ export default function Home() {
         <div id="products" className="ground-chart">
           <FeaturedProducts products={featured} />
         </div>
-        <CategoryNav categories={categories} />
+        <CategoryNav categories={categories} countBySlug={countBySlug} />
         <div aria-hidden="true" className="tear tear-carbon" />
         <InstallSteps />
-        <PricingLadder />
-        <BundlesList />
-        <Faq items={FAQ_ITEMS} />
-        <Footer />
+        <PricingLadder pricingLadder={pricingLadder} everythingBundle={everythingBundle} pairBundle={pairBundle} />
+        <BundlesList bundles={bundles} productsBySlug={productsBySlug} />
+        <Faq items={faqItems} />
+        <Footer {...footer} />
       </main>
     </>
   );

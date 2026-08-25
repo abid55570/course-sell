@@ -3,18 +3,20 @@ import { listCategories, listProducts } from '@/lib/catalog';
 import SearchBox from '@/components/search/SearchBox';
 import ProductGrid from '@/components/product/ProductGrid';
 import Footer from '@/components/landing/Footer';
+import { getFooterData } from '@/lib/catalog/footer-data';
 
-export function generateMetadata(): Metadata {
-  const count = listProducts().length;
+export async function generateMetadata(): Promise<Metadata> {
+  const count = (await listProducts()).length;
   return {
     title: `All products (${count}) | Dropdesk`,
     description: `Every digital product Dropdesk sells, grouped by category. ${count} products, instant download.`,
   };
 }
 
-export default function ProductsPage() {
-  const products = listProducts();
-  const categories = listCategories();
+export default async function ProductsPage() {
+  const footer = await getFooterData();
+  const products = await listProducts();
+  const categories = await listCategories();
 
   return (
     <main>
@@ -61,7 +63,7 @@ export default function ProductsPage() {
 
       <ProductGrid products={products} />
 
-      <Footer />
+      <Footer {...footer} />
     </main>
   );
 }

@@ -1,22 +1,33 @@
-import { PRICING_LADDER, getBundle } from '@/lib/catalog';
+import type { Bundle } from '@/lib/catalog';
 import { formatRupees } from '@/lib/format';
 
 // The Everything Bundle and The Complete Man are real, shipped catalog
 // records priced at exactly the "all six" and "any pair" ladder tiers — their
 // `separatePrice` is genuine catalog data, not a number computed here. No
 // other comparison figure is shown; nothing here is invented.
-const everythingBundle = getBundle('everything-bundle');
-const pairBundle = getBundle('the-complete-man');
+//
+// These were module-level constants until the catalog became a database read.
+// The tiers are built per render now, from values the component awaits.
+// Synchronous: a descendant of a page the test suite awaits at the top.
+export default function PricingLadder({
+  pricingLadder,
+  everythingBundle,
+  pairBundle,
+}: {
+  pricingLadder: { single: number; pair: number; allSix: number };
+  everythingBundle?: Bundle;
+  pairBundle?: Bundle;
+}) {
 
-// The Everything Bundle's component count is real catalog data (how many
-// products it actually contains today), not a hardcoded "six" — this label
-// keeps reading correctly if the bundle ever grows.
-const everythingCount = everythingBundle?.components.length ?? 0;
+  // The Everything Bundle's component count is real catalog data (how many
+  // products it actually contains today), not a hardcoded "six" — this label
+  // keeps reading correctly if the bundle ever grows.
+  const everythingCount = everythingBundle?.components.length ?? 0;
 
-const TIERS = [
+  const TIERS = [
   {
     label: 'From',
-    price: PRICING_LADDER.single,
+    price: pricingLadder.single,
     body: 'The lowest single-item price in the catalog. Bigger systems and full sets cost more.',
     includes: ['1 product', 'Instant download', 'Yours to keep'],
     separatePrice: undefined as number | undefined,
@@ -24,7 +35,7 @@ const TIERS = [
   },
   {
     label: 'Any pair',
-    price: PRICING_LADDER.pair,
+    price: pricingLadder.pair,
     body: 'Two products, your choice.',
     includes: ['2 products, your choice', 'Instant download', 'Yours to keep'],
     separatePrice: pairBundle?.separatePrice,
@@ -32,15 +43,14 @@ const TIERS = [
   },
   {
     label: `All ${everythingCount}`,
-    price: PRICING_LADDER.allSix,
+    price: pricingLadder.allSix,
     body: 'Every launch product, plus everything released later.',
     includes: [`${everythingCount} products`, 'Instant download', 'Future releases included'],
     separatePrice: everythingBundle?.separatePrice,
     favoured: false,
   },
-];
+  ];
 
-export default function PricingLadder() {
   return (
     <section className="band-register px-5 py-20 sm:py-24 lg:px-12">
       <div className="mx-auto max-w-5xl">

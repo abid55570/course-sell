@@ -23,7 +23,12 @@ vi.mock('@/lib/orders', () => ({
   getOrder: () => Promise.resolve(mockOrderResult),
 }));
 
-import OrderStatusPage from '@/app/order/[id]/page';
+import OrderView from '@/components/order/OrderView';
+
+// /order/[id] is a server shell that resolves footer data and renders this
+// client view. The view is what these tests are about, so they render it
+// directly with a footer stub.
+const FOOTER_STUB = { productCount: 84, categories: [] };
 import { PUBLIC_API_BASE } from '@/lib/env';
 
 function baseOrder(overrides: Record<string, unknown> = {}) {
@@ -46,14 +51,14 @@ function baseOrder(overrides: Record<string, unknown> = {}) {
 describe('order page download link', () => {
   it('uses drive_link directly when the course has one', async () => {
     mockOrderResult = { ok: true, data: baseOrder({ drive_link: 'https://drive.google.com/folder/abc' }) };
-    render(<OrderStatusPage />);
+    render(<OrderView footer={FOOTER_STUB} />);
     const link = await screen.findByRole('link', { name: /download now/i });
     expect(link).toHaveAttribute('href', 'https://drive.google.com/folder/abc');
   });
 
   it('routes a PDF through the same /api/orders/:id/pdf endpoint the delivery email uses, not the raw storage path', async () => {
     mockOrderResult = { ok: true, data: baseOrder({ pdf_file: '/uploads/pdfs/1699999999-glow-up-os.pdf' }) };
-    render(<OrderStatusPage />);
+    render(<OrderView footer={FOOTER_STUB} />);
     const link = await screen.findByRole('link', { name: /download now/i });
     // This must equal the exact URL api/utils/template.js's buildResourcesBlock
     // constructs for the delivery email: `${SITE_URL}/api/orders/${order_id}/pdf`.
@@ -67,14 +72,14 @@ describe('order page download link', () => {
       ok: true,
       data: baseOrder({ drive_link: 'https://drive.google.com/folder/xyz', pdf_file: '/uploads/pdfs/x.pdf' }),
     };
-    render(<OrderStatusPage />);
+    render(<OrderView footer={FOOTER_STUB} />);
     const link = await screen.findByRole('link', { name: /download now/i });
     expect(link).toHaveAttribute('href', 'https://drive.google.com/folder/xyz');
   });
 
   it('a completed course order with no file at all gets an explanation, not a dead link', async () => {
     mockOrderResult = { ok: true, data: baseOrder({ drive_link: null, pdf_file: null }) };
-    render(<OrderStatusPage />);
+    render(<OrderView footer={FOOTER_STUB} />);
     await screen.findByText(/payment confirmed/i);
     expect(screen.queryByRole('link', { name: /download now/i })).not.toBeInTheDocument();
 
@@ -94,7 +99,7 @@ describe('order page download link', () => {
       ok: true,
       data: baseOrder({ product_type: 'carousel', course_title: undefined, drive_link: null, pdf_file: null }),
     };
-    render(<OrderStatusPage />);
+    render(<OrderView footer={FOOTER_STUB} />);
     await screen.findByText(/payment confirmed/i);
     expect(screen.queryByRole('link', { name: /download now/i })).not.toBeInTheDocument();
     expect(screen.queryByText(/no download file is attached/i)).not.toBeInTheDocument();
@@ -102,7 +107,7 @@ describe('order page download link', () => {
 
   it('a pending order shows no download link and no "no file" message', async () => {
     mockOrderResult = { ok: true, data: baseOrder({ status: 'pending' }) };
-    render(<OrderStatusPage />);
+    render(<OrderView footer={FOOTER_STUB} />);
     await screen.findByText(/payment not confirmed yet/i);
     expect(screen.queryByRole('link', { name: /download now/i })).not.toBeInTheDocument();
     expect(screen.queryByText(/no download file is attached/i)).not.toBeInTheDocument();

@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import type { Category } from '@/lib/catalog';
-import { listProductsByCategory } from '@/lib/catalog';
+
 
 /**
  * Every category as a linked tile: accent, label, a real product count, a
@@ -11,7 +11,15 @@ import { listProductsByCategory } from '@/lib/catalog';
  * that category. /products remains the single page that lists everything at
  * once, for anyone who wants the whole catalog in one scroll.
  */
-export default function CategoryNav({ categories }: { categories: Category[] }) {
+// Synchronous: this renders inside a page the test suite awaits once at the
+// top, so it must not be async itself. The counts arrive already computed.
+export default function CategoryNav({
+  categories,
+  countBySlug,
+}: {
+  categories: Category[];
+  countBySlug: Map<string, number>;
+}) {
   if (categories.length === 0) return null;
 
   return (
@@ -23,7 +31,7 @@ export default function CategoryNav({ categories }: { categories: Category[] }) 
         </h2>
         <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {categories.map((category) => {
-            const count = listProductsByCategory(category.slug).length;
+            const count = countBySlug.get(category.slug) ?? 0;
             return (
               <Link
                 key={category.slug}

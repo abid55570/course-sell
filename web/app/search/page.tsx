@@ -18,8 +18,8 @@ export default async function SearchPage({
 }) {
   const { q = '' } = await searchParams;
   const query = q.trim();
-  const results = searchProducts(query);
-  const categories = listCategories();
+  const results = await searchProducts(query);
+  const categories = await listCategories();
 
   return (
     <main className="bg-canvas px-5 py-10 sm:px-10 lg:px-12">

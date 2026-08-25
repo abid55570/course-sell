@@ -2,21 +2,49 @@ import { describe, it, expect } from 'vitest';
 import fs from 'node:fs';
 import path from 'node:path';
 import {
-  listProducts,
-  getProduct,
-  listBundles,
-  getBundle,
-  getPairFor,
-  getSetFor,
-  listCategories,
-  listProductsByCategory,
-  listFeatured,
+  listProducts as loadProducts,
+  listBundles as loadBundles,
+  listCategories as loadCategories,
+  listFeatured as loadFeatured,
+  getPricingLadder,
   groupProductsByCategory,
-  PRICING_LADDER,
   type ProductSlug,
   type Product,
   type Category,
 } from '@/lib/catalog';
+
+/**
+ * This suite asserts on catalog DATA — that every product has a disclaimer,
+ * that pairings resolve, that no category invents a colour — not on the read
+ * path that fetches it. The accessors are async now that the catalog lives in
+ * the database, so the whole catalog is resolved once here, through the real
+ * accessors, and the assertions below stay synchronous.
+ *
+ * The read path itself is covered by tests/catalog-loader.test.ts.
+ */
+const [ALL_PRODUCTS, ALL_BUNDLES, ALL_CATEGORIES, ALL_FEATURED, PRICING_LADDER] = await Promise.all([
+  loadProducts(),
+  loadBundles(),
+  loadCategories(),
+  loadFeatured(),
+  getPricingLadder(),
+]);
+
+const listProducts = () => ALL_PRODUCTS;
+const listBundles = () => ALL_BUNDLES;
+const listCategories = () => ALL_CATEGORIES;
+const listFeatured = () => ALL_FEATURED;
+const getProduct = (slug: string) => ALL_PRODUCTS.find((p) => p.slug === slug);
+const getBundle = (slug: string) => ALL_BUNDLES.find((b) => b.slug === slug);
+const listProductsByCategory = (slug: string) => ALL_PRODUCTS.filter((p) => p.category.slug === slug);
+const getPairFor = (slug: string) => {
+  const product = getProduct(slug);
+  return product?.pairSlug ? getProduct(product.pairSlug) : undefined;
+};
+const getSetFor = (slug: string) => {
+  const product = getProduct(slug);
+  return product?.setSlug ? getProduct(product.setSlug) : undefined;
+};
 
 // Renamed from ALL_SLUGS: the catalog now holds 84 products (the six launch
 // "OS" systems below plus 75 imported guides + their 3 full-set products —

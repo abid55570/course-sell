@@ -26,6 +26,9 @@ app.use(cookieParser());
 
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/courses', require('./routes/courses'));
+// Must precede /api/catalog: routes/catalog.js ends in a `/:slug` catch-all,
+// which would otherwise swallow /api/catalog/storefront as a slug lookup.
+app.use('/api/catalog/storefront', require('./routes/catalog-storefront'));
 app.use('/api/catalog', require('./routes/catalog'));
 app.use('/api/orders', require('./routes/orders'));
 app.use('/api/video', require('./routes/video'));

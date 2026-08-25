@@ -12,7 +12,16 @@ vi.mock('next/navigation', () => ({
 
 import CheckoutPage from '@/app/checkout/page';
 import CheckoutForm from '@/components/checkout/CheckoutForm';
-import { getProduct, getBundle } from '@/lib/catalog';
+import { listProducts as loadProducts, listBundles as loadBundles } from '@/lib/catalog';
+/**
+ * The catalog accessors are async now that the catalog lives in the database.
+ * This suite iterates the catalog at module scope, so it resolves it once here
+ * with a top-level await and keeps its assertions synchronous. The read path
+ * itself is covered by tests/catalog-loader.test.ts.
+ */
+const [ALL_PRODUCTS, ALL_BUNDLES] = await Promise.all([loadProducts(), loadBundles()]);
+const getProduct = (slug: string) => ALL_PRODUCTS.find((p) => p.slug === slug);
+const getBundle = (slug: string) => ALL_BUNDLES.find((b) => b.slug === slug);
 import { formatRupees } from '@/lib/format';
 
 describe('CheckoutPage', () => {

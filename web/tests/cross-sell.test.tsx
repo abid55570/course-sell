@@ -3,7 +3,29 @@ import '@testing-library/jest-dom/vitest';
 import { render } from '@testing-library/react';
 
 import CrossSell from '@/components/product/CrossSell';
-import { getProduct, getPairFor, listProducts, findPairBundle } from '@/lib/catalog';
+import { listProducts as loadProducts, listBundles as loadBundles } from '@/lib/catalog';
+/**
+ * The catalog accessors are async now that the catalog lives in the database.
+ * This suite iterates the catalog at module scope, so it resolves it once here
+ * with a top-level await and keeps its assertions synchronous. The read path
+ * itself is covered by tests/catalog-loader.test.ts.
+ */
+const [ALL_PRODUCTS, ALL_BUNDLES] = await Promise.all([loadProducts(), loadBundles()]);
+const listProducts = () => ALL_PRODUCTS;
+const getProduct = (slug: string) => ALL_PRODUCTS.find((p) => p.slug === slug);
+const getPairFor = (slug: string) => {
+  const product = getProduct(slug);
+  return product?.pairSlug ? getProduct(product.pairSlug) : undefined;
+};
+const findPairBundle = (a: string, b: string) => {
+  const wanted = [a, b].sort().join('|');
+  return ALL_BUNDLES.find((bundle) => {
+    if (!bundle.availableToday) return false;
+    const parts = bundle.components.map((c) => c.slug).filter((s): s is string => Boolean(s));
+    if (parts.length !== 2) return false;
+    return parts.slice().sort().join('|') === wanted;
+  });
+};
 
 /**
  * The bug this guards against shipped to production and sat on the six
@@ -21,12 +43,12 @@ describe('CrossSell pair pricing', () => {
     return [...text.matchAll(/₹([\d,]+)/g)].map((m) => Number(m[1].replace(/,/g, '')));
   }
 
-  it('never advertises a bundle that costs more than buying the two separately', () => {
+  it('never advertises a bundle that costs more than buying the two separately', async () => {
     for (const product of listProducts()) {
       const pair = getPairFor(product.slug);
       if (!pair) continue;
 
-      const { container } = render(<CrossSell product={product} pair={pair} />);
+      const { container } = render(<CrossSell product={product!} pair={pair!} bundle={findPairBundle(product!.slug, pair!.slug)} />);
       const text = container.textContent ?? '';
       const bundle = findPairBundle(product.slug, pair.slug);
 
@@ -54,13 +76,13 @@ describe('CrossSell pair pricing', () => {
     }
   });
 
-  it('quotes the two products own prices, never a catalog-wide constant', () => {
+  it('quotes the two products own prices, never a catalog-wide constant', async () => {
     // Glow-Up + Social is the one pairing with a shipped bundle today.
     const product = getProduct('glow-up-os');
     const pair = getProduct('social-os');
     expect(product && pair).toBeTruthy();
 
-    const { container } = render(<CrossSell product={product!} pair={pair!} />);
+    const { container } = render(<CrossSell product={product!} pair={pair!} bundle={findPairBundle(product!.slug, pair!.slug)} />);
     const text = container.textContent ?? '';
     const separately = product!.price + pair!.price;
 

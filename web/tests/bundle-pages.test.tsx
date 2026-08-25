@@ -1,12 +1,20 @@
 import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import BundlePage, { generateStaticParams } from '@/app/bundle/[slug]/page';
-import { listBundles } from '@/lib/catalog';
+import { listBundles as loadBundles } from '@/lib/catalog';
+/**
+ * The catalog accessors are async now that the catalog lives in the database.
+ * This suite iterates the catalog at module scope, so it resolves it once here
+ * with a top-level await and keeps its assertions synchronous. The read path
+ * itself is covered by tests/catalog-loader.test.ts.
+ */
+const ALL_BUNDLES = await loadBundles();
+const listBundles = () => ALL_BUNDLES;
 import { formatRupees } from '@/lib/format';
 
 describe('generateStaticParams', () => {
-  it('generates a static param for every named bundle, available or not', () => {
-    const params = generateStaticParams();
+  it('generates a static param for every named bundle, available or not', async () => {
+    const params = await generateStaticParams();
     const slugs = params.map((p) => p.slug).sort();
     expect(slugs).toEqual(listBundles().map((b) => b.slug).sort());
   });

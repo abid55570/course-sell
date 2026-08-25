@@ -108,7 +108,7 @@ export default async function TermsPage() {
         <p>
           Email {SUPPORT_EMAIL} with any question about these terms.
           <br />
-          Registered business address: REPLACE_BUSINESS_ADDRESS.
+          Operating from Uttar Pradesh, India.
         </p>
       </div>
     </LegalLayout>

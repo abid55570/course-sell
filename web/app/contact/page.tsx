@@ -53,9 +53,7 @@ export default async function ContactPage() {
         <p>
           Registered business name: REPLACE_LEGAL_ENTITY_NAME.
           <br />
-          Registered business address: REPLACE_BUSINESS_ADDRESS.
-          <br />
-          Phone: REPLACE_SUPPORT_PHONE.
+          Operating from Uttar Pradesh, India.
         </p>
       </div>
     </LegalLayout>

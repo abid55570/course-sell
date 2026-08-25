@@ -93,7 +93,7 @@ export default async function PrivacyPage() {
         <p>
           Email {SUPPORT_EMAIL} with any privacy question.
           <br />
-          Registered business address: REPLACE_BUSINESS_ADDRESS.
+          Operating from Uttar Pradesh, India.
         </p>
       </div>
     </LegalLayout>

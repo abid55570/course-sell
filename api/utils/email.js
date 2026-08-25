@@ -27,7 +27,7 @@ async function sendMail({ to, subject, html, text, replyTo }) {
     console.log('[email] would send', { to, subject });
     return { skipped: true, to, subject, html };
   }
-  const fromName = process.env.SMTP_FROM_NAME || 'Course Hub';
+  const fromName = process.env.SMTP_FROM_NAME || 'Dropdesk';
   return t.sendMail({
     from: `"${fromName}" <${process.env.SMTP_USER}>`,
     to, subject, text, html, replyTo,

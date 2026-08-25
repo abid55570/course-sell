@@ -64,11 +64,18 @@ test('markOrderPaid: a catalog order sends the delivery email', async () => {
   } finally { s.restore(); }
 });
 
-test('markOrderPaid: a catalog order claims no download it does not have', async () => {
-  // catalog_products has no delivery columns yet, so both flags must be false.
-  // The delivery template reads them to decide between linking a file and
-  // telling the buyer honestly that the download is not ready.
-  const s = stub({ order: CATALOG_ORDER, item: { slug: 'glow-up-os', title: 'Glow-Up OS' } });
+test('markOrderPaid: a catalog order with no file claims no download', async () => {
+  // The delivery template reads these flags to decide between linking a file
+  // and telling the buyer honestly that the download is not ready. A row with
+  // nothing attached must take the honest branch.
+  const s = stub({
+    order: CATALOG_ORDER,
+    item: {
+      slug: 'glow-up-os', title: 'Glow-Up OS',
+      pdf_file: null, drive_link: null,
+      send_pdf_in_email: false, send_drive_in_email: false,
+    },
+  });
   try {
     await markOrderPaid('ORD-CAT1', {});
     const { course } = s.sent[0];
@@ -76,6 +83,43 @@ test('markOrderPaid: a catalog order claims no download it does not have', async
     assert.equal(course.send_drive_in_email, false);
     assert.equal(course.pdf_file, null);
     assert.equal(course.drive_link, null);
+  } finally { s.restore(); }
+});
+
+test('markOrderPaid: a catalog order WITH a file passes it through to delivery', async () => {
+  // Migration 012 gave catalog_products its own delivery fields. Before that a
+  // paid catalog order could never be delivered automatically, whatever an
+  // admin uploaded, because there was nowhere to record the file.
+  const s = stub({
+    order: CATALOG_ORDER,
+    item: {
+      slug: 'glow-up-os', title: 'Glow-Up OS',
+      pdf_file: '/uploads/pdfs/glow-up-os.pdf', drive_link: null,
+      send_pdf_in_email: true, send_drive_in_email: false,
+    },
+  });
+  try {
+    await markOrderPaid('ORD-CAT1', {});
+    const { course } = s.sent[0];
+    assert.equal(course.pdf_file, '/uploads/pdfs/glow-up-os.pdf');
+    assert.equal(course.send_pdf_in_email, true);
+  } finally { s.restore(); }
+});
+
+test('markOrderPaid: a catalog order with a Drive link passes that through too', async () => {
+  const s = stub({
+    order: CATALOG_ORDER,
+    item: {
+      slug: 'glow-up-os', title: 'Glow-Up OS',
+      pdf_file: null, drive_link: 'https://drive.google.com/xyz',
+      send_pdf_in_email: false, send_drive_in_email: true,
+    },
+  });
+  try {
+    await markOrderPaid('ORD-CAT1', {});
+    const { course } = s.sent[0];
+    assert.equal(course.drive_link, 'https://drive.google.com/xyz');
+    assert.equal(course.send_drive_in_email, true);
   } finally { s.restore(); }
 });
 

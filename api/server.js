@@ -41,7 +41,7 @@ app.use('/api/admin/video', require('./routes/admin-video'));
 
 app.get('/api/site-info', (req, res) => {
   res.json({
-    site_name: process.env.SITE_NAME || 'My Course Hub',
+    site_name: process.env.SITE_NAME || 'Dropdesk',
     site_url: process.env.SITE_URL || '',
     support_email: process.env.SUPPORT_EMAIL || process.env.SMTP_USER || '',
     upi_id: process.env.UPI_ID || '',

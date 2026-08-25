@@ -45,23 +45,29 @@ async function markOrderPaid(orderId, { paymentId = null, actor = 'razorpay' } =
  * cannot find them — without this branch a paying buyer would get no email at
  * all, which is worse than the current behaviour.
  *
- * catalog_products has no delivery columns yet: no product files ship with the
- * catalog, so there is no PDF path or Drive link to send. The delivery
- * template already handles that honestly — with both flags false it tells the
- * buyer their download is not ready and to reply — so this passes them false
- * rather than linking a file that does not exist.
+ * Delivery reads the row's own pdf_file / drive_link (migration 012). Until an
+ * admin attaches one, both send_* flags stay false and the shared template
+ * tells the buyer their download is not ready rather than linking a file that
+ * does not exist.
  */
 async function fulfilCatalog(order) {
   const { sendOrderCompletedEmail } = require('../utils/email');
-  const item = await db.get('SELECT slug, title FROM catalog_products WHERE id = $1', [order.catalog_product_id]);
+  const item = await db.get(
+    `SELECT slug, title, pdf_file, drive_link, send_pdf_in_email, send_drive_in_email
+       FROM catalog_products WHERE id = $1`,
+    [order.catalog_product_id]
+  );
   if (!item) return;
+  // Shaped like a `courses` row so the shared delivery template can render it.
+  // When no file is attached, both flags are false and the template says so
+  // honestly rather than linking a download that does not exist.
   const courseLike = {
     slug: item.slug,
     title: item.title,
-    send_pdf_in_email: false,
-    pdf_file: null,
-    send_drive_in_email: false,
-    drive_link: null,
+    pdf_file: item.pdf_file,
+    drive_link: item.drive_link,
+    send_pdf_in_email: item.send_pdf_in_email,
+    send_drive_in_email: item.send_drive_in_email,
     email_template_html: null,
   };
   try {

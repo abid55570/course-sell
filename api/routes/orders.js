@@ -245,16 +245,17 @@ router.get('/:orderId', async (req, res, next) => {
     // no product title on it.
     if (order.catalog_product_id) {
       const item = await db.get(
-        'SELECT title, slug FROM catalog_products WHERE id = $1',
+        `SELECT title, slug, drive_link, pdf_file, send_drive_in_email, send_pdf_in_email
+           FROM catalog_products WHERE id = $1`,
         [order.catalog_product_id]);
       return res.json({
         ...base,
         course_title: item ? item.title : null,
         course_slug: item ? item.slug : null,
-        // No delivery columns on catalog_products yet: no product files ship
-        // with the catalog, so there is nothing to link here.
-        drive_link: null,
-        pdf_file: null,
+        // Same gating as the courses branch below: a link only appears once the
+        // order is paid AND an admin has switched that delivery method on.
+        drive_link: isCompleted && item && item.send_drive_in_email ? item.drive_link : null,
+        pdf_file: isCompleted && item && item.send_pdf_in_email ? item.pdf_file : null,
       });
     }
 
@@ -274,13 +275,19 @@ router.get('/:orderId', async (req, res, next) => {
 router.get('/:orderId/pdf', async (req, res, next) => {
   try {
     const order = await db.get(
-      // LEFT JOIN: a storefront catalog order has no `courses` row, and an
-      // inner join made it 404 as "we cannot find that order" — untrue, and
-      // alarming for someone who has just paid. Left-joined, it falls through
-      // to the "download is not switched on yet" message below, which is what
-      // is actually the case.
-      `SELECT o.status, o.catalog_product_id, c.pdf_file, c.send_pdf_in_email, c.title FROM orders o
-       LEFT JOIN courses c ON c.id = o.course_id WHERE o.order_id = $1`,
+      // LEFT JOIN both product tables: an order references exactly one of them,
+      // and an inner join on `courses` alone made every catalog order 404 as
+      // "we cannot find that order" — untrue, and alarming for someone who has
+      // just paid. COALESCE picks whichever row the order actually points at,
+      // so the gating below reads the same fields either way.
+      `SELECT o.status,
+              COALESCE(c.pdf_file, cp.pdf_file)                   AS pdf_file,
+              COALESCE(c.send_pdf_in_email, cp.send_pdf_in_email) AS send_pdf_in_email,
+              COALESCE(c.title, cp.title)                         AS title
+         FROM orders o
+         LEFT JOIN courses c ON c.id = o.course_id
+         LEFT JOIN catalog_products cp ON cp.id = o.catalog_product_id
+        WHERE o.order_id = $1`,
       [req.params.orderId]
     );
     if (!order) return res.status(404).type('html').send(

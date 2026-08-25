@@ -24,6 +24,7 @@ const COLS = `
   id, slug, kind, title, short_title, tagline, price, anchor_price,
   category_slug, category_label, accent_name, accent_hex, tags,
   is_published, featured, available_today, pair_slug, set_slug, content,
+  pdf_file, drive_link, send_pdf_in_email, send_drive_in_email,
   created_at, updated_at`;
 
 /**
@@ -50,6 +51,14 @@ const EDITABLE = {
   available_today: (v) => v === true || v === 'true' || v === 1 || v === '1',
   pair_slug: (v) => (v === null || v === '' ? null : String(v)),
   set_slug: (v) => (v === null || v === '' ? null : String(v)),
+  // Delivery. A row with no file must never claim a download, so the send_*
+  // flags are meaningless without the matching field — see the guard in the
+  // PUT handler, which refuses that combination rather than emailing a buyer
+  // a link to nothing.
+  pdf_file: (v) => (v === null || v === '' ? null : String(v)),
+  drive_link: (v) => (v === null || v === '' ? null : String(v)),
+  send_pdf_in_email: (v) => v === true || v === 'true' || v === 1 || v === '1',
+  send_drive_in_email: (v) => v === true || v === 'true' || v === 1 || v === '1',
 };
 
 /**
@@ -119,6 +128,21 @@ router.put('/:id', async (req, res, next) => {
     const built = buildUpdate(req.body || {});
     if (built === null) return res.status(400).json({ error: 'no editable fields in request' });
     if (built.error) return res.status(400).json({ error: built.error });
+
+    // Never let a row promise a download it does not have. The flags and the
+    // fields can arrive in separate requests, so the check is against the row
+    // as it will be after this update, not against the body alone.
+    const current = await db.get(
+      'SELECT pdf_file, drive_link, send_pdf_in_email, send_drive_in_email FROM catalog_products WHERE id = $1',
+      [req.params.id]
+    );
+    const after = (field) => (field in (req.body || {}) ? EDITABLE[field](req.body[field]) : current[field]);
+    if (after('send_pdf_in_email') && !after('pdf_file')) {
+      return res.status(400).json({ error: 'send_pdf_in_email requires a pdf_file' });
+    }
+    if (after('send_drive_in_email') && !after('drive_link')) {
+      return res.status(400).json({ error: 'send_drive_in_email requires a drive_link' });
+    }
 
     built.params.push(req.params.id);
     const result = await db.run(

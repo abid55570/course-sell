@@ -2,13 +2,15 @@
   "name": "dropdesk",
   "private": true,
   "version": "1.0.0",
-  "description": "Dropdesk — digital products store",
+  "description": "Dropdesk \u2014 digital products store",
   "scripts": {
     "dev:api": "npm --prefix api run dev",
     "dev:web": "npm --prefix web run dev",
     "dev": "concurrently -n api,web -c blue,magenta \"npm run dev:api\" \"npm run dev:web\"",
     "test": "npm --prefix api test",
-    "migrate": "npm --prefix api run migrate"
+    "migrate": "npm --prefix api run migrate",
+    "check:ready": "node scripts/check-ready.js",
+    "migrate:catalog": "npm --prefix api run migrate:catalog"
   },
   "devDependencies": {
     "concurrently": "^9.1.0"

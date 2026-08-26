@@ -86,7 +86,6 @@ if (!env) {
 } else {
   const EXAMPLE_VALUES = {
     SUPPORT_EMAIL: ['your-email@gmail.com', ''],
-    ADMIN_EMAIL: ['admin@example.com', ''],
     SITE_NAME: ['My Course Hub', ''],
     SMTP_FROM_NAME: ['My Course Hub', 'Course Hub'],
   };
@@ -96,6 +95,20 @@ if (!env) {
     } else {
       passes.push(`${key} is set to a real value`);
     }
+  }
+
+  // ADMIN_EMAIL is the admin panel's login identifier, not a delivery address —
+  // nothing is ever sent to it, so it needs no mailbox and is not a blocker.
+  // It is still worth changing: `admin@example.com` is the first username
+  // anyone would try, which leaves ADMIN_PASSWORD doing all the work.
+  if (['admin@example.com', ''].includes(env.ADMIN_EMAIL ?? '')) {
+    warnings.push(
+      'ADMIN_EMAIL is the default admin login (admin@example.com) — no mailbox needed, ' +
+        'but a guessable username leaves the password as the only barrier. ' +
+        'Change it and re-run `npm --prefix api run init-admin`'
+    );
+  } else {
+    passes.push('ADMIN_EMAIL is not the default login');
   }
 
   // Outbound email. Without it utils/email.js logs "[email] would send" and

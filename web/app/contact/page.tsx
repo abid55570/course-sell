@@ -51,7 +51,7 @@ export default async function ContactPage() {
       <div>
         <h2>Business details</h2>
         <p>
-          Registered business name: REPLACE_LEGAL_ENTITY_NAME.
+          Registered business name: Axilrise Private Limited.
           <br />
           Operating from Uttar Pradesh, India.
         </p>

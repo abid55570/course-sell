@@ -12,8 +12,9 @@
       <a class="brand" href="/admin/dashboard"><span class="logo"></span> <span>Admin</span></a>
       <nav class="admin-nav mt-16">
         <a data-tab="overview" class="active">Overview</a>
-        <a data-tab="courses">Courses</a>
-        <a data-tab="products">Products</a>
+        <a data-tab="catalog">Catalogue</a>
+        <a data-tab="courses">Courses <span class="text-muted" style="font-size:11px">(legacy)</span></a>
+        <a data-tab="products">Products <span class="text-muted" style="font-size:11px">(legacy)</span></a>
         <a data-tab="templates">Video Templates</a>
         <a data-tab="orders">Orders</a>
         <a data-tab="transactions">Transactions</a>
@@ -34,16 +35,26 @@
         <div class="card body" style="padding:22px">
           <h3 style="margin-top:0">Quick start</h3>
           <ul class="text-muted">
-            <li>Add a new course from the <a data-tab-link="courses" style="cursor:pointer;color:#a5b4fc">Courses</a> tab. Toggle whether each course's PDF, Drive link, or custom email template is sent on payment confirmation.</li>
-            <li>Verify UPI payments and confirm orders in the <a data-tab-link="orders" style="cursor:pointer;color:#a5b4fc">Orders</a> tab. The customer gets the access email automatically.</li>
+            <li>Edit prices, copy and delivery files in the <a data-tab-link="catalog" style="cursor:pointer;color:#a5b4fc">Catalogue</a> tab. That is what the storefront sells; the Courses and Products tabs are the legacy table and no longer drive the site.</li>
+            <li>Orders paid over WhatsApp arrive as <strong>Submitted</strong> with the buyer's payment reference. Check it, then press Confirm in the <a data-tab-link="orders" style="cursor:pointer;color:#a5b4fc">Orders</a> tab &mdash; that sends the receipt and unlocks the download.</li>
             <li>Inspect the audit trail in the <a data-tab-link="transactions" style="cursor:pointer;color:#a5b4fc">Transactions</a> tab.</li>
           </ul>
         </div>
       </section>
 
+      <section id="tab-catalog" class="hidden">
+        <div class="flex-between mb-16">
+          <div>
+            <p class="text-muted" style="margin:0">Everything the storefront sells. Edits appear on the site within a few seconds.</p>
+          </div>
+          <input id="catalogFilter" class="input" placeholder="Filter by title or slug&hellip;" style="max-width:280px" />
+        </div>
+        <div id="catalogTable"></div>
+      </section>
+
       <section id="tab-courses" class="hidden">
         <div class="flex-between mb-16">
-          <p class="text-muted" style="margin:0">Courses (published and drafts).</p>
+          <p class="text-muted" style="margin:0">Legacy table. The storefront does not read this &mdash; use Catalogue. Kept for the one-time tools and the carousel editor.</p>
           <button id="addCourseBtn" class="btn btn-primary">+ New course</button>
         </div>
         <div id="coursesTable"></div>
@@ -51,7 +62,7 @@
 
       <section id="tab-products" class="hidden">
         <div class="flex-between mb-16">
-          <p class="text-muted" style="margin:0">Digital products (ebooks, packs, files — delivered on payment, same as courses).</p>
+          <p class="text-muted" style="margin:0">Legacy table. The storefront does not read this &mdash; use Catalogue.</p>
           <button id="addProductBtn" class="btn btn-primary">+ New product</button>
         </div>
         <div id="productsTable"></div>
@@ -82,6 +93,7 @@
 
   <div id="modalRoot"></div>
 
+  <script src="/js/admin-catalog.js"></script>
   <script src="/js/admin.js"></script>
 </body>
 </html>

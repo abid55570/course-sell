@@ -34,8 +34,8 @@ function pct(orig, disc) {
   return 0;
 }
 
-const TABS = ['overview', 'courses', 'products', 'templates', 'orders', 'transactions'];
-const TAB_TITLES = { overview: 'Overview', courses: 'Courses', products: 'Products', templates: 'Video Templates', orders: 'Orders', transactions: 'Transactions' };
+const TABS = ['overview', 'catalog', 'courses', 'products', 'templates', 'orders', 'transactions'];
+const TAB_TITLES = { overview: 'Overview', catalog: 'Catalogue', courses: 'Courses (legacy)', products: 'Products', templates: 'Video Templates', orders: 'Orders', transactions: 'Transactions' };
 
 function activateTab(name) {
   TABS.forEach((t) => {
@@ -45,6 +45,7 @@ function activateTab(name) {
   });
   document.getElementById('tabTitle').textContent = TAB_TITLES[name];
   if (name === 'overview') loadStats();
+  if (name === 'catalog') loadCatalog();
   if (name === 'courses') loadCourses();
   if (name === 'products') loadProducts();
   if (name === 'templates') loadVideoTemplates();
@@ -559,6 +560,7 @@ async function init() {
   document.querySelectorAll('[data-tab-link]').forEach((el) => {
     el.addEventListener('click', () => activateTab(el.dataset.tabLink));
   });
+  document.getElementById('catalogFilter')?.addEventListener('input', renderCatalog);
   document.getElementById('addCourseBtn')?.addEventListener('click', () => openCourseModal(null, 'course'));
   document.getElementById('addProductBtn')?.addEventListener('click', () => openCourseModal(null, 'product'));
   document.getElementById('addTemplateBtn')?.addEventListener('click', () => openTemplateModal(null));

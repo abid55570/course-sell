@@ -199,3 +199,13 @@ test('delivery email keeps the honest notice when there is no file', () => {
   assert.match(html, /not ready yet/i);
   assert.match(html, new RegExp(BRAND.primary, 'i'));
 });
+
+test('delivery email lead-in agrees with whether there is a download', () => {
+  // "Here is your download:" immediately above "your download is not ready
+  // yet" reads as a mistake to the one buyer who most needs to trust the
+  // sentence after it.
+  assert.match(renderSample(), /Here is your download/);
+  const none = renderSample({ course: { pdf_file: null, send_pdf_in_email: false }, includePdf: false });
+  assert.doesNotMatch(none, /Here is your download/);
+  assert.match(none, /not ready yet/i);
+});

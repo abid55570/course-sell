@@ -58,7 +58,7 @@ const DEFAULT_COMPLETED_TEMPLATE = `
 
    <tr><td style="padding:20px 32px 0;font-family:${FONT_BODY};font-size:15px;line-height:1.6;color:#0B1020">
      <p style="margin:0 0 12px">Hi {{buyer_name}},</p>
-     <p style="margin:0 0 4px">Your payment for <strong style="color:#0B1020">{{product_title}}</strong> went through. Here is your download:</p>
+     <p style="margin:0 0 4px">Your payment for <strong style="color:#0B1020">{{product_title}}</strong> went through.{{download_lead}}</p>
    </td></tr>
 
    <tr><td style="padding:16px 32px 0">{{resources_block}}</td></tr>
@@ -151,6 +151,12 @@ function renderCompletedEmail({ course, order, includePdf, includeDrive, customT
     ? customTemplate
     : DEFAULT_COMPLETED_TEMPLATE;
   const resources = buildResourcesBlock(course, order, { includePdf, includeDrive });
+  // The lead-in has to agree with the block beneath it: "Here is your
+  // download:" immediately above "your download is not ready yet" reads as a
+  // mistake to the one buyer who most needs to trust the next sentence.
+  const hasDownload =
+    (includeDrive && course.drive_link) || (includePdf && course.pdf_file);
+  const downloadLead = hasDownload ? ' Here is your download:' : '';
   const SENTINEL = 'RESOURCES_BLOCK';
   const withSentinel = String(template).replace(/\{\{\s*resources_block\s*\}\}/g, SENTINEL);
   const textData = {
@@ -163,6 +169,7 @@ function renderCompletedEmail({ course, order, includePdf, includeDrive, customT
     order_id: order.order_id,
     amount: order.amount,
     drive_link: includeDrive ? (course.drive_link || '') : '',
+    download_lead: downloadLead,
     pdf_url: includePdf && course.pdf_file
       ? `${(process.env.SITE_URL || '').replace(/\/$/, '')}/api/orders/${order.order_id}/pdf`
       : '',

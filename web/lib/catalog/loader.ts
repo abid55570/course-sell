@@ -16,15 +16,55 @@ import { API_BASE } from '../env';
 
 export type CatalogPayload = { products: Product[]; bundles: Bundle[] };
 
+const ENDPOINT = '/api/catalog/storefront';
+
+/**
+ * Every failure here stops a build, so each message names the URL it tried and
+ * the most likely cause. "catalog fetch failed: 404" on its own sent someone
+ * looking for a bug in this file when the actual problem was an API process
+ * started before this route existed.
+ */
+function diagnose(status: number): string {
+  const url = `${API_BASE}${ENDPOINT}`;
+  if (status === 404) {
+    // The signature of a stale API: routes/catalog.js's `/:slug` handler
+    // answers this path and reports "no product with slug 'storefront'".
+    return (
+      `The API at ${url} returned 404. That usually means it is running code from ` +
+      'before this route existed — restart it (`npm --prefix api start`) and build again. ' +
+      'If it is already current, check that server.js mounts /api/catalog/storefront ' +
+      'BEFORE /api/catalog, whose /:slug handler would otherwise swallow it.'
+    );
+  }
+  if (status >= 500) {
+    return (
+      `The API at ${url} returned ${status}. It is running but the request failed — ` +
+      'usually the database being unreachable. Check DATABASE_URL and that Postgres is up.'
+    );
+  }
+  return `The API at ${url} returned ${status}.`;
+}
+
 export async function loadCatalog(): Promise<CatalogPayload> {
-  const res = await fetch(`${API_BASE}/api/catalog/storefront`, {
-    next: { tags: ['catalog'], revalidate: 3600 },
-  });
+  let res: Response;
+  try {
+    res = await fetch(`${API_BASE}${ENDPOINT}`, {
+      next: { tags: ['catalog'], revalidate: 3600 },
+    });
+  } catch (cause) {
+    // A refused connection is the commonest cause of a failed build here, and
+    // the raw fetch error does not mention the API at all.
+    throw new Error(
+      `Could not reach the API at ${API_BASE}${ENDPOINT}. The storefront cannot ` +
+        'build without it. Start it with `npm --prefix api start`, or set API_BASE ' +
+        `in web/.env.local if it runs elsewhere. (${(cause as Error).message})`
+    );
+  }
 
   if (!res.ok) {
     // Fail loudly. Returning an empty catalog here would build a storefront
     // with no products in it and nothing anywhere saying why.
-    throw new Error(`catalog fetch failed: ${res.status} ${res.statusText}`);
+    throw new Error(diagnose(res.status));
   }
 
   const data = (await res.json()) as Partial<CatalogPayload> | null;

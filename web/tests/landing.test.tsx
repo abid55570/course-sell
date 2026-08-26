@@ -11,7 +11,37 @@ import PricingLadder from '@/components/landing/PricingLadder';
 import BundlesList from '@/components/landing/BundlesList';
 import Faq from '@/components/landing/Faq';
 import Footer from '@/components/landing/Footer';
-import { listProducts, listCategories, listBundles, PRICING_LADDER } from '@/lib/catalog';
+import {
+  listProducts as loadProducts,
+  listCategories as loadCategories,
+  listBundles as loadBundles,
+  getPricingLadder,
+} from '@/lib/catalog';
+/**
+ * The catalog accessors are async now that the catalog lives in the database.
+ * This suite iterates the catalog at module scope, so it resolves it once here
+ * with a top-level await and keeps its assertions synchronous. The read path
+ * itself is covered by tests/catalog-loader.test.ts.
+ */
+const [ALL_PRODUCTS, ALL_CATEGORIES, ALL_BUNDLES, PRICING_LADDER] = await Promise.all([
+  loadProducts(),
+  loadCategories(),
+  loadBundles(),
+  getPricingLadder(),
+]);
+const listProducts = () => ALL_PRODUCTS;
+const listCategories = () => ALL_CATEGORIES;
+const listBundles = () => ALL_BUNDLES;
+
+// CategoryNav, PricingLadder, BundlesList and Footer are presentational now:
+// the page resolves the catalog and hands these down. The tests do the same.
+const PRODUCTS_BY_SLUG = new Map(ALL_PRODUCTS.map((p) => [p.slug, p]));
+const FOOTER_PROPS = { productCount: ALL_PRODUCTS.length, categories: ALL_CATEGORIES };
+const LADDER_PROPS = {
+  pricingLadder: PRICING_LADDER,
+  everythingBundle: ALL_BUNDLES.find((b) => b.slug === 'everything-bundle'),
+  pairBundle: ALL_BUNDLES.find((b) => b.slug === 'the-complete-man'),
+};
 import { formatRupees } from '@/lib/format';
 
 describe('Hero', () => {
@@ -118,8 +148,8 @@ describe('InstallSteps', () => {
 });
 
 describe('PricingLadder', () => {
-  it('shows the single, pair and all-products prices', () => {
-    render(<PricingLadder />);
+  it('shows the single, pair and all-products prices', async () => {
+    render(<PricingLadder {...LADDER_PROPS} />);
     expect(screen.getByText(formatRupees(PRICING_LADDER.single))).toBeDefined();
     expect(screen.getByText(formatRupees(PRICING_LADDER.pair))).toBeDefined();
     expect(screen.getByText(formatRupees(PRICING_LADDER.allSix))).toBeDefined();
@@ -127,13 +157,16 @@ describe('PricingLadder', () => {
 });
 
 describe('BundlesList', () => {
-  it('lists every named bundle and marks the unavailable ones', () => {
-    render(<BundlesList />);
+  it('lists every named bundle, badging exactly the unavailable ones', async () => {
+    render(<BundlesList bundles={ALL_BUNDLES} productsBySlug={PRODUCTS_BY_SLUG} />);
     for (const bundle of listBundles()) {
       expect(screen.getAllByText(bundle.title).length).toBeGreaterThan(0);
     }
+    // All six are sellable today, so the badge should appear zero times. The
+    // assertion is against the real count either way, so it keeps holding if a
+    // future bundle ships incomplete.
     const unavailable = listBundles().filter((b) => !b.availableToday);
-    expect(screen.getAllByText('Not available yet').length).toBe(unavailable.length);
+    expect(screen.queryAllByText('Not available yet').length).toBe(unavailable.length);
   });
 });
 
@@ -157,9 +190,9 @@ describe('no rendered landing section uses shadcn\'s muted namespace', () => {
         <Hero />
         <ProductGrid products={listProducts()} />
         <InstallSteps />
-        <PricingLadder />
-        <BundlesList />
-        <Footer />
+        <PricingLadder {...LADDER_PROPS} />
+        <BundlesList bundles={ALL_BUNDLES} productsBySlug={PRODUCTS_BY_SLUG} />
+        <Footer {...FOOTER_PROPS} />
       </>
     );
     expect(container.innerHTML).not.toContain('text-muted');
@@ -181,10 +214,10 @@ describe('no rendered landing section uses shadcn\'s muted namespace', () => {
 // now the only place a count appears, so the "derived, never hardcoded" rule
 // is enforced here instead of being lost with the hero's old spec line.
 describe('Footer catalog counts', () => {
-  it('derives its product and category counts from the catalog', () => {
+  it('derives its product and category counts from the catalog', async () => {
     const products = listProducts();
     const categories = listCategories();
-    const { container } = render(<Footer />);
+    const { container } = render(<Footer {...FOOTER_PROPS} />);
     const text = (container.textContent ?? '').replace(/\s+/g, ' ');
 
     expect(text).toContain(`${products.length} digital products`);

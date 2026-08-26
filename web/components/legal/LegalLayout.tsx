@@ -1,10 +1,13 @@
 import Footer from '@/components/landing/Footer';
+import type { FooterData } from '@/lib/catalog/footer-data';
 
 export default function LegalLayout({
+  footer,
   title,
   updated,
   children,
 }: {
+  footer: FooterData;
   title: string;
   updated: string;
   children: React.ReactNode;
@@ -20,7 +23,7 @@ export default function LegalLayout({
           </div>
         </div>
       </section>
-      <Footer />
+      <Footer {...footer} />
     </main>
   );
 }

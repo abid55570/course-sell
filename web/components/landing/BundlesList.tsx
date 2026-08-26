@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import type { CSSProperties } from 'react';
 import type { BundleComponent } from '@/lib/catalog';
-import { getProduct, listBundles } from '@/lib/catalog';
+import type { Bundle, Product } from '@/lib/catalog';
 import { formatRupees } from '@/lib/format';
 
 /** A left-to-right gradient stripe of every in-catalog component's accent, or
@@ -13,8 +13,15 @@ function stripeStyle(hexes: string[]): CSSProperties {
   return { backgroundImage: `linear-gradient(90deg, ${stops})` };
 }
 
-export default function BundlesList() {
-  const bundles = listBundles();
+// Synchronous: a descendant of a page the test suite awaits at the top, so it
+// takes its data already resolved rather than fetching it here.
+export default function BundlesList({
+  bundles,
+  productsBySlug,
+}: {
+  bundles: Bundle[];
+  productsBySlug: Map<string, Product>;
+}) {
 
   return (
     <section className="band-leaders px-5 py-20 sm:py-24 lg:px-12">
@@ -27,7 +34,7 @@ export default function BundlesList() {
           {bundles.map((bundle) => {
             const hexes = bundle.components
               .filter((c): c is Extract<BundleComponent, { inCatalog: true }> => c.inCatalog)
-              .map((c) => getProduct(c.slug)?.accent.hex)
+              .map((c) => productsBySlug.get(c.slug)?.accent.hex)
               .filter((hex): hex is string => Boolean(hex));
 
             return (
@@ -61,7 +68,7 @@ export default function BundlesList() {
                           aria-hidden="true"
                           className="h-2 w-2 shrink-0 rounded-full"
                           style={{
-                            backgroundColor: c.inCatalog ? getProduct(c.slug)?.accent.hex : 'var(--color-ink-soft)',
+                            backgroundColor: c.inCatalog ? productsBySlug.get(c.slug)?.accent.hex : 'var(--color-ink-soft)',
                           }}
                         />
                         {c.label}

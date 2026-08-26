@@ -1,68 +1,55 @@
-import type { Bundle, BundleSlug, Category, Product, ProductSlug } from './types';
-import { glowUpOs } from './products/glow-up-os';
-import { auraOs } from './products/aura-os';
-import { moneyOs } from './products/money-os';
-import { socialOs } from './products/social-os';
-import { studyOs } from './products/study-os';
-import { careerOs } from './products/career-os';
-import { allCharacterGuideProducts } from './products/character-guides';
-import { allTalkingToYourParentsProducts } from './products/talking-to-your-parents';
-import { allTheTenSeriesProducts } from './products/the-ten-series';
-import { bundles as bundleList } from './bundles';
+import type { Bundle, Category, Product } from './types';
+import { loadCatalog } from './loader';
 
 export * from './types';
 export { SUPPORT_EMAIL } from './config';
+export type { CatalogPayload } from './loader';
 
 /**
- * The six launch products, in README catalog order, followed by the three
- * imported guide families (40 character guides + the Codex, 12 parents
- * guides + the full set, 23 Ten Series guides + the full set — 84 products
- * total). The six launch product data files are untouched; everything after
- * them is additive.
- */
-const products: Product[] = [
-  glowUpOs,
-  auraOs,
-  moneyOs,
-  socialOs,
-  studyOs,
-  careerOs,
-  ...allCharacterGuideProducts,
-  ...allTalkingToYourParentsProducts,
-  ...allTheTenSeriesProducts,
-];
-
-const productsBySlug = new Map<ProductSlug, Product>(products.map((p) => [p.slug, p]));
-const bundlesBySlug = new Map<BundleSlug, Bundle>(bundleList.map((b) => [b.slug, b]));
-
-/**
- * The pricing ladder, computed from real catalog data rather than restated
- * as hardcoded numbers (see config.ts for why this moved here).
+ * Every accessor below is async, because the catalog lives in the database
+ * now rather than in the eleven TypeScript imports this file used to hold.
+ * The product files still exist — see ./fixture-source.ts, which is what the
+ * migration script and the test suite read — but nothing at runtime reads them.
  *
- * `single` is the real catalog-wide minimum price — ₹499, the guide price,
- * now that guides exist. It is deliberately NOT hardcoded to either 499 or
- * 999: if the cheapest product in the catalog ever changes again, this
- * keeps reading correctly without a second edit.
+ * The public names and semantics are unchanged, so call sites needed only an
+ * `await`. Every consumer is a server component, which is what makes that
+ * possible.
+ */
+
+/**
+ * The pricing ladder, still computed from real catalog data rather than
+ * restated as hardcoded numbers.
+ *
+ * `single` is the real catalog-wide minimum price — ₹499, the guide price, now
+ * that guides exist. It is deliberately NOT hardcoded to either 499 or 999: if
+ * the cheapest product in the catalog ever changes again, this keeps reading
+ * correctly without a second edit.
  *
  * `pair` and `allSix` are read off the two bundles that already carry those
- * exact ladder prices as real, shipped catalog data (The Complete Man and
- * the Everything Bundle) rather than restated as separate literals that
- * could drift out of sync with bundles.ts.
+ * exact ladder prices as real, shipped catalog data (The Complete Man and the
+ * Everything Bundle) rather than restated as separate literals that could
+ * drift out of sync.
+ *
+ * This was a module-level const until the catalog moved into the database.
+ * It is a function now because the data it reads arrives asynchronously.
  */
-export const PRICING_LADDER = {
-  single: Math.min(...products.map((p) => p.price)),
-  pair: bundleList.find((b) => b.slug === 'the-complete-man')?.price ?? 1499,
-  allSix: bundleList.find((b) => b.slug === 'everything-bundle')?.price ?? 2999,
-} as const;
+export async function getPricingLadder(): Promise<{ single: number; pair: number; allSix: number }> {
+  const { products, bundles } = await loadCatalog();
+  return {
+    single: Math.min(...products.map((p) => p.price)),
+    pair: bundles.find((b) => b.slug === 'the-complete-man')?.price ?? 1499,
+    allSix: bundles.find((b) => b.slug === 'everything-bundle')?.price ?? 2999,
+  };
+}
 
 /** Every product in the catalog. */
-export function listProducts(): Product[] {
-  return products;
+export async function listProducts(): Promise<Product[]> {
+  return (await loadCatalog()).products;
 }
 
 /** A single product by slug, or undefined if the slug isn't in the catalog. */
-export function getProduct(slug: string): Product | undefined {
-  return productsBySlug.get(slug as ProductSlug);
+export async function getProduct(slug: string): Promise<Product | undefined> {
+  return (await loadCatalog()).products.find((p) => p.slug === slug);
 }
 
 /**
@@ -74,6 +61,9 @@ export function getProduct(slug: string): Product | undefined {
  * `listCategories`) so both the storefront's grid components and
  * tests/catalog.test.ts's openness suite can call the exact same grouping
  * logic the real catalog uses, on an arbitrary product list.
+ *
+ * Stays synchronous: it takes its list as an argument, so it never needs to
+ * load anything.
  */
 export function groupProductsByCategory(list: Product[]): Category[] {
   const bySlug = new Map<string, Category>();
@@ -84,28 +74,28 @@ export function groupProductsByCategory(list: Product[]): Category[] {
 }
 
 /** Every category currently in use by the catalog, in first-seen (catalog) order. */
-export function listCategories(): Category[] {
-  return groupProductsByCategory(products);
+export async function listCategories(): Promise<Category[]> {
+  return groupProductsByCategory((await loadCatalog()).products);
 }
 
 /** Every product in a given category, in catalog order. Empty array for an unknown slug. */
-export function listProductsByCategory(slug: string): Product[] {
-  return products.filter((p) => p.category.slug === slug);
+export async function listProductsByCategory(slug: string): Promise<Product[]> {
+  return (await loadCatalog()).products.filter((p) => p.category.slug === slug);
 }
 
 /** Products curated for homepage/featured placement (`featured: true`). */
-export function listFeatured(): Product[] {
-  return products.filter((p) => p.featured === true);
+export async function listFeatured(): Promise<Product[]> {
+  return (await loadCatalog()).products.filter((p) => p.featured === true);
 }
 
 /** Every named bundle (see bundles.ts for which ones are sellable today). */
-export function listBundles(): Bundle[] {
-  return bundleList;
+export async function listBundles(): Promise<Bundle[]> {
+  return (await loadCatalog()).bundles;
 }
 
 /** A single bundle by slug, or undefined if the slug isn't in the catalog. */
-export function getBundle(slug: string): Bundle | undefined {
-  return bundlesBySlug.get(slug as BundleSlug);
+export async function getBundle(slug: string): Promise<Bundle | undefined> {
+  return (await loadCatalog()).bundles.find((b) => b.slug === slug);
 }
 
 /**
@@ -129,10 +119,11 @@ export function getBundle(slug: string): Bundle | undefined {
  * Career OS. See the catalog build report for the full discrepancy note
  * (no shipped bundle actually pairs Glow-Up OS with Aura OS).
  */
-export function getPairFor(slug: string): Product | undefined {
-  const product = getProduct(slug);
+export async function getPairFor(slug: string): Promise<Product | undefined> {
+  const { products } = await loadCatalog();
+  const product = products.find((p) => p.slug === slug);
   if (!product?.pairSlug) return undefined;
-  return getProduct(product.pairSlug);
+  return products.find((p) => p.slug === product.pairSlug);
 }
 
 /**
@@ -142,12 +133,13 @@ export function getPairFor(slug: string): Product | undefined {
  * shape exactly, but reads `setSlug` instead of `pairSlug` — kept as a
  * separate field and function because a set anchor compares two arbitrary
  * real prices (see components/product/SetAnchor.tsx), not the fixed
- * PRICING_LADDER.pair rung `getPairFor`'s callers assume.
+ * pricing-ladder pair rung `getPairFor`'s callers assume.
  */
-export function getSetFor(slug: string): Product | undefined {
-  const product = getProduct(slug);
+export async function getSetFor(slug: string): Promise<Product | undefined> {
+  const { products } = await loadCatalog();
+  const product = products.find((p) => p.slug === slug);
   if (!product?.setSlug) return undefined;
-  return getProduct(product.setSlug);
+  return products.find((p) => p.slug === product.setSlug);
 }
 
 /**
@@ -155,18 +147,19 @@ export function getSetFor(slug: string): Product | undefined {
  * undefined when no such bundle is on sale.
  *
  * Cross-sell used to quote a pair price on every product page by multiplying
- * PRICING_LADDER.single by two. Once Rs 499 guides joined the catalog, `single`
- * became the catalog-wide minimum, so the six Rs 999 product pages advertised
- * "buy both for Rs 1,499 instead of Rs 998" — telling buyers the bundle cost
- * Rs 501 MORE than buying separately, directly above a Rs 999 card.
+ * the ladder's `single` rung by two. Once ₹499 guides joined the catalog,
+ * `single` became the catalog-wide minimum, so the six ₹999 product pages
+ * advertised "buy both for ₹1,499 instead of ₹998" — telling buyers the bundle
+ * cost ₹501 MORE than buying separately, directly above a ₹999 card.
  *
  * A pair price may only be quoted when a real bundle backs it. Today exactly
  * one does: The Complete Man (Glow-Up OS + Social OS). Everything else shows
  * the partner product without a bundle claim.
  */
-export function findPairBundle(slugA: string, slugB: string): Bundle | undefined {
+export async function findPairBundle(slugA: string, slugB: string): Promise<Bundle | undefined> {
   const wanted = [slugA, slugB].sort().join('|');
-  return bundleList.find((bundle) => {
+  const { bundles } = await loadCatalog();
+  return bundles.find((bundle) => {
     if (!bundle.availableToday) return false;
     const parts = bundle.components.map((c) => c.slug).filter((s): s is string => Boolean(s));
     if (parts.length !== 2) return false;

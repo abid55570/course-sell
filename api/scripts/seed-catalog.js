@@ -1,4 +1,54 @@
 #!/usr/bin/env node
+// ============================================================================
+// SUPERSEDED — do not run this against a database that has catalog_products.
+//
+// This script mirrored the file catalog into `courses` so the order pipeline
+// could sell it. The catalog lives in its own table now (migration 011), the
+// storefront reads it there, and routes/orders.js resolves a slug from
+// catalog_products first. Running this would insert 90 duplicate `courses`
+// rows shadowing the real catalog in the admin's course list, for products
+// nothing sells through any more.
+//
+// Use `npm run migrate:catalog` instead. This file stays only so an operator
+// following an older runbook gets an explanation rather than silent damage.
+// ============================================================================
+const pathGuard = require('path');
+require('dotenv').config({ path: pathGuard.join(__dirname, '..', '..', '.env') });
+
+async function refuseIfSuperseded() {
+  const dbGuard = require('../utils/db');
+  try {
+    const row = await dbGuard.get(
+      "SELECT to_regclass('public.catalog_products') AS t"
+    );
+    if (row && row.t) {
+      console.error(
+        [
+          'seed-catalog is superseded: catalog_products exists, and both the',
+          'storefront and checkout read the catalog from there. Seeding `courses`',
+          'now would create duplicate rows for products nothing sells through.',
+          '',
+          'Run this instead:',
+          '  npm --prefix api run migrate:catalog',
+        ].join('\n')
+      );
+      await dbGuard.close();
+      process.exit(1);
+    }
+    await dbGuard.close();
+  } catch {
+    // No database reachable: fall through and let the original script fail
+    // with its own, more specific error.
+  }
+}
+
+// A hard gate, not a warning. It must finish before the original seeding
+// routine below is allowed to touch anything, so the rest of this file only
+// runs once this resolves without exiting.
+const supersededCheck = require.main === module
+  ? refuseIfSuperseded()
+  : Promise.resolve();
+
 // Seeds the six file-catalog products (web/lib/catalog/products) and the
 // bundles that are sellable today (web/lib/catalog/bundles.ts, filtered to
 // availableToday === true) into the `courses` table (kind='product'), so the
@@ -146,7 +196,10 @@ function isConnectionError(err) {
 // directly, not when a test requires it to exercise upsertCourse/upsertBundle
 // with a stubbed db and no real Postgres or export-catalog.js subprocess.
 if (require.main === module) {
-  seed()
+  // supersededCheck exits the process when catalog_products exists, so seeding
+  // only ever starts on a database that predates migration 011.
+  supersededCheck
+    .then(() => seed())
     .then(() => db.close())
     .catch(async (err) => {
       if (isConnectionError(err)) {

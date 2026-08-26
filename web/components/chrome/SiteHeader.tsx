@@ -17,9 +17,11 @@ import MobileDrawer, { type DrawerCategory } from './MobileDrawer';
  * `searchSlot` is where the search entry point mounts. It is a prop rather than
  * a hardcoded import so search can be built without editing this file.
  */
-export default function SiteHeader({ searchSlot }: { searchSlot?: React.ReactNode }) {
-  const products = listProducts();
-  const categories: DrawerCategory[] = listCategories().map((category) => ({
+// The props object defaults to empty: every field in it is optional, so
+// requiring the object itself made `SiteHeader()` a type error for no reason.
+export default async function SiteHeader({ searchSlot }: { searchSlot?: React.ReactNode } = {}) {
+  const products = await listProducts();
+  const categories: DrawerCategory[] = (await listCategories()).map((category) => ({
     slug: category.slug,
     label: category.label,
     hex: category.accent.hex,

@@ -12,7 +12,16 @@ vi.mock('next/navigation', () => ({
 
 import CheckoutPage from '@/app/checkout/page';
 import CheckoutForm from '@/components/checkout/CheckoutForm';
-import { getProduct, getBundle } from '@/lib/catalog';
+import { listProducts as loadProducts, listBundles as loadBundles } from '@/lib/catalog';
+/**
+ * The catalog accessors are async now that the catalog lives in the database.
+ * This suite iterates the catalog at module scope, so it resolves it once here
+ * with a top-level await and keeps its assertions synchronous. The read path
+ * itself is covered by tests/catalog-loader.test.ts.
+ */
+const [ALL_PRODUCTS, ALL_BUNDLES] = await Promise.all([loadProducts(), loadBundles()]);
+const getProduct = (slug: string) => ALL_PRODUCTS.find((p) => p.slug === slug);
+const getBundle = (slug: string) => ALL_BUNDLES.find((b) => b.slug === slug);
 import { formatRupees } from '@/lib/format';
 
 describe('CheckoutPage', () => {
@@ -41,15 +50,30 @@ describe('CheckoutPage', () => {
     expect(screen.queryByLabelText(/full name/i)).not.toBeInTheDocument();
   });
 
+  // Every bundle is sellable today, so this constructs the unavailable case
+  // rather than borrowing one from the catalog. The guard is what is under
+  // test, and it has to keep working the next time a bundle ships incomplete.
   it('an unavailable bundle can never reach checkout: no form is rendered, ever', async () => {
-    const bundle = getBundle('the-complete-woman')!;
-    expect(bundle.availableToday).toBe(false);
-    const Page = await CheckoutPage({ searchParams: Promise.resolve({ slug: 'the-complete-woman' }) });
+    const available = ALL_BUNDLES.find((b) => b.slug === 'the-complete-woman')!;
+    expect(available.availableToday).toBe(true);
+    vi.doMock('@/lib/catalog/loader', () => ({
+      loadCatalog: async () => ({
+        products: ALL_PRODUCTS,
+        bundles: ALL_BUNDLES.map((b) =>
+          b.slug === 'the-complete-woman' ? { ...b, availableToday: false } : b
+        ),
+      }),
+    }));
+    vi.resetModules();
+    const { default: FreshCheckoutPage } = await import('@/app/checkout/page');
+    const Page = await FreshCheckoutPage({ searchParams: Promise.resolve({ slug: 'the-complete-woman' }) });
     render(Page);
     expect(screen.getByText(/not available yet/i)).toBeInTheDocument();
     // No name/email inputs, no submit button, no CheckoutForm mounted at all.
     expect(screen.queryByLabelText(/full name/i)).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /pay/i })).not.toBeInTheDocument();
+    vi.doUnmock('@/lib/catalog/loader');
+    vi.resetModules();
   });
 
   it('an available bundle does reach a real checkout form', async () => {

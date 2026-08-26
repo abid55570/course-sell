@@ -50,7 +50,12 @@ vi.mock('@/lib/orders', () => ({
 }));
 
 import CheckoutPage from '@/app/checkout/page';
-import OrderStatusPage from '@/app/order/[id]/page';
+import OrderView from '@/components/order/OrderView';
+
+// /order/[id] is a server shell that resolves footer data and renders this
+// client view. The view is what these tests are about, so they render it
+// directly with a footer stub.
+const FOOTER_STUB = { productCount: 84, categories: [] };
 
 describe('Footer is never nested inside a padded ancestor', () => {
   it('/checkout: no ancestor of <footer> carries horizontal padding', async () => {
@@ -62,7 +67,7 @@ describe('Footer is never nested inside a padded ancestor', () => {
   });
 
   it('/order/[id]: no ancestor of <footer> carries horizontal padding', () => {
-    const { container } = render(<OrderStatusPage />);
+    const { container } = render(<OrderView footer={FOOTER_STUB} />);
     const footer = container.querySelector('footer');
     expect(footer).not.toBeNull();
     assertNoAncestorHorizontalPadding(footer as HTMLElement);

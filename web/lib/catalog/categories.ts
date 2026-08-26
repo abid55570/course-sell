@@ -85,3 +85,9 @@ export const THE_TEN_SERIES: Category = {
   label: 'The Ten Series',
   accent: { name: 'indigo', hex: '#4263eb' },
 };
+
+export const THE_SCAM_FILES: Category = {
+  slug: 'the-scam-files',
+  label: 'The Scam Files',
+  accent: { name: 'cyan', hex: '#0c8599' },
+};

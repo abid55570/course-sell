@@ -4,15 +4,16 @@ import type { Bundle } from './types';
  * Source: Dashrize-Products/BUNDLES/<name>/3 - LISTING TEXT/listing-copy-paste.md
  * and Dashrize-Products/READ-ME-FIRST.txt (pricing ladder, pairings).
  *
- * Four of these six named bundles mix in products that are NOT among
- * Dropdesk's six shipped products (no PDFs, no approved listing copy, no
- * gallery images built for this catalog): Skin OS, Sleep OS, "30 Days of
- * Focus", Money Habits OS, English Confidence OS. Those components are
- * recorded with `slug: null, inCatalog: false` rather than invented as fake
- * catalog entries, and the bundle's `availableToday` is false. Only
- * "Everything Bundle" and "The Complete Man" are composed entirely of the
- * six shipped products and can be sold today. Flagged in the catalog build
- * report.
+ * All six bundles are sellable. Four of them used to carry components recorded
+ * as `slug: null, inCatalog: false` — Skin OS, Sleep OS, "30 Days of Focus",
+ * Money Habits OS and English Confidence OS were built and packaged in
+ * Dashrize-Products/PRODUCT-PIPELINE but had never been listed, so those four
+ * bundles sat at `availableToday: false` and could not be bought at all.
+ *
+ * The five products are now real catalog entries, every component resolves to
+ * one, and all six bundles are available. Each bundle's ZIP was already
+ * complete in BUNDLES/<name>/1 - UPLOAD THIS, so nothing about them was ever
+ * actually pending — only the listing was.
  */
 export const bundles: Bundle[] = [
   {
@@ -194,15 +195,10 @@ export const bundles: Bundle[] = [
     helplines: [],
     components: [
       { slug: 'aura-os', label: 'Aura OS', inCatalog: true },
-      {
-        slug: null,
-        label: 'Skin OS',
-        inCatalog: false,
-        note: 'Listed in the Dashrize-Products pipeline (Tier 2), not yet a finished Dropdesk product — no listing copy, PDFs or gallery images built for this catalog.',
-      },
+      { slug: 'skin-os', label: 'Skin OS', inCatalog: true },
     ],
     coverImage: { filename: '1-cover-thumbnail.png', role: 'cover', alt: 'The Complete Woman cover.' },
-    availableToday: false,
+    availableToday: true,
     faqs: [
       {
         question: 'I already own Aura OS. Can I buy just Skin OS?',
@@ -276,22 +272,12 @@ export const bundles: Bundle[] = [
       'General sleep-hygiene and study-technique information for healthy adults. Not medical advice and not a treatment for insomnia, sleep apnoea or any other condition. No medication or supplement is recommended anywhere. If you snore heavily, have been seen to stop breathing in your sleep, fall asleep during the day without meaning to, sleep a full night and still feel destroyed, or cannot sleep for weeks despite all of this, see a doctor — these are common and treatable, and none of them are fixed by better habits. Not affiliated with or endorsed by any board, university or examination body; no rank, score or result is claimed or implied.',
     helplines: [],
     components: [
-      {
-        slug: null,
-        label: 'Sleep OS',
-        inCatalog: false,
-        note: 'Listed in the Dashrize-Products pipeline (Tier 2), not yet a finished Dropdesk product — no listing copy, PDFs or gallery images built for this catalog.',
-      },
-      {
-        slug: null,
-        label: '30 Days of Focus',
-        inCatalog: false,
-        note: 'A ₹299 tripwire product in the Dashrize-Products pipeline (Tier 1), not part of the six-product Dropdesk catalog.',
-      },
+      { slug: 'sleep-os', label: 'Sleep OS', inCatalog: true },
+      { slug: '30-days-of-focus', label: '30 Days of Focus', inCatalog: true },
       { slug: 'study-os', label: 'Study OS', inCatalog: true },
     ],
     coverImage: { filename: '1-cover-thumbnail.png', role: 'cover', alt: 'The Discipline Bundle cover.' },
-    availableToday: false,
+    availableToday: true,
     faqs: [
       {
         question: 'I work night shifts. Is this useless to me?',
@@ -370,15 +356,10 @@ export const bundles: Bundle[] = [
     components: [
       { slug: 'money-os', label: 'Money OS', inCatalog: true },
       { slug: 'career-os', label: 'Career OS', inCatalog: true },
-      {
-        slug: null,
-        label: 'Money Habits OS',
-        inCatalog: false,
-        note: 'Listed in the Dashrize-Products pipeline (Tier 2), not yet a finished Dropdesk product — no listing copy, PDFs or gallery images built for this catalog.',
-      },
+      { slug: 'money-habits-os', label: 'Money Habits OS', inCatalog: true },
     ],
     coverImage: { filename: '1-cover-thumbnail.png', role: 'cover', alt: 'The Earner Bundle cover.' },
-    availableToday: false,
+    availableToday: true,
     faqs: [
       {
         question: 'Is this investment advice?',
@@ -458,15 +439,10 @@ export const bundles: Bundle[] = [
     components: [
       { slug: 'study-os', label: 'Study OS', inCatalog: true },
       { slug: 'career-os', label: 'Career OS', inCatalog: true },
-      {
-        slug: null,
-        label: 'English Confidence OS',
-        inCatalog: false,
-        note: 'Listed in the Dashrize-Products pipeline (Tier 2), not yet a finished Dropdesk product — no listing copy, PDFs or gallery images built for this catalog.',
-      },
+      { slug: 'english-confidence-os', label: 'English Confidence OS', inCatalog: true },
     ],
     coverImage: { filename: '1-cover-thumbnail.png', role: 'cover', alt: 'The Student Bundle cover.' },
-    availableToday: false,
+    availableToday: true,
     faqs: [
       {
         question: 'My English grammar is weak. Is this a grammar course?',

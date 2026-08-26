@@ -26,17 +26,22 @@ app.use(cookieParser());
 
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/courses', require('./routes/courses'));
+// Must precede /api/catalog: routes/catalog.js ends in a `/:slug` catch-all,
+// which would otherwise swallow /api/catalog/storefront as a slug lookup.
+app.use('/api/catalog/storefront', require('./routes/catalog-storefront'));
 app.use('/api/catalog', require('./routes/catalog'));
 app.use('/api/orders', require('./routes/orders'));
 app.use('/api/video', require('./routes/video'));
 app.use('/api/carousel', require('./routes/carousel'));
 app.use('/api/tools', require('./routes/tools'));
+// Before /api/admin so the catalog routes are not shadowed by it.
+app.use('/api/admin/catalog', require('./routes/admin-catalog'));
 app.use('/api/admin', require('./routes/admin'));
 app.use('/api/admin/video', require('./routes/admin-video'));
 
 app.get('/api/site-info', (req, res) => {
   res.json({
-    site_name: process.env.SITE_NAME || 'My Course Hub',
+    site_name: process.env.SITE_NAME || 'Dropdesk',
     site_url: process.env.SITE_URL || '',
     support_email: process.env.SUPPORT_EMAIL || process.env.SMTP_USER || '',
     upi_id: process.env.UPI_ID || '',

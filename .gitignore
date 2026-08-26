@@ -23,3 +23,14 @@ node_modules
 _archive/
 .superpowers/
 *_stdout.log
+
+# Runtime artifacts: uploaded photos and rendered video files. The video
+# render e2e test writes here, so they show up as untracked after a test run.
+api/storage/photos/
+api/storage/renders/
+
+# Paid product files. These ARE the product — a buyer pays for them — so they
+# must never enter git history, which is public the moment the repo is.
+# The admin panel's upload and api/scripts/attach-product-files.js both
+# write here. Keep the directory, ignore the contents.
+public/uploads/

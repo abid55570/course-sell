@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { getProduct, getBundle, SUPPORT_EMAIL } from '@/lib/catalog';
+import { getFooterData } from '@/lib/catalog/footer-data';
 import { formatRupees } from '@/lib/format';
 import CheckoutForm from '@/components/checkout/CheckoutForm';
 import Footer from '@/components/landing/Footer';
@@ -10,12 +11,12 @@ export const metadata: Metadata = {
 };
 
 /** Looks the slug up as a product first, then a bundle — /checkout?slug=... serves both, same as BuyButton does. */
-function resolveCheckoutItem(slug: string) {
-  const product = getProduct(slug);
+async function resolveCheckoutItem(slug: string) {
+  const product = await getProduct(slug);
   if (product) {
     return { title: product.title, tagline: product.tagline, price: product.price, available: true as const };
   }
-  const bundle = getBundle(slug);
+  const bundle = await getBundle(slug);
   if (bundle) {
     return { title: bundle.title, tagline: bundle.tagline, price: bundle.price, available: bundle.availableToday };
   }
@@ -49,7 +50,8 @@ export default async function CheckoutPage({
     );
   }
 
-  const item = resolveCheckoutItem(slug);
+  const item = await resolveCheckoutItem(slug);
+  const footer = await getFooterData();
 
   if (!item) {
     return (
@@ -114,7 +116,7 @@ export default async function CheckoutPage({
         </div>
       </div>
       <div className="mt-16">
-        <Footer />
+        <Footer {...footer} />
       </div>
     </main>
   );

@@ -4,13 +4,14 @@ import Link from 'next/link';
 import { listCategories, listProductsByCategory } from '@/lib/catalog';
 import ProductCard from '@/components/product/ProductCard';
 import Footer from '@/components/landing/Footer';
+import { getFooterData } from '@/lib/catalog/footer-data';
 
-export function generateStaticParams() {
-  return listCategories().map((c) => ({ slug: c.slug }));
+export async function generateStaticParams() {
+  return (await listCategories()).map((c) => ({ slug: c.slug }));
 }
 
-function getCategory(slug: string) {
-  return listCategories().find((c) => c.slug === slug);
+async function getCategory(slug: string) {
+  return (await listCategories()).find((c) => c.slug === slug);
 }
 
 export async function generateMetadata({
@@ -19,10 +20,10 @@ export async function generateMetadata({
   params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
   const { slug } = await params;
-  const category = getCategory(slug);
+  const category = await getCategory(slug);
   if (!category) return {};
 
-  const count = listProductsByCategory(slug).length;
+  const count = (await listProductsByCategory(slug)).length;
   return {
     title: `${category.label} | Dropdesk`,
     description: `${count} ${count === 1 ? 'product' : 'products'} in ${category.label} on Dropdesk.`,
@@ -30,11 +31,12 @@ export async function generateMetadata({
 }
 
 export default async function CategoryPage({ params }: { params: Promise<{ slug: string }> }) {
+  const footer = await getFooterData();
   const { slug } = await params;
-  const category = getCategory(slug);
+  const category = await getCategory(slug);
   if (!category) notFound();
 
-  const products = listProductsByCategory(slug);
+  const products = await listProductsByCategory(slug);
 
   return (
     <main>
@@ -72,7 +74,7 @@ export default async function CategoryPage({ params }: { params: Promise<{ slug:
         </div>
       </section>
 
-      <Footer />
+      <Footer {...footer} />
     </main>
   );
 }

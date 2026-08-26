@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import type { Product } from '@/lib/catalog';
-import { findPairBundle } from '@/lib/catalog';
+import type { Bundle } from '@/lib/catalog';
 import { formatRupees } from '@/lib/format';
 import ProductCard from './ProductCard';
 
@@ -19,9 +19,8 @@ import ProductCard from './ProductCard';
  * `findPairBundle` returns one that is actually on sale AND that genuinely
  * costs less than buying the pair separately.
  */
-export default function CrossSell({ product, pair }: { product: Product; pair: Product }) {
+export default function CrossSell({ product, pair, bundle }: { product: Product; pair: Product; bundle?: Bundle }) {
   const separately = product.price + pair.price;
-  const bundle = findPairBundle(product.slug, pair.slug);
   const saves = bundle ? separately - bundle.price : 0;
 
   return (

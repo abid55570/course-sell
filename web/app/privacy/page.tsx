@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import LegalLayout from '@/components/legal/LegalLayout';
+import { getFooterData } from '@/lib/catalog/footer-data';
 import { SUPPORT_EMAIL } from '@/lib/catalog';
 
 export const metadata: Metadata = {
@@ -7,9 +8,10 @@ export const metadata: Metadata = {
   description: 'How Dropdesk collects, uses and protects your information when you buy a PDF system.',
 };
 
-export default function PrivacyPage() {
+export default async function PrivacyPage() {
+  const footer = await getFooterData();
   return (
-    <LegalLayout title="Privacy Policy" updated="18 August 2026">
+    <LegalLayout footer={footer} title="Privacy Policy" updated="18 August 2026">
       <div>
         <p>
           Dropdesk sells digital PDF products. This page explains what information we collect
@@ -91,7 +93,7 @@ export default function PrivacyPage() {
         <p>
           Email {SUPPORT_EMAIL} with any privacy question.
           <br />
-          Registered business address: REPLACE_BUSINESS_ADDRESS.
+          Operating from Uttar Pradesh, India.
         </p>
       </div>
     </LegalLayout>

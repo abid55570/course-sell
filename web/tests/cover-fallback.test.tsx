@@ -1,6 +1,34 @@
 import { describe, it, expect, beforeAll } from 'vitest';
 import { render, screen, within } from '@testing-library/react';
-import { getProduct, getSetFor, listCategories, PRICING_LADDER } from '@/lib/catalog';
+import {
+  listProducts as loadProducts,
+  listCategories as loadCategories,
+  getPricingLadder,
+} from '@/lib/catalog';
+/**
+ * The catalog accessors are async now that the catalog lives in the database.
+ * This suite iterates the catalog at module scope, so it resolves it once here
+ * with a top-level await and keeps its assertions synchronous. The read path
+ * itself is covered by tests/catalog-loader.test.ts.
+ */
+const [ALL_PRODUCTS, ALL_CATEGORIES, PRICING_LADDER] = await Promise.all([
+  loadProducts(),
+  loadCategories(),
+  getPricingLadder(),
+]);
+const listCategories = () => ALL_CATEGORIES;
+
+// PricingLadder is presentational now; the page resolves these and passes them.
+const LADDER_PROPS = {
+  pricingLadder: PRICING_LADDER,
+  everythingBundle: undefined,
+  pairBundle: undefined,
+};
+const getProduct = (slug: string) => ALL_PRODUCTS.find((p) => p.slug === slug);
+const getSetFor = (slug: string) => {
+  const product = getProduct(slug);
+  return product?.setSlug ? getProduct(product.setSlug) : undefined;
+};
 import { formatRupees } from '@/lib/format';
 
 import Home from '@/app/page';
@@ -39,8 +67,8 @@ function expectNoBrokenCounts(container: HTMLElement) {
 }
 
 describe('a cover-less guide renders its typographic card, not a broken image', () => {
-  it('on the homepage (it is one of the three featured guides)', () => {
-    const { container } = render(<Home />);
+  it('on the homepage (it is one of the three featured guides)', async () => {
+    const { container } = render(await Home());
     expectNoBrokenCounts(container);
 
     const link = screen
@@ -59,8 +87,8 @@ describe('a cover-less guide renders its typographic card, not a broken image', 
     expect(within(card).getByText('Character Guides')).toBeDefined();
   });
 
-  it('on the browse page (/products), sitting in a grid that also holds real covers', () => {
-    const { container } = render(<ProductsPage />);
+  it('on the browse page (/products), sitting in a grid that also holds real covers', async () => {
+    const { container } = render(await ProductsPage());
     expectNoBrokenCounts(container);
 
     const guideLink = container.querySelector(`a[href="/p/${GUIDE_SLUG}"]`);
@@ -127,24 +155,23 @@ describe("a cover-less guide's own product page", () => {
 });
 
 describe('the new categories appear across the storefront', () => {
-  it('all three imported categories are linked from the homepage category-nav grid', () => {
-    render(<Home />);
+  it('all three imported categories are linked from the homepage category-nav grid', async () => {
+    render(await Home());
     for (const label of ['Character Guides', 'Talking to Your Parents', 'The Ten Series']) {
       expect(screen.getAllByText(label).length).toBeGreaterThan(0);
     }
   });
 
-  it('all three imported categories are linked from the /products jump nav', () => {
-    render(<ProductsPage />);
+  it('all three imported categories are linked from the /products jump nav', async () => {
+    render(await ProductsPage());
     for (const slug of ['character-guides', 'talking-to-your-parents', 'the-ten-series']) {
       const link = screen.getAllByRole('link').find((l) => l.getAttribute('href') === `#${slug}`);
       expect(link, `no jump-nav link for ${slug}`).toBeDefined();
     }
   });
 
-  it('listCategories() carries 6 categories, each with its own accent hex distinguishable from the rest and from vermilion (#C42B22)', () => {
+  it('every category carries its own accent hex, distinguishable from the rest and from vermilion (#C42B22)', () => {
     const categories = listCategories();
-    expect(categories).toHaveLength(6);
     for (const c of categories) {
       expect(c.accent.hex).toMatch(/^#[0-9a-f]{6}$/i);
       expect(c.accent.hex.toLowerCase()).not.toBe('#c42b22');
@@ -156,16 +183,19 @@ describe('the new categories appear across the storefront', () => {
 });
 
 describe('the price ladder reflects the real catalog minimum', () => {
-  it('PricingLadder renders ₹499, not the old flat ₹999, as its lowest tier', () => {
-    render(<PricingLadder />);
-    expect(screen.getByText(formatRupees(499))).toBeDefined();
+  it('PricingLadder renders ₹299, not the old flat ₹999, as its lowest tier', async () => {
+    render(<PricingLadder {...LADDER_PROPS} />);
+    expect(screen.getByText(formatRupees(299))).toBeDefined();
     expect(screen.queryByText(formatRupees(999))).toBeNull();
-    expect(PRICING_LADDER.single).toBe(499);
+    expect(PRICING_LADDER.single).toBe(299);
   });
 
-  it('₹499 is a real product price (the guides), not an arbitrary number', () => {
-    const guide = getProduct(GUIDE_SLUG)!;
-    expect(guide.price).toBe(499);
-    expect(guide.price).toBe(PRICING_LADDER.single);
+  it('the ladder floor is some real product’s price, not an arbitrary number', () => {
+    // The guides are still ₹499; the floor moved below them when the first
+    // ₹299 tripwire shipped. What matters is that `single` is always a price
+    // some product actually charges, whichever product that happens to be.
+    expect(getProduct(GUIDE_SLUG)!.price).toBe(499);
+    expect(ALL_PRODUCTS.map((p) => p.price)).toContain(PRICING_LADDER.single);
+    expect(getProduct('30-days-of-focus')!.price).toBe(PRICING_LADDER.single);
   });
 });

@@ -14,10 +14,15 @@ const body = Instrument_Sans({ subsets: ['latin'], variable: '--font-instrument'
 const mono = Geist_Mono({ subsets: ['latin'], variable: '--font-geist-mono' });
 const deva = Noto_Sans_Devanagari({ subsets: ['devanagari'], variable: '--font-noto-deva', weight: ['400', '700'] });
 
-export const metadata: Metadata = {
-  title: 'Dropdesk — digital products, instant download',
-  description: `${listProducts().length} finished digital products for Indians building their next move. Instant download, pay by UPI.`,
-};
+// A function rather than a const, because the product count it quotes now
+// comes from the database and arrives asynchronously.
+export async function generateMetadata(): Promise<Metadata> {
+  const products = await listProducts();
+  return {
+    title: 'Dropdesk — digital products, instant download',
+    description: `${products.length} finished digital products for Indians building their next move. Instant download, pay by UPI.`,
+  };
+}
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (

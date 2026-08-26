@@ -2,16 +2,17 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
-import { getBundle, getProduct, listBundles, SUPPORT_EMAIL } from '@/lib/catalog';
+import { getBundle, listBundles, listProducts, SUPPORT_EMAIL } from '@/lib/catalog';
 import { formatRupees } from '@/lib/format';
 import Disclaimer from '@/components/product/Disclaimer';
 import BuyButton from '@/components/product/BuyButton';
 import ProductCard from '@/components/product/ProductCard';
 import Faq from '@/components/landing/Faq';
 import Footer from '@/components/landing/Footer';
+import { getFooterData } from '@/lib/catalog/footer-data';
 
-export function generateStaticParams() {
-  return listBundles().map((b) => ({ slug: b.slug }));
+export async function generateStaticParams() {
+  return (await listBundles()).map((b) => ({ slug: b.slug }));
 }
 
 export async function generateMetadata({
@@ -20,7 +21,7 @@ export async function generateMetadata({
   params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
   const { slug } = await params;
-  const bundle = getBundle(slug);
+  const bundle = await getBundle(slug);
   if (!bundle) return {};
 
   return {
@@ -30,9 +31,14 @@ export async function generateMetadata({
 }
 
 export default async function BundlePage({ params }: { params: Promise<{ slug: string }> }) {
+  const footer = await getFooterData();
   const { slug } = await params;
-  const bundle = getBundle(slug);
+  const bundle = await getBundle(slug);
   if (!bundle) notFound();
+
+  // One catalog read, indexed by slug. Calling the per-slug accessor inside
+  // the component map below would reload the catalog once per component.
+  const bySlug = new Map((await listProducts()).map((product) => [product.slug, product]));
 
   return (
     <main>
@@ -81,7 +87,7 @@ export default async function BundlePage({ params }: { params: Promise<{ slug: s
           <div className="mt-6 grid gap-4 sm:grid-cols-2">
             {bundle.components.map((c) =>
               c.inCatalog ? (
-                <ProductCard key={c.slug} product={getProduct(c.slug)!} />
+                <ProductCard key={c.slug} product={bySlug.get(c.slug)!} />
               ) : (
                 <div key={c.label} className="rounded-card bg-canvas-2 p-5">
                   <span className="inline-block rounded-full bg-ink/10 px-2.5 py-1 text-xs font-semibold text-ink-soft">
@@ -141,7 +147,7 @@ export default async function BundlePage({ params }: { params: Promise<{ slug: s
         </div>
       </section>
 
-      <Footer />
+      <Footer {...footer} />
     </main>
   );
 }

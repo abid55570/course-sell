@@ -25,7 +25,9 @@ function stub({ order, item }) {
     if (/FROM courses/.test(sql)) return null;
     return null;
   };
-  db.run = async () => ({ rows: [] });
+  // rowCount matters: markOrderPaid claims the order with a conditional
+  // UPDATE and only fulfils when exactly one row changed.
+  db.run = async () => ({ rowCount: 1, rows: [] });
   db.logTransaction = async () => {};
   email.sendOrderCompletedEmail = async (o, c) => { sent.push({ order: o, course: c }); };
 
@@ -142,4 +144,47 @@ test('markOrderPaid: an already-completed catalog order is a no-op', async () =>
     assert.equal(r.alreadyDone, true);
     assert.equal(s.sent.length, 0, 'idempotency: no second email');
   } finally { s.restore(); }
+});
+
+test('markOrderPaid fulfils once when two callers race the same order', async () => {
+  // The browser's verify call and the Razorpay webhook both land here for the
+  // same order — that is the normal case, not a rare race. Both used to pass
+  // the status check and both then sent the delivery email.
+  const original = { get: db.get, run: db.run, log: db.logTransaction, send: email.sendOrderCompletedEmail };
+  const sent = [];
+  let claims = 0;
+
+  db.get = async (sql) => {
+    if (/FROM orders/.test(sql)) return { ...CATALOG_ORDER };
+    if (/FROM catalog_products/.test(sql)) return { slug: 'glow-up-os', title: 'Glow-Up OS' };
+    return null;
+  };
+  // Only the first conditional UPDATE can match a row; the second sees the
+  // order already completed, exactly as Postgres would.
+  db.run = async (sql) => {
+    if (/UPDATE\s+orders\s+SET\s+status/i.test(sql)) {
+      claims += 1;
+      return { rowCount: claims === 1 ? 1 : 0, rows: [] };
+    }
+    return { rowCount: 1, rows: [] };
+  };
+  db.logTransaction = async () => {};
+  email.sendOrderCompletedEmail = async (o, c) => { sent.push({ order: o, course: c }); };
+
+  try {
+    const [a, b] = await Promise.all([
+      markOrderPaid('ORD-CAT1', { actor: 'razorpay-checkout' }),
+      markOrderPaid('ORD-CAT1', { actor: 'razorpay-webhook' }),
+    ]);
+    assert.equal(a.ok, true);
+    assert.equal(b.ok, true);
+    assert.equal(sent.length, 1, 'the buyer must receive exactly one delivery email');
+    assert.equal(claims, 2, 'both callers should have attempted the claim');
+    assert.ok(a.alreadyDone || b.alreadyDone, 'the loser should report alreadyDone');
+  } finally {
+    db.get = original.get;
+    db.run = original.run;
+    db.logTransaction = original.log;
+    email.sendOrderCompletedEmail = original.send;
+  }
 });

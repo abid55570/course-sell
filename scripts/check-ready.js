@@ -133,6 +133,42 @@ if (!env) {
     }
   }
 
+  // Signing secrets. A forgeable admin token is a worse failure than any
+  // wrong site name, and this checked neither.
+  const PLACEHOLDER_SECRETS = [
+    'replace-with-a-long-random-string-min-32-chars',
+    'changeme',
+    'dev-secret',
+    '',
+  ];
+  for (const key of ['JWT_SECRET', 'SESSION_SECRET']) {
+    const value = env[key] ?? '';
+    if (PLACEHOLDER_SECRETS.includes(value)) {
+      blockers.push(`${key} is unset or still the example value — admin tokens would be forgeable`);
+    } else if (value.length < 32) {
+      blockers.push(`${key} is only ${value.length} characters; use at least 32`);
+    } else {
+      passes.push(`${key} is a real secret`);
+    }
+  }
+
+  if (['ChangeMe123!', 'changeme', ''].includes(env.ADMIN_PASSWORD ?? '')) {
+    blockers.push('ADMIN_PASSWORD is the default — anyone who finds /admin can confirm orders and change prices');
+  } else {
+    passes.push('ADMIN_PASSWORD is not the default');
+  }
+
+  // NODE_ENV is load-bearing: it is what disables the Razorpay dev bypass and
+  // what makes the admin cookie `secure`. Nothing verified it.
+  if (env.NODE_ENV !== 'production') {
+    warnings.push(
+      `NODE_ENV is "${env.NODE_ENV || 'unset'}" in this .env. On the server it must be ` +
+        'production — it is what disables the payment bypass and sets the secure cookie flag'
+    );
+  } else {
+    passes.push('NODE_ENV is production');
+  }
+
   // Payments.
   const razorpayKeys = ['RAZORPAY_KEY_ID', 'RAZORPAY_KEY_SECRET', 'RAZORPAY_WEBHOOK_SECRET'];
   const missingRazorpay = razorpayKeys.filter((k) => !env[k]);
@@ -161,6 +197,37 @@ if (!env) {
     else if (/localhost|127\.0\.0\.1/.test(value)) {
       blockers.push(`${label} is ${value} — emailed download links would point at localhost`);
     } else passes.push(`${label} points at a real host`);
+  }
+
+  // The API origin. NEXT_PUBLIC_API_BASE is inlined into the browser bundle,
+  // so a production build made from a localhost value ships a checkout that
+  // calls the buyer's own machine. This was checked for SITE_URL but not here.
+  for (const [label, value] of [
+    ['API_BASE (web/.env.local)', webEnv?.API_BASE],
+    ['NEXT_PUBLIC_API_BASE (web/.env.local)', webEnv?.NEXT_PUBLIC_API_BASE],
+  ]) {
+    if (!value) {
+      warnings.push(`${label} is not set; it falls back to localhost:4000`);
+    } else if (/localhost|127\.0\.0\.1/.test(value)) {
+      blockers.push(
+        `${label} is ${value} — a build from this ships a checkout that calls the buyer's own machine`
+      );
+    } else {
+      passes.push(`${label} points at a real host`);
+    }
+  }
+
+  // STOREFRONT_URL must reach the Next app directly. Left blank in production
+  // it falls back to SITE_URL, which goes back through the proxy that routes
+  // /api/* to Express — where the revalidation route does not exist.
+  if (!env.STOREFRONT_URL) {
+    warnings.push(
+      'STOREFRONT_URL is unset, so revalidation posts to SITE_URL. If a proxy routes ' +
+        '/api/* to the API, that 404s and catalog edits never reach the site. Set it to ' +
+        "the Next app's internal address (e.g. http://127.0.0.1:3000)"
+    );
+  } else {
+    passes.push('STOREFRONT_URL is set');
   }
 
   // Revalidation.
@@ -210,12 +277,27 @@ async function checkDeliverables() {
       );
     } else {
       const withFiles = await pool.query(
-        'SELECT count(*)::int n FROM catalog_products WHERE pdf_file IS NOT NULL OR drive_link IS NOT NULL'
+        'SELECT slug, pdf_file, drive_link FROM catalog_products WHERE pdf_file IS NOT NULL OR drive_link IS NOT NULL'
       );
-      if (withFiles.rows[0].n === 0) {
+      if (withFiles.rowCount === 0) {
         blockers.push('No catalog product has a file attached yet — paid orders cannot be delivered');
       } else {
-        passes.push(`${withFiles.rows[0].n} catalog product(s) have a deliverable file`);
+        // Trusting the column was not enough. After a redeploy that did not
+        // carry the files across, every row still says "deliverable" while the
+        // buyer gets "that file has gone missing". Check the disk.
+        const root = path.join(ROOT, 'api', 'storage', 'deliverables');
+        const missingOnDisk = withFiles.rows.filter((r) => {
+          if (!r.pdf_file) return false;
+          return !fs.existsSync(path.join(root, path.basename(r.pdf_file)));
+        });
+        if (missingOnDisk.length) {
+          blockers.push(
+            `${missingOnDisk.length} product(s) point at a file that is not on this machine ` +
+              `(e.g. ${missingOnDisk[0].slug}). Re-run api/scripts/attach-product-files.js --source <product library>`
+          );
+        } else {
+          passes.push(`${withFiles.rowCount} catalog product(s) have a deliverable, present on disk`);
+        }
       }
     }
   } catch (e) {

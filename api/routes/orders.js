@@ -326,6 +326,35 @@ router.get('/:orderId', async (req, res, next) => {
   } catch (e) { next(e); }
 });
 
+/**
+ * Where paid deliverables live: outside public/, on purpose.
+ *
+ * They used to sit in public/uploads/pdfs/, which express.static serves with no
+ * authentication — so every product was downloadable at a URL guessable from
+ * its own public slug, and the payment gate below was decorative. Moving them
+ * out of the web root is what actually enforces payment; this route is now the
+ * only way to reach them.
+ */
+const DELIVERABLES_ROOT = path.resolve(__dirname, '..', 'storage', 'deliverables');
+
+/**
+ * Resolve a stored `pdf_file` to an absolute path, or null if it is unusable.
+ *
+ * Only the basename is used. That keeps legacy values written by the old
+ * uploader ("/uploads/pdfs/x.zip") working unchanged, and makes traversal
+ * structurally impossible rather than merely checked for — path.basename
+ * cannot produce a separator, so the result can never leave the root.
+ */
+function resolveDeliverablePath(stored) {
+  if (!stored || typeof stored !== 'string') return null;
+  const name = path.basename(stored.split('\\').join('/'));
+  if (!name || name === '.' || name === '..') return null;
+  const abs = path.resolve(DELIVERABLES_ROOT, name);
+  const rel = path.relative(DELIVERABLES_ROOT, abs);
+  if (!rel || rel.startsWith('..') || path.isAbsolute(rel)) return null;
+  return abs;
+}
+
 router.get('/:orderId/pdf', async (req, res, next) => {
   try {
     const order = await db.get(
@@ -356,7 +385,20 @@ router.get('/:orderId/pdf', async (req, res, next) => {
     if (!order.pdf_file) return res.status(404).type('html').send(
       downloadProblem('There is no file attached to this order yet', 'Your payment is recorded. Reply to your order email and we will send the file straight to you.')
     );
-    const abs = path.join(__dirname, '..', '..', 'public', order.pdf_file);
+    // Confine the resolved path to the uploads directory.
+    //
+    // `pdf_file` is a free-text column an admin sets, and this route streams
+    // whatever it points at to an unauthenticated caller who has the order id.
+    // Without this check a value like `../../.env` resolves outside public/ and
+    // path.join happily produces it — turning an admin write into an arbitrary
+    // server-file read through the buyer's own download link.
+    const abs = resolveDeliverablePath(order.pdf_file);
+    if (!abs) {
+      console.error('[download] refused a path outside uploads:', order.pdf_file);
+      return res.status(404).type('html').send(
+        downloadProblem('That file has gone missing', 'This is our fault, not yours. Reply to your order email and we will get it to you.')
+      );
+    }
     if (!fs.existsSync(abs)) return res.status(404).type('html').send(
       downloadProblem('That file has gone missing', 'This is our fault, not yours. Reply to your order email and we will get it to you.')
     );
@@ -393,3 +435,5 @@ function downloadProblem(title, advice) {
 
 module.exports = router;
 module.exports.resolveProduct = resolveProduct;
+module.exports.resolveDeliverablePath = resolveDeliverablePath;
+module.exports.DELIVERABLES_ROOT = DELIVERABLES_ROOT;

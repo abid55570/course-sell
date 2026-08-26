@@ -29,6 +29,11 @@ _archive/
 api/storage/photos/
 api/storage/renders/
 
+# Paid deliverables. These live OUTSIDE public/ on purpose: anything under
+# public/ is served by express.static with no auth, which made every product
+# downloadable at a URL guessable from its own slug.
+api/storage/deliverables/
+
 # Paid product files. These ARE the product — a buyer pays for them — so they
 # must never enter git history, which is public the moment the repo is.
 # The admin panel's upload and api/scripts/attach-product-files.js both

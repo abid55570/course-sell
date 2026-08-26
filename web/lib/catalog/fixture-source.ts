@@ -30,9 +30,17 @@ import { sleepOs } from './products/sleep-os';
 import { moneyHabitsOs } from './products/money-habits-os';
 import { englishConfidenceOs } from './products/english-confidence-os';
 import { thirtyDaysOfFocus } from './products/thirty-days-of-focus';
+import { homeWorkoutOs } from './products/home-workout-os';
+import { gymBeginnerOs } from './products/gym-beginner-os';
+import { weddingGlowUpOs } from './products/wedding-glow-up-os';
+import { examSprintOs } from './products/exam-sprint-os';
+import { creatorOs } from './products/creator-os';
+import { presenceOs } from './products/presence-os';
+import { allTripwireProducts } from './products/tripwires';
 import { allCharacterGuideProducts } from './products/character-guides';
 import { allTalkingToYourParentsProducts } from './products/talking-to-your-parents';
 import { allTheTenSeriesProducts } from './products/the-ten-series';
+import { allScamFilesProducts } from './products/the-scam-files';
 import { bundles as bundleList } from './bundles';
 
 /**
@@ -56,9 +64,17 @@ export function fixtureCatalog(): { products: Product[]; bundles: Bundle[] } {
       moneyHabitsOs,
       englishConfidenceOs,
       thirtyDaysOfFocus,
+      homeWorkoutOs,
+      gymBeginnerOs,
+      weddingGlowUpOs,
+      examSprintOs,
+      creatorOs,
+      presenceOs,
+      ...allTripwireProducts,
       ...allCharacterGuideProducts,
       ...allTalkingToYourParentsProducts,
       ...allTheTenSeriesProducts,
+      ...allScamFilesProducts,
     ],
     bundles: bundleList,
   };

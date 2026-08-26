@@ -56,22 +56,35 @@ const LAUNCH_SLUGS: ProductSlug[] = ['glow-up-os', 'aura-os', 'money-os', 'socia
 
 /** The 75 imported guide slugs plus their 3 full-set products, in catalog order. */
 /**
- * Built in Dashrize-Products/PRODUCT-PIPELINE and listed later than the launch
- * six. Named explicitly because IMPORTED_SLUGS used to mean "anything that is
- * not a launch product", which quietly asserted every future product would be
- * a ₹499 guide.
+ * The three imported guide families, derived from their categories rather than
+ * by excluding everything else.
+ *
+ * This used to be "any product that is not a launch product", which quietly
+ * asserted that every product added in future would be a ₹499 guide. It broke
+ * the moment the pipeline products were listed, and would have broken again on
+ * the next batch. Naming the families means new products land outside it by
+ * default, which is the correct behaviour.
  */
-const PIPELINE_SLUGS: ProductSlug[] = [
-  'skin-os',
-  'sleep-os',
-  'money-habits-os',
-  'english-confidence-os',
-  '30-days-of-focus',
-];
+const GUIDE_FAMILY_CATEGORIES = ['character-guides', 'talking-to-your-parents', 'the-ten-series'];
 
 const IMPORTED_SLUGS: ProductSlug[] = listProducts()
-  .map((p) => p.slug)
-  .filter((slug) => !LAUNCH_SLUGS.includes(slug) && !PIPELINE_SLUGS.includes(slug));
+  .filter((p) => GUIDE_FAMILY_CATEGORIES.includes(p.category.slug))
+  .map((p) => p.slug);
+
+/** Everything built in Dashrize-Products/PRODUCT-PIPELINE and listed later. */
+const PIPELINE_SLUGS: ProductSlug[] = listProducts()
+  .filter(
+    (p) =>
+      !LAUNCH_SLUGS.includes(p.slug) &&
+      !GUIDE_FAMILY_CATEGORIES.includes(p.category.slug) &&
+      p.category.slug !== 'the-scam-files'
+  )
+  .map((p) => p.slug);
+
+/** The Scam Files family: eight ₹499 guides plus the ₹1,999 set. */
+const SCAM_FILES_SLUGS: ProductSlug[] = listProducts()
+  .filter((p) => p.category.slug === 'the-scam-files')
+  .map((p) => p.slug);
 
 /** Product-specific phrases the compliance rules require inside the disclaimer text. */
 const REQUIRED_DISCLAIMER_PHRASES: Record<ProductSlug, string[]> = {
@@ -97,15 +110,22 @@ function bundleImageDir(slug: string) {
 }
 
 describe('catalog products', () => {
-  it('loads the six launch products, 78 imported SKUs and 5 pipeline products (89 total)', () => {
+  it('accounts for every product across the four families, with no overlap', () => {
     const products = listProducts();
     // 75 individual guides (40 character + 12 parents + 23 ten-series) + 3
     // full-set products (Codex, parents set, ten-series set) = 78 imports.
     expect(IMPORTED_SLUGS).toHaveLength(78);
-    expect(PIPELINE_SLUGS).toHaveLength(5);
-    expect(products).toHaveLength(89);
+    // 10 core products at ₹999 + 8 tripwires at ₹299 (PRODUCT-PIPELINE).
+    expect(PIPELINE_SLUGS).toHaveLength(18);
+    // 8 guides at ₹499 + the ₹1,999 set.
+    expect(SCAM_FILES_SLUGS).toHaveLength(9);
+    expect(products).toHaveLength(
+      LAUNCH_SLUGS.length + IMPORTED_SLUGS.length + PIPELINE_SLUGS.length + SCAM_FILES_SLUGS.length
+    );
     const slugs = new Set(products.map((p) => p.slug));
-    expect(slugs).toEqual(new Set([...LAUNCH_SLUGS, ...IMPORTED_SLUGS, ...PIPELINE_SLUGS]));
+    expect(slugs).toEqual(
+      new Set([...LAUNCH_SLUGS, ...IMPORTED_SLUGS, ...PIPELINE_SLUGS, ...SCAM_FILES_SLUGS])
+    );
     // No duplicate slugs across the whole catalog.
     expect(slugs.size).toBe(products.length);
   });
@@ -315,7 +335,7 @@ describe('catalog product metadata fields (open-catalog additions)', () => {
 });
 
 describe('catalog categories', () => {
-  it('derives six categories in catalog order: the three launch categories plus the three imported ones', () => {
+  it('derives every category in catalog order, launch first and newest last', () => {
     const categories = listCategories();
     expect(categories.map((c) => c.slug)).toEqual([
       'self-improvement',
@@ -324,6 +344,7 @@ describe('catalog categories', () => {
       'character-guides',
       'talking-to-your-parents',
       'the-ten-series',
+      'the-scam-files',
     ]);
   });
 
@@ -356,19 +377,24 @@ describe('catalog categories', () => {
     expect(listProductsByCategory('the-ten-series')).toHaveLength(24);
   });
 
-  it('listProductsByCategory(self-improvement) returns the launch three plus the pipeline additions', () => {
-    const slugs = listProductsByCategory('self-improvement').map((p) => p.slug).sort();
-    expect(slugs).toEqual(['30-days-of-focus', 'aura-os', 'glow-up-os', 'skin-os', 'sleep-os', 'social-os']);
-  });
-
-  it('listProductsByCategory(money-and-career) returns Money OS, Career OS and Money Habits OS', () => {
-    const slugs = listProductsByCategory('money-and-career').map((p) => p.slug).sort();
-    expect(slugs).toEqual(['career-os', 'money-habits-os', 'money-os']);
-  });
-
-  it('listProductsByCategory(study-skills) returns Study OS and English Confidence OS', () => {
-    const slugs = listProductsByCategory('study-skills').map((p) => p.slug).sort();
-    expect(slugs).toEqual(['english-confidence-os', 'study-os']);
+  // These assert membership rather than an exact list: every product added to
+  // a category would otherwise break an equality check that is not what the
+  // test is actually about. The exhaustive accounting lives in the
+  // "accounts for every product" test above.
+  it.each([
+    ['self-improvement', ['glow-up-os', 'aura-os', 'social-os', 'skin-os', 'sleep-os', '30-days-of-focus', 'home-workout-os', 'gym-beginner-os']],
+    ['money-and-career', ['money-os', 'career-os', 'money-habits-os', 'creator-os', 'the-scam-shield']],
+    ['study-skills', ['study-os', 'english-confidence-os', 'exam-sprint-os', 'presence-os']],
+    ['the-scam-files', ['the-scam-files', 'the-digital-arrest-scam', 'upi-and-otp-fraud']],
+  ] as const)('listProductsByCategory(%s) contains its known products', (category, expected) => {
+    const slugs = listProductsByCategory(category).map((p) => p.slug);
+    for (const slug of expected) {
+      expect(slugs, `${category} should contain ${slug}`).toContain(slug);
+    }
+    // And every product it returns really does declare that category.
+    for (const product of listProductsByCategory(category)) {
+      expect(product.category.slug).toBe(category);
+    }
   });
 
   it.each([
@@ -413,16 +439,19 @@ describe('catalog categories', () => {
 describe('catalog featured products', () => {
   it('lists exactly the curated featured products, one per category', () => {
     const featured = listFeatured();
-    // The three launch picks, plus one flagship guide per imported family —
-    // each the family's own "start here" recommendation from its listing
-    // copy (Saitama, "Being Treated as an Adult", "What Your Screentime
-    // Costs You" — see each product file's FAQ for the exact quote).
+    // The three launch picks, plus one flagship per family — each the
+    // family's own "start here" recommendation from its listing copy
+    // (Saitama, "Being Treated as an Adult", "What Your Screentime Costs
+    // You" — see each product file's FAQ for the exact quote). The Scam
+    // Files set is its family's flagship for the same reason: the listing
+    // copy points buyers at the set over the individual guides.
     expect(featured.map((p) => p.slug).sort()).toEqual([
       'being-treated-as-an-adult-in-your-own-home',
       'glow-up-os',
       'how-to-be-like-saitama',
       'money-os',
       'study-os',
+      'the-scam-files',
       'what-your-screentime-costs-you',
     ]);
     const featuredCategorySlugs = new Set(featured.map((p) => p.category.slug));

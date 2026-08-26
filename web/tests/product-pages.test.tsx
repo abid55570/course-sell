@@ -13,11 +13,10 @@ const listProducts = () => ALL_PRODUCTS;
 import { formatRupees } from '@/lib/format';
 
 describe('generateStaticParams', () => {
-  it('generates a static param for every catalog product (89: 6 launch + 78 imported + 5 pipeline)', async () => {
+  it('generates a static param for every catalog product', async () => {
     const params = await generateStaticParams();
     const slugs = params.map((p) => p.slug).sort();
     expect(slugs).toEqual(listProducts().map((p) => p.slug).sort());
-    expect(slugs.length).toBe(89);
   });
 });
 

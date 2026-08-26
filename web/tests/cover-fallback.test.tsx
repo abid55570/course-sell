@@ -170,9 +170,8 @@ describe('the new categories appear across the storefront', () => {
     }
   });
 
-  it('listCategories() carries 6 categories, each with its own accent hex distinguishable from the rest and from vermilion (#C42B22)', () => {
+  it('every category carries its own accent hex, distinguishable from the rest and from vermilion (#C42B22)', () => {
     const categories = listCategories();
-    expect(categories).toHaveLength(6);
     for (const c of categories) {
       expect(c.accent.hex).toMatch(/^#[0-9a-f]{6}$/i);
       expect(c.accent.hex.toLowerCase()).not.toBe('#c42b22');

@@ -30,7 +30,7 @@ export type BundleSlug = string;
  * vermilion brand primary (#C42B22) — see lib/catalog/categories.ts.
  */
 export type AccentColor = {
-  name: 'green' | 'gold' | 'blue' | 'violet' | 'teal' | 'orange' | 'pink' | 'lime' | 'indigo';
+  name: 'green' | 'gold' | 'blue' | 'violet' | 'teal' | 'orange' | 'pink' | 'lime' | 'indigo' | 'cyan';
   hex: string;
 };
 

@@ -7,6 +7,7 @@ const payments = require('../services/payments');
 const { markOrderPaid } = require('../services/fulfillment');
 const { planPricing } = require('../services/pricing');
 const { isToolKey, getTool } = require('../services/tool-products');
+const manualPayment = require('../services/manual-payment');
 
 const router = express.Router();
 
@@ -114,6 +115,15 @@ router.post('/', async (req, res, next) => {
       amount: product.amount,
       currency: pay.currency,
       product: { type: product.productType, title: product.title },
+      // Which path the storefront should offer. 'razorpay' whenever real keys
+      // exist; 'whatsapp' is the interim manual path while onboarding is
+      // blocked; 'dev' is the local auto-complete.
+      payment_mode: manualPayment.paymentMode(),
+      whatsapp: manualPayment.checkoutBlock({
+        orderId,
+        title: product.title,
+        amount: product.amount,
+      }),
       razorpay: {
         configured: pay.configured,
         key_id: pay.key_id,
@@ -171,6 +181,50 @@ router.post('/:orderId/verify', async (req, res, next) => {
       if (lic) payload.license_key = lic.license_key;
     }
     res.json(payload);
+  } catch (e) { next(e); }
+});
+
+/**
+ * The buyer reporting that they have paid, on the interim WhatsApp path.
+ *
+ * This deliberately does NOT deliver anything. It records the reference the
+ * buyer typed and moves the order to `submitted`, which is the status that
+ * already meant "buyer says paid, nobody has checked". An admin verifies
+ * against the actual WhatsApp conversation and confirms in the panel, and
+ * only that calls markOrderPaid.
+ *
+ * So a made-up reference costs the sender nothing and gains them nothing.
+ */
+router.post('/:orderId/reference', async (req, res, next) => {
+  try {
+    const reference = String(req.body?.reference || '').trim();
+    if (reference.length < 4 || reference.length > 64) {
+      return res.status(400).json({ error: 'Enter the payment reference from your UPI app or bank.' });
+    }
+
+    const order = await db.get('SELECT * FROM orders WHERE order_id = $1', [req.params.orderId]);
+    if (!order) return res.status(404).json({ error: 'order not found' });
+    if (order.status === 'completed') {
+      return res.json({ ok: true, status: 'completed', already: true });
+    }
+    if (order.status === 'cancelled') {
+      return res.status(400).json({ error: 'This order was cancelled. Start a new one.' });
+    }
+
+    await db.run(
+      "UPDATE orders SET upi_txn_ref = $1, status = 'submitted', updated_at = NOW() WHERE order_id = $2",
+      [reference, order.order_id]
+    );
+    await db.logTransaction({
+      order_id: order.order_id,
+      event: 'submitted',
+      actor: 'buyer',
+      amount: order.amount,
+      upi_txn_ref: reference,
+      detail: 'reference reported by buyer, awaiting manual confirmation',
+    });
+
+    res.json({ ok: true, status: 'submitted' });
   } catch (e) { next(e); }
 });
 

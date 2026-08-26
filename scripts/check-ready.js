@@ -98,6 +98,28 @@ if (!env) {
     }
   }
 
+  // Outbound email. Without it utils/email.js logs "[email] would send" and
+  // delivers nothing — so a buyer pays, the order completes, and no download
+  // link ever reaches them. Silent, and the worst failure in the system.
+  const EMAIL_PLACEHOLDERS = ['your-16-char-app-password', 'your-email@gmail.com', ''];
+  const smtpUnset = ['SMTP_USER', 'SMTP_PASS'].filter((k) =>
+    EMAIL_PLACEHOLDERS.includes(env[k] ?? '')
+  );
+  if (smtpUnset.length) {
+    blockers.push(
+      `Email is not configured (${smtpUnset.join(', ')} unset or still the example value) — ` +
+        'orders complete but no delivery email is ever sent'
+    );
+  } else {
+    passes.push('Outbound email is configured');
+    if (env.SMTP_USER && env.SUPPORT_EMAIL && env.SMTP_USER !== env.SUPPORT_EMAIL) {
+      warnings.push(
+        `SMTP_USER (${env.SMTP_USER}) and SUPPORT_EMAIL (${env.SUPPORT_EMAIL}) differ — ` +
+          'delivery emails will come from one address and ask buyers to reply to another'
+      );
+    }
+  }
+
   // Payments.
   const razorpayKeys = ['RAZORPAY_KEY_ID', 'RAZORPAY_KEY_SECRET', 'RAZORPAY_WEBHOOK_SECRET'];
   const missingRazorpay = razorpayKeys.filter((k) => !env[k]);

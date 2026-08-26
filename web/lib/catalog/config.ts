@@ -1,19 +1,15 @@
 /**
  * Store-wide catalog configuration.
  *
- * The owner's support email is not finalised yet. The source listing copy in
- * `Dashrize-Products/*\/READ-ME-FIRST.txt` marks it as something to fill in
- * before publishing ("Add your support email — marked in the listing text
- * and START-HERE"), but the approved listing-copy-paste.md files themselves
- * never spell out a literal address — they only say "reply to this email" in
- * the delivery-email copy, which assumes whatever inbox sends that email.
+ * The store's support inbox, on the Google Workspace account for dropdesk.in.
+ * It appears on the footer, checkout, order, product, bundle, privacy, refunds,
+ * terms and contact pages — every one of them imports it from here rather than
+ * hardcoding an address, so it is changed in exactly one place.
  *
- * Rather than scatter a hardcoded address (or leave call sites guessing),
- * every place in the app that needs to show a support contact should import
- * SUPPORT_EMAIL from here. Replace this single value once the owner has a
- * real inbox, and every page/email picks it up automatically.
+ * It must stay in step with SUPPORT_EMAIL in the repo-root .env, which is what
+ * the API reports on /api/site-info. `npm run check:ready` verifies both.
  */
-export const SUPPORT_EMAIL = 'REPLACE_SUPPORT_EMAIL@dropdesk.example' as const;
+export const SUPPORT_EMAIL = 'support@dropdesk.in' as const;
 
 /**
  * PRICING_LADDER used to live here as three hardcoded numbers straight off

@@ -24,9 +24,11 @@ vi.mock('next/navigation', () => ({
 
 const createOrderMock = vi.fn();
 const verifyOrderMock = vi.fn();
+const submitReferenceMock = vi.fn();
 vi.mock('@/lib/orders', () => ({
   createOrder: (...args: unknown[]) => createOrderMock(...args),
   verifyOrder: (...args: unknown[]) => verifyOrderMock(...args),
+  submitPaymentReference: (...args: unknown[]) => submitReferenceMock(...args),
 }));
 
 import CheckoutForm from '@/components/checkout/CheckoutForm';
@@ -236,5 +238,80 @@ describe('CheckoutForm retry state machine', () => {
     });
 
     await waitFor(() => expect(pushMock).toHaveBeenCalledWith('/order/ORD-LIVE01'));
+  });
+});
+
+describe('the interim WhatsApp payment path', () => {
+  const WHATSAPP_ORDER = {
+    order_id: 'ORD-WA0001',
+    amount: 299,
+    currency: 'INR',
+    product: { type: 'catalog', title: '30 Days of Focus' },
+    payment_mode: 'whatsapp' as const,
+    whatsapp: {
+      number: '919559872757',
+      link: 'https://wa.me/919559872757?text=Order%20ORD-WA0001',
+      message: 'Order ORD-WA0001',
+    },
+    razorpay: {
+      configured: false,
+      key_id: 'dev_bypass',
+      order_id: 'order_dev_ORD-WA0001',
+      amount_paise: 29900,
+      prefill: { name: '', email: '', contact: '' },
+      name: 'Dropdesk',
+    },
+  };
+
+  async function reachWhatsappStep() {
+    createOrderMock.mockResolvedValue({ ok: true, data: WHATSAPP_ORDER });
+    render(<CheckoutForm slug="30-days-of-focus" title="30 Days of Focus" price={299} />);
+    fillForm();
+    fireEvent.click(screen.getByRole('button', { name: /pay/i }));
+    await screen.findByLabelText(/payment reference/i);
+  }
+
+  it('offers the WhatsApp link rather than auto-completing the order', async () => {
+    await reachWhatsappStep();
+    expect(screen.getByRole('link', { name: /message us to pay/i }))
+      .toHaveAttribute('href', WHATSAPP_ORDER.whatsapp.link);
+    // The old behaviour auto-completed the order with no payment taken. The
+    // whole point of this path is that it must not.
+    expect(verifyOrderMock).not.toHaveBeenCalled();
+  });
+
+  it('hides the Pay button once the WhatsApp step is showing', async () => {
+    await reachWhatsappStep();
+    // A dead, greyed-out Pay button under the WhatsApp block reads as
+    // something the buyer is meant to press and cannot.
+    expect(screen.queryByRole('button', { name: /^pay ₹/i })).not.toBeInTheDocument();
+  });
+
+  it('refuses a too-short reference without calling the API', async () => {
+    await reachWhatsappStep();
+    fireEvent.change(screen.getByLabelText(/payment reference/i), { target: { value: 'ab' } });
+    fireEvent.click(screen.getByRole('button', { name: /submit reference/i }));
+    expect(await screen.findByRole('alert')).toBeInTheDocument();
+    expect(submitReferenceMock).not.toHaveBeenCalled();
+  });
+
+  it('submits a real reference against the right order', async () => {
+    submitReferenceMock.mockResolvedValue({ ok: true, data: { ok: true, status: 'submitted' } });
+    await reachWhatsappStep();
+    fireEvent.change(screen.getByLabelText(/payment reference/i), { target: { value: '512345678901' } });
+    fireEvent.click(screen.getByRole('button', { name: /submit reference/i }));
+    await waitFor(() => {
+      expect(submitReferenceMock).toHaveBeenCalledWith('ORD-WA0001', '512345678901');
+    });
+    await waitFor(() => expect(pushMock).toHaveBeenCalledWith('/order/ORD-WA0001'));
+  });
+
+  it('surfaces a server rejection instead of pretending it worked', async () => {
+    submitReferenceMock.mockResolvedValue({ ok: false, error: 'This order was cancelled. Start a new one.' });
+    await reachWhatsappStep();
+    fireEvent.change(screen.getByLabelText(/payment reference/i), { target: { value: '512345678901' } });
+    fireEvent.click(screen.getByRole('button', { name: /submit reference/i }));
+    expect(await screen.findByRole('alert')).toHaveTextContent(/cancelled/i);
+    expect(pushMock).not.toHaveBeenCalled();
   });
 });

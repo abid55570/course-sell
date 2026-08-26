@@ -37,52 +37,90 @@ function renderTemplate(template, data, { escape = true } = {}) {
  */
 const FONT_BODY = "'Instrument Sans','Segoe UI',Helvetica,Arial,sans-serif";
 const FONT_DISPLAY = "'Big Shoulders Display','Arial Narrow',Impact,Haettenschweiler,'Segoe UI',Arial,sans-serif";
+/** The dashed separator .receipt-rule draws between sections on the site. */
+const RULE = `<tr><td style="padding:16px 28px"><div style="border-top:1px dashed rgba(11,16,32,0.28);font-size:0;line-height:0">&nbsp;</div></td></tr>`;
+
 const FONT_MONO = "'Geist Mono','SFMono-Regular',Consolas,'Liberation Mono',Menlo,monospace";
 
 const DEFAULT_COMPLETED_TEMPLATE = `
-<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background:#F6F8FC;margin:0;padding:24px 12px">
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background:#F6F8FC;margin:0;padding:28px 12px">
  <tr><td align="center">
-  <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="600" style="max-width:600px;width:100%;background:#FFFFFF;border:1px solid rgba(11,16,32,0.12)">
+  <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="420" style="max-width:420px;width:100%;background:#FFFFFF;border-left:1px solid #0B1020;border-right:1px solid #0B1020">
 
-   <!-- vermilion rule, the storefront's primary -->
-   <tr><td style="height:6px;background:#C42B22;line-height:6px;font-size:0">&nbsp;</td></tr>
-
-   <tr><td style="padding:32px 32px 0">
-     <div style="font-family:${FONT_MONO};font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.15em;color:#5A6480">
-       Dropdesk &middot; Order confirmed
-     </div>
-     <h1 style="font-family:${FONT_DISPLAY};font-size:34px;line-height:1.05;font-weight:700;color:#0B1020;margin:12px 0 0;letter-spacing:-0.01em">
-       Payment received
-     </h1>
+   <!-- Perforated top edge. The site punches real semicircles with a CSS
+        mask; email cannot, so the holes are drawn as characters in the page
+        colour, which reads the same and renders everywhere. -->
+   <tr><td style="background:#0B1020;font-family:${FONT_MONO};font-size:13px;line-height:9px;letter-spacing:3px;color:#F6F8FC;padding:3px 0;text-align:center;mso-line-height-rule:exactly">
+     &bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;
    </td></tr>
 
-   <tr><td style="padding:20px 32px 0;font-family:${FONT_BODY};font-size:15px;line-height:1.6;color:#0B1020">
-     <p style="margin:0 0 12px">Hi {{buyer_name}},</p>
-     <p style="margin:0 0 4px">Your payment for <strong style="color:#0B1020">{{product_title}}</strong> went through.{{download_lead}}</p>
-   </td></tr>
-
-   <tr><td style="padding:16px 32px 0">{{resources_block}}</td></tr>
-
-   <!-- dotted leader, matching the rules used across the site -->
-   <tr><td style="padding:24px 32px 0">
-     <div style="border-bottom:1px dotted rgba(11,16,32,0.25);font-size:0;line-height:0">&nbsp;</div>
-   </td></tr>
-
-   <tr><td style="padding:16px 32px 0;font-family:${FONT_MONO};font-size:11px;text-transform:uppercase;letter-spacing:0.1em;color:#5A6480">
-     Order {{order_id}}
-   </td></tr>
-
-   <tr><td style="padding:8px 32px 28px;font-family:${FONT_BODY};font-size:14px;line-height:1.6;color:#5A6480">
-     <p style="margin:0 0 10px">Keep this email. The link stays valid, so you can download again from here.</p>
-     <p style="margin:0;color:#0B1020">Something wrong with the file or the link? Reply to this email and we will fix it.</p>
-   </td></tr>
-
-   <!-- ink footer, the site's own footer colour -->
-   <tr><td style="background:#0B1020;padding:18px 32px">
-     <div style="font-family:${FONT_DISPLAY};font-size:20px;font-weight:700;color:#FFFFFF;letter-spacing:0.02em">Dropdesk</div>
-     <div style="font-family:${FONT_MONO};font-size:10px;text-transform:uppercase;letter-spacing:0.1em;color:rgba(255,255,255,0.6);padding-top:4px">
+   <tr><td style="padding:26px 28px 0;text-align:center">
+     <div style="font-family:${FONT_DISPLAY};font-size:30px;font-weight:800;line-height:1;color:#0B1020;letter-spacing:0.01em">Dropdesk</div>
+     <div style="font-family:${FONT_MONO};font-size:9px;letter-spacing:0.18em;text-transform:uppercase;color:#5A6480;padding-top:7px">
        Digital products &middot; Instant download
      </div>
+   </td></tr>
+
+   ${RULE}
+
+   <tr><td style="padding:0 28px;font-family:${FONT_BODY};font-size:15px;line-height:1.45;color:#0B1020">
+     {{product_title}}
+   </td></tr>
+
+   ${RULE}
+
+   <!-- The paid line, weighted like a receipt total. -->
+   <tr><td style="padding:0 28px">
+     <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+       <tr>
+         <td style="font-family:${FONT_MONO};font-size:10px;letter-spacing:0.14em;text-transform:uppercase;color:#5A6480">Paid</td>
+         <td align="right" style="font-family:${FONT_DISPLAY};font-size:24px;font-weight:800;color:#0B1020;line-height:1">{{amount_display}}</td>
+       </tr>
+     </table>
+   </td></tr>
+
+   <tr><td style="padding:12px 28px 0">
+     <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="font-family:${FONT_MONO};font-size:10px;letter-spacing:0.08em;color:#5A6480">
+       <tr>
+         <td style="padding-bottom:5px;text-transform:uppercase">Order</td>
+         <td align="right" style="padding-bottom:5px;color:#0B1020">{{order_id}}</td>
+       </tr>
+       <tr>
+         <td style="padding-bottom:5px;text-transform:uppercase">Buyer</td>
+         <td align="right" style="padding-bottom:5px;color:#0B1020">{{buyer_name}}</td>
+       </tr>
+       <tr>
+         <td style="padding-bottom:5px;text-transform:uppercase">Sent to</td>
+         <td align="right" style="padding-bottom:5px;color:#0B1020">{{buyer_email}}</td>
+       </tr>
+       <tr>
+         <td style="text-transform:uppercase">Date</td>
+         <td align="right" style="color:#0B1020">{{order_date}}</td>
+       </tr>
+     </table>
+   </td></tr>
+
+   ${RULE}
+
+   <tr><td style="padding:0 28px">{{resources_block}}</td></tr>
+
+   ${RULE}
+
+   <!-- The stamp, in the storefront's vermilion. -->
+   <tr><td style="padding:0 28px;text-align:center">
+     <div style="display:inline-block;border:2px solid #C42B22;color:#C42B22;font-family:${FONT_MONO};font-size:11px;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;padding:7px 16px">
+       Payment received
+     </div>
+   </td></tr>
+
+   <tr><td style="padding:18px 28px 22px;text-align:center;font-family:${FONT_BODY};font-size:12px;line-height:1.55;color:#5A6480">
+     Keep this receipt &mdash; the link stays valid, so you can download again from here.<br>
+     Something wrong with the file? Just reply to this email.
+   </td></tr>
+
+   <!-- Perforated bottom edge. -->
+   <tr><td style="background:#0B1020;font-family:${FONT_MONO};font-size:13px;line-height:9px;letter-spacing:3px;color:#F6F8FC;padding:3px 0;text-align:center;mso-line-height-rule:exactly">
+     &bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;
    </td></tr>
 
   </table>
@@ -146,17 +184,28 @@ function buildResourcesBlock(course, order, opts) {
   return `<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">${rows}</table>`;
 }
 
+/**
+ * Indian-format rupees, matching web/lib/format.ts's formatRupees so the
+ * receipt in the email and the receipt on the order page read identically.
+ */
+function formatRupees(amount) {
+  const n = Number(amount);
+  if (!Number.isFinite(n)) return '';
+  return '₹' + n.toLocaleString('en-IN', { maximumFractionDigits: 0 });
+}
+
+/** "26 Aug 2026". Falls back to today when an order carries no timestamp. */
+function formatOrderDate(value) {
+  const d = value ? new Date(value) : new Date();
+  if (Number.isNaN(d.getTime())) return '';
+  return d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+}
+
 function renderCompletedEmail({ course, order, includePdf, includeDrive, customTemplate }) {
   const template = customTemplate && customTemplate.trim().length > 0
     ? customTemplate
     : DEFAULT_COMPLETED_TEMPLATE;
   const resources = buildResourcesBlock(course, order, { includePdf, includeDrive });
-  // The lead-in has to agree with the block beneath it: "Here is your
-  // download:" immediately above "your download is not ready yet" reads as a
-  // mistake to the one buyer who most needs to trust the next sentence.
-  const hasDownload =
-    (includeDrive && course.drive_link) || (includePdf && course.pdf_file);
-  const downloadLead = hasDownload ? ' Here is your download:' : '';
   const SENTINEL = 'RESOURCES_BLOCK';
   const withSentinel = String(template).replace(/\{\{\s*resources_block\s*\}\}/g, SENTINEL);
   const textData = {
@@ -168,8 +217,11 @@ function renderCompletedEmail({ course, order, includePdf, includeDrive, customT
     course_slug: course.slug,
     order_id: order.order_id,
     amount: order.amount,
+    // A receipt shows what was paid and when. The old email showed neither,
+    // which is the one thing a buyer looks for when they come back to it.
+    amount_display: formatRupees(order.amount),
+    order_date: formatOrderDate(order.created_at),
     drive_link: includeDrive ? (course.drive_link || '') : '',
-    download_lead: downloadLead,
     pdf_url: includePdf && course.pdf_file
       ? `${(process.env.SITE_URL || '').replace(/\/$/, '')}/api/orders/${order.order_id}/pdf`
       : '',
@@ -180,6 +232,7 @@ function renderCompletedEmail({ course, order, includePdf, includeDrive, customT
 
 module.exports = {
   renderTemplate,
+  formatRupees,
   renderCompletedEmail,
   buildResourcesBlock,
   DEFAULT_COMPLETED_TEMPLATE,

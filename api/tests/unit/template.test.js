@@ -200,12 +200,32 @@ test('delivery email keeps the honest notice when there is no file', () => {
   assert.match(html, new RegExp(BRAND.primary, 'i'));
 });
 
-test('delivery email lead-in agrees with whether there is a download', () => {
-  // "Here is your download:" immediately above "your download is not ready
-  // yet" reads as a mistake to the one buyer who most needs to trust the
-  // sentence after it.
-  assert.match(renderSample(), /Here is your download/);
+test('delivery email never announces a download it does not have', () => {
+  // The prose lead-in that used to sit above the download block could
+  // contradict the "not ready yet" notice. The receipt layout has no such
+  // sentence, so this pins that no announcing phrase creeps back in.
   const none = renderSample({ course: { pdf_file: null, send_pdf_in_email: false }, includePdf: false });
-  assert.doesNotMatch(none, /Here is your download/);
   assert.match(none, /not ready yet/i);
+  assert.doesNotMatch(none, /here is your download/i);
+  assert.doesNotMatch(none, /your files are ready/i);
+});
+
+test('delivery email reads as a receipt: paid amount, order, buyer and date', () => {
+  // The old layout showed none of these. A buyer returning to this email is
+  // usually looking for exactly them.
+  const html = renderSample();
+  assert.match(html, /Paid/);
+  assert.match(html, /₹999/);          // formatted rupees, not a bare number
+  assert.match(html, /ORD-BRAND1/);
+  assert.match(html, /Payment received/);
+  assert.match(html, /Order/);
+  assert.match(html, /Buyer/);
+});
+
+test('delivery email draws the perforated edges the storefront uses', () => {
+  const html = renderSample();
+  // Punched holes drawn as characters: a CSS mask does not survive email.
+  const perforations = html.match(/&bull;&bull;&bull;/g) || [];
+  assert.ok(perforations.length >= 2, 'expected a perforated edge top and bottom');
+  assert.match(html, /1px dashed rgba\(11, ?16, ?32, ?0\.28\)/);
 });

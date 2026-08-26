@@ -98,7 +98,7 @@ function catCheck(label, name, on, hint) {
     '</label>';
 }
 
-const CAT_HR = '<hr style="border:0;border-top:1px solid rgba(255,255,255,0.1);margin:18px 0" />';
+const CAT_HR = '<hr style="border:0;border-top:1px dashed rgba(11,16,32,0.28);margin:18px 0" />';
 
 function openCatalogModal(id) {
   const row = CATALOG_ROWS.find((r) => String(r.id) === String(id));
@@ -138,7 +138,7 @@ function openCatalogModal(id) {
       CAT_HR +
       '<p class="text-muted" style="margin:0 0 10px;font-size:12px">Delivery &mdash; what the buyer receives after paying.</p>' +
       '<div class="grid-2">' +
-        catField('File path', 'pdf_file', row.pdf_file, 'text', 'e.g. /uploads/pdfs/glow-up-os.zip') +
+        catField('File name', 'pdf_file', row.pdf_file, 'text', 'The deliverable filename, e.g. glow-up-os.zip') +
         catField('Drive link', 'drive_link', row.drive_link) +
       '</div>' +
       '<div class="grid-2">' +
@@ -171,11 +171,16 @@ function openCatalogModal(id) {
       '</div>' +
     '</form></div></div>';
 
-  const close = () => { root.innerHTML = ''; };
+  const close = () => {
+    document.removeEventListener('keydown', onKey);
+    root.innerHTML = '';
+  };
+  const onKey = (e) => { if (e.key === 'Escape') close(); };
   document.getElementById('closeModal').addEventListener('click', close);
   root.firstElementChild.addEventListener('click', (e) => {
     if (e.target === root.firstElementChild) close();
   });
+  document.addEventListener('keydown', onKey);
 
   document.getElementById('catalogForm').addEventListener('submit', async (e) => {
     e.preventDefault();

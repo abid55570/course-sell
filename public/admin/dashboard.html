@@ -3,58 +3,80 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Admin Dashboard</title>
-  <link rel="stylesheet" href="/css/styles.css">
+  <title>Dropdesk Admin</title>
+  <link rel="stylesheet" href="/css/admin.css">
 </head>
 <body>
   <div class="admin-shell">
     <aside>
-      <a class="brand" href="/admin/dashboard"><span class="logo"></span> <span>Admin</span></a>
-      <nav class="admin-nav mt-16">
-        <a data-tab="overview" class="active">Overview</a>
-        <a data-tab="catalog">Catalogue</a>
-        <a data-tab="courses">Courses <span class="text-muted" style="font-size:11px">(legacy)</span></a>
-        <a data-tab="products">Products <span class="text-muted" style="font-size:11px">(legacy)</span></a>
-        <a data-tab="templates">Video Templates</a>
+      <a class="brand" href="/admin/dashboard">
+        <span class="logo"></span>
+        <span>Dropdesk</span>
+        <span class="badge-admin">Admin</span>
+      </a>
+      <nav class="admin-nav">
+        <!-- What the store runs on, day to day. -->
+        <a data-tab="catalog" class="active">Catalogue</a>
         <a data-tab="orders">Orders</a>
+        <a data-tab="overview">Overview</a>
         <a data-tab="transactions">Transactions</a>
-        <a id="logoutBtn" style="margin-top:auto">Logout</a>
+
+        <!-- The older product lines. The storefront does not read these; kept
+             reachable for the one-time tools, the carousel editor, and the
+             invite-video generator. -->
+        <div class="nav-group-label">Advanced</div>
+        <a data-tab="courses">Courses <span class="muted-note">legacy</span></a>
+        <a data-tab="products">Products <span class="muted-note">legacy</span></a>
+        <a data-tab="templates">Video templates</a>
+
+        <a id="logoutBtn">Log out</a>
       </nav>
     </aside>
     <main>
       <header class="topbar">
         <div>
-          <h2 id="tabTitle" style="margin:0">Overview</h2>
-          <p class="text-muted" style="margin:4px 0 0">Manage courses, orders, and support.</p>
+          <h2 id="tabTitle">Catalogue</h2>
+          <p id="tabSubtitle" class="text-muted" style="margin:4px 0 0">Everything the storefront sells.</p>
         </div>
-        <div id="adminEmail" class="text-muted"></div>
+        <div id="adminEmail"></div>
       </header>
 
-      <section id="tab-overview">
-        <div id="stats" class="stats"></div>
-        <div class="card body" style="padding:22px">
-          <h3 style="margin-top:0">Quick start</h3>
-          <ul class="text-muted">
-            <li>Edit prices, copy and delivery files in the <a data-tab-link="catalog" style="cursor:pointer;color:#a5b4fc">Catalogue</a> tab. That is what the storefront sells; the Courses and Products tabs are the legacy table and no longer drive the site.</li>
-            <li>Orders paid over WhatsApp arrive as <strong>Submitted</strong> with the buyer's payment reference. Check it, then press Confirm in the <a data-tab-link="orders" style="cursor:pointer;color:#a5b4fc">Orders</a> tab &mdash; that sends the receipt and unlocks the download.</li>
-            <li>Inspect the audit trail in the <a data-tab-link="transactions" style="cursor:pointer;color:#a5b4fc">Transactions</a> tab.</li>
-          </ul>
-        </div>
-      </section>
-
-      <section id="tab-catalog" class="hidden">
-        <div class="flex-between mb-16">
-          <div>
-            <p class="text-muted" style="margin:0">Everything the storefront sells. Edits appear on the site within a few seconds.</p>
-          </div>
-          <input id="catalogFilter" class="input" placeholder="Filter by title or slug&hellip;" style="max-width:280px" />
+      <section id="tab-catalog">
+        <div class="flex-between mb-16" style="gap:16px;flex-wrap:wrap">
+          <p class="text-muted" style="margin:0">Edit a product to change its price, copy, delivery file, or whether it is live. Saved changes appear on the site within a few seconds.</p>
+          <input id="catalogFilter" class="input" placeholder="Filter by title or slug…" style="max-width:280px" />
         </div>
         <div id="catalogTable"></div>
       </section>
 
+      <section id="tab-orders" class="hidden">
+        <p class="text-muted" style="margin:0 0 16px">
+          Orders paid over WhatsApp arrive as <span class="badge submitted">Submitted</span> with the buyer's payment reference. Check the reference against the chat, then press <strong>Confirm</strong> — that sends the receipt email and unlocks the download. Once Razorpay is live, orders complete automatically.
+        </p>
+        <div id="ordersTable"></div>
+      </section>
+
+      <section id="tab-overview" class="hidden">
+        <div id="stats" class="stats"></div>
+        <div class="card body">
+          <h3 style="margin-top:0;font-family:var(--font-display);font-weight:800">How this store runs</h3>
+          <ul class="text-muted" style="line-height:1.9;padding-left:18px">
+            <li>Change prices, copy and delivery files in <a data-tab-link="catalog" style="cursor:pointer;color:var(--primary)">Catalogue</a> — that is what the storefront sells.</li>
+            <li>Confirm WhatsApp payments in <a data-tab-link="orders" style="cursor:pointer;color:var(--primary)">Orders</a>; the buyer's receipt and download go out automatically on Confirm.</li>
+            <li>Review every order event in <a data-tab-link="transactions" style="cursor:pointer;color:var(--primary)">Transactions</a>.</li>
+            <li>The <strong>Advanced</strong> tabs are older product lines the storefront no longer reads — leave them unless you sell tools, the carousel editor, or invite videos.</li>
+          </ul>
+        </div>
+      </section>
+
+      <section id="tab-transactions" class="hidden">
+        <p class="text-muted">Audit log of every order event (created, submitted, completed, cancelled).</p>
+        <div id="transactionsTable"></div>
+      </section>
+
       <section id="tab-courses" class="hidden">
         <div class="flex-between mb-16">
-          <p class="text-muted" style="margin:0">Legacy table. The storefront does not read this &mdash; use Catalogue. Kept for the one-time tools and the carousel editor.</p>
+          <p class="text-muted" style="margin:0">Legacy table. The storefront does not read this — use Catalogue. Kept for the one-time tools and the carousel editor.</p>
           <button id="addCourseBtn" class="btn btn-primary">+ New course</button>
         </div>
         <div id="coursesTable"></div>
@@ -62,7 +84,7 @@
 
       <section id="tab-products" class="hidden">
         <div class="flex-between mb-16">
-          <p class="text-muted" style="margin:0">Legacy table. The storefront does not read this &mdash; use Catalogue.</p>
+          <p class="text-muted" style="margin:0">Legacy table. The storefront does not read this — use Catalogue.</p>
           <button id="addProductBtn" class="btn btn-primary">+ New product</button>
         </div>
         <div id="productsTable"></div>
@@ -70,23 +92,13 @@
 
       <section id="tab-templates" class="hidden">
         <div class="flex-between mb-16">
-          <p class="text-muted" style="margin:0">Invite-video templates shown in the generator.</p>
+          <p class="text-muted" style="margin:0">Invite-video templates shown in the generator. Only relevant if you sell invite videos.</p>
           <div style="display:flex;gap:8px">
             <button id="addCategoryBtn" class="btn">+ Category</button>
             <button id="addTemplateBtn" class="btn btn-primary">+ New template</button>
           </div>
         </div>
         <div id="templatesTable"></div>
-      </section>
-
-      <section id="tab-orders" class="hidden">
-        <p class="text-muted">Orders auto-complete via Razorpay. Use Confirm only as a manual override.</p>
-        <div id="ordersTable"></div>
-      </section>
-
-      <section id="tab-transactions" class="hidden">
-        <p class="text-muted">Audit log of all order events (created, submitted, completed, cancelled).</p>
-        <div id="transactionsTable"></div>
       </section>
     </main>
   </div>

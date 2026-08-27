@@ -10,10 +10,12 @@ import { formatRupees } from '@/lib/format';
 // The tiers are built per render now, from values the component awaits.
 // Synchronous: a descendant of a page the test suite awaits at the top.
 export default function PricingLadder({
+  paymentMode,
   pricingLadder,
   everythingBundle,
   pairBundle,
 }: {
+  paymentMode: 'razorpay' | 'whatsapp' | 'dev';
   pricingLadder: { single: number; pair: number; allSix: number };
   everythingBundle?: Bundle;
   pairBundle?: Bundle;
@@ -23,29 +25,32 @@ export default function PricingLadder({
   // products it actually contains today), not a hardcoded "six" — this label
   // keeps reading correctly if the bundle ever grows.
   const everythingCount = everythingBundle?.components.length ?? 0;
+  const downloadLabel = paymentMode === 'whatsapp' ? 'Delivered by email' : 'Instant download';
+  const pairTitle = pairBundle?.title?.split(' — ')[0] ?? 'Popular pair';
+  const pairSavings = pairBundle?.separatePrice ? pairBundle.separatePrice - pricingLadder.pair : 0;
 
   const TIERS = [
   {
     label: 'From',
     price: pricingLadder.single,
     body: 'The lowest single-item price in the catalog. Bigger systems and full sets cost more.',
-    includes: ['1 product', 'Instant download', 'Yours to keep'],
+    includes: ['1 product', downloadLabel, 'Yours to keep'],
     separatePrice: undefined as number | undefined,
     favoured: false,
   },
   {
-    label: 'Any pair',
+    label: 'Most popular pair',
     price: pricingLadder.pair,
-    body: 'Two products, your choice.',
-    includes: ['2 products, your choice', 'Instant download', 'Yours to keep'],
+    body: `${pairTitle} at ${formatRupees(pricingLadder.pair)} — save ${formatRupees(pairSavings)} versus buying the two products on their own.`,
+    includes: [`${pairBundle?.components.length ?? 2} products`, downloadLabel, 'Yours to keep'],
     separatePrice: pairBundle?.separatePrice,
     favoured: true,
   },
   {
     label: `All ${everythingCount}`,
     price: pricingLadder.allSix,
-    body: 'Every launch product, plus everything released later.',
-    includes: [`${everythingCount} products`, 'Instant download', 'Future releases included'],
+    body: 'Every product in the catalog, plus every future release.',
+    includes: [`${everythingCount} products`, downloadLabel, 'Future releases included'],
     separatePrice: everythingBundle?.separatePrice,
     favoured: false,
   },
@@ -86,6 +91,11 @@ export default function PricingLadder({
                   }`}
                 >
                   {formatRupees(tier.separatePrice)} separately
+                </span>
+              ) : null}
+              {pairSavings > 0 && tier.favoured ? (
+                <span className="inline-block w-fit rounded bg-white/15 px-2.5 py-1 font-mono text-[11px] font-semibold uppercase tracking-[0.1em] text-white">
+                  You save {formatRupees(pairSavings)}
                 </span>
               ) : null}
               <p className={tier.favoured ? 'text-white/80' : 'text-ink-soft'}>{tier.body}</p>

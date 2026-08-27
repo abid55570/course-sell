@@ -30,10 +30,16 @@ const LEADER = (
 export default function Footer({
   productCount,
   categories,
+  paymentMode,
 }: {
   productCount: number;
   categories: Category[];
+  paymentMode?: 'razorpay' | 'whatsapp' | 'dev';
 }) {
+  const mode = paymentMode ?? 'razorpay';
+  const paymentLabel = mode === 'whatsapp'
+    ? 'UPI transfer · WhatsApp confirmation'
+    : 'Razorpay · UPI · Cards · Netbanking';
 
   return (
     <>
@@ -46,7 +52,7 @@ export default function Footer({
               {productCount} digital products across {categories.length} categories. Instant download.
             </p>
             <p className="mt-2 max-w-xs font-mono text-xs uppercase tracking-[0.1em] text-white/60">
-              Payments by Razorpay · UPI · Cards · Netbanking
+              Payments by {paymentLabel}
             </p>
           </div>
           <div className="flex flex-wrap gap-x-12 gap-y-8 text-sm">

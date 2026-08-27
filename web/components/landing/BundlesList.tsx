@@ -15,6 +15,8 @@ function stripeStyle(hexes: string[]): CSSProperties {
 
 // Synchronous: a descendant of a page the test suite awaits at the top, so it
 // takes its data already resolved rather than fetching it here.
+// Each available bundle shows a "Save {amount}" chip when its separatePrice is
+// genuinely larger than the bundle price — both figures come from catalog data.
 export default function BundlesList({
   bundles,
   productsBySlug,
@@ -36,6 +38,7 @@ export default function BundlesList({
               .filter((c): c is Extract<BundleComponent, { inCatalog: true }> => c.inCatalog)
               .map((c) => productsBySlug.get(c.slug)?.accent.hex)
               .filter((hex): hex is string => Boolean(hex));
+            const savings = bundle.separatePrice ? bundle.separatePrice - bundle.price : 0;
 
             return (
               <Link
@@ -77,7 +80,7 @@ export default function BundlesList({
                   </ul>
 
                   <div className="mt-auto flex flex-wrap items-end justify-between gap-x-4 gap-y-2 pt-4">
-                    <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
                       <span className="font-display text-3xl font-bold text-ink">{formatRupees(bundle.price)}</span>
                       {bundle.separatePrice ? (
                         <span className="font-mono text-xs text-ink-soft">
@@ -85,9 +88,16 @@ export default function BundlesList({
                         </span>
                       ) : null}
                     </div>
-                    <span className="shrink-0 font-mono text-xs font-semibold uppercase tracking-wide text-ink group-hover:text-primary">
-                      {bundle.availableToday ? 'Open bundle →' : 'See what’s inside →'}
-                    </span>
+                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                      {savings > 0 ? (
+                        <span className="inline-block rounded bg-primary/10 px-2.5 py-1 font-mono text-[11px] font-semibold uppercase tracking-[0.1em] text-primary">
+                          Save {formatRupees(savings)}
+                        </span>
+                      ) : null}
+                      <span className="shrink-0 font-mono text-xs font-semibold uppercase tracking-wide text-ink group-hover:text-primary">
+                        {bundle.availableToday ? 'Open bundle →' : "See what's inside →"}
+                      </span>
+                    </div>
                   </div>
                 </div>
               </Link>

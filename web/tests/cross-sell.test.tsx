@@ -48,7 +48,7 @@ describe('CrossSell pair pricing', () => {
       const pair = getPairFor(product.slug);
       if (!pair) continue;
 
-      const { container } = render(<CrossSell product={product!} pair={pair!} bundle={findPairBundle(product!.slug, pair!.slug)} />);
+      const { container } = render(<CrossSell product={product!} pair={pair!} bundle={findPairBundle(product!.slug, pair!.slug)} paymentMode="dev" />);
       const text = container.textContent ?? '';
       const bundle = findPairBundle(product.slug, pair.slug);
 
@@ -82,7 +82,7 @@ describe('CrossSell pair pricing', () => {
     const pair = getProduct('social-os');
     expect(product && pair).toBeTruthy();
 
-    const { container } = render(<CrossSell product={product!} pair={pair!} bundle={findPairBundle(product!.slug, pair!.slug)} />);
+    const { container } = render(<CrossSell product={product!} pair={pair!} bundle={findPairBundle(product!.slug, pair!.slug)} paymentMode="dev" />);
     const text = container.textContent ?? '';
     const separately = product!.price + pair!.price;
 

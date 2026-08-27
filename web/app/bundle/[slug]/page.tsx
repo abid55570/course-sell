@@ -4,8 +4,11 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { getBundle, listBundles, listProducts, SUPPORT_EMAIL } from '@/lib/catalog';
 import { formatRupees } from '@/lib/format';
+import { readPaymentMode } from '@/lib/payment-mode';
 import Disclaimer from '@/components/product/Disclaimer';
 import BuyButton from '@/components/product/BuyButton';
+import BuyReassurance from '@/components/product/BuyReassurance';
+import StickyBuyBar from '@/components/product/StickyBuyBar';
 import ProductCard from '@/components/product/ProductCard';
 import Faq from '@/components/landing/Faq';
 import Footer from '@/components/landing/Footer';
@@ -39,9 +42,13 @@ export default async function BundlePage({ params }: { params: Promise<{ slug: s
   // One catalog read, indexed by slug. Calling the per-slug accessor inside
   // the component map below would reload the catalog once per component.
   const bySlug = new Map((await listProducts()).map((product) => [product.slug, product]));
+  const paymentMode = await readPaymentMode();
 
   return (
     <main>
+      {bundle.availableToday ? (
+        <StickyBuyBar slug={bundle.slug} title={bundle.title} price={bundle.price} paymentMode={paymentMode} />
+      ) : null}
       <section className="bg-primary px-5 py-16 text-white sm:py-20">
         <div className="mx-auto grid max-w-5xl gap-8 sm:grid-cols-[1fr_180px] sm:items-start">
           <div>
@@ -60,7 +67,10 @@ export default async function BundlePage({ params }: { params: Promise<{ slug: s
             </div>
             <div className="mt-6">
               {bundle.availableToday ? (
-                <BuyButton slug={bundle.slug} title={bundle.title} price={bundle.price} className="bg-white text-primary" />
+                <div>
+                  <BuyButton slug={bundle.slug} title={bundle.title} price={bundle.price} className="bg-white text-primary" />
+                  <BuyReassurance tone="dark" />
+                </div>
               ) : (
                 <p className="max-w-md text-sm text-white/70">
                   Not purchasable yet. One or more products in this bundle have not shipped. Once
@@ -130,9 +140,16 @@ export default async function BundlePage({ params }: { params: Promise<{ slug: s
           <h2 className="font-display text-3xl font-bold">{bundle.title}</h2>
           {bundle.availableToday ? (
             <>
-              <p className="mt-2 text-white/85">{formatRupees(bundle.price)}, instant download, pay by UPI.</p>
+              <p className="mt-2 text-white/85">
+                {formatRupees(bundle.price)}
+                {paymentMode === 'whatsapp'
+                  ? ', delivered by email after we confirm your UPI payment.'
+                  : ', instant download by email.'}{' '}
+                Pay by {paymentMode === 'whatsapp' ? 'UPI' : 'card or UPI'}.
+              </p>
               <div className="mt-6">
                 <BuyButton slug={bundle.slug} title={bundle.title} price={bundle.price} className="bg-white text-primary" />
+                <BuyReassurance tone="dark" />
               </div>
             </>
           ) : (
@@ -147,7 +164,7 @@ export default async function BundlePage({ params }: { params: Promise<{ slug: s
         </div>
       </section>
 
-      <Footer {...footer} />
+      <Footer {...footer} paymentMode={paymentMode} />
     </main>
   );
 }

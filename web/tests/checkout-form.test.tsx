@@ -116,13 +116,13 @@ describe('CheckoutForm retry state machine', () => {
   });
 
   it('starts with the submit button disabled until name and email are both valid', () => {
-    render(<CheckoutForm slug="glow-up-os" title="Glow-Up OS" price={999} />);
+    render(<CheckoutForm slug="glow-up-os" title="Glow-Up OS" price={999} paymentMode="dev" />);
     expect(screen.getByRole('button', { name: /pay/i })).toBeDisabled();
   });
 
   it('order creation itself fails: nothing was created, so retry is a clean resubmit', async () => {
     createOrderMock.mockResolvedValueOnce({ ok: false, error: 'product not found' });
-    render(<CheckoutForm slug="glow-up-os" title="Glow-Up OS" price={999} />);
+    render(<CheckoutForm slug="glow-up-os" title="Glow-Up OS" price={999} paymentMode="dev" />);
     fillForm();
     fireEvent.click(screen.getByRole('button', { name: /^pay/i }));
 
@@ -142,7 +142,7 @@ describe('CheckoutForm retry state machine', () => {
   it('dev-bypass verify fails: retry reuses the same order and never calls createOrder again', async () => {
     createOrderMock.mockResolvedValueOnce({ ok: true, data: devOrder() });
     verifyOrderMock.mockResolvedValueOnce({ ok: false, error: 'network blip' });
-    render(<CheckoutForm slug="glow-up-os" title="Glow-Up OS" price={999} />);
+    render(<CheckoutForm slug="glow-up-os" title="Glow-Up OS" price={999} paymentMode="dev" />);
     fillForm();
     fireEvent.click(screen.getByRole('button', { name: /^pay/i }));
 
@@ -160,7 +160,7 @@ describe('CheckoutForm retry state machine', () => {
   it('buyer closes the Razorpay modal: retry reopens payment for the same order, no new order', async () => {
     const { RazorpayCtor, instances } = installRazorpayMock();
     createOrderMock.mockResolvedValueOnce({ ok: true, data: liveOrder() });
-    render(<CheckoutForm slug="glow-up-os" title="Glow-Up OS" price={999} />);
+    render(<CheckoutForm slug="glow-up-os" title="Glow-Up OS" price={999} paymentMode="dev" />);
     fillForm();
     fireEvent.click(screen.getByRole('button', { name: /^pay/i }));
 
@@ -180,7 +180,7 @@ describe('CheckoutForm retry state machine', () => {
   it('card is declined: retry reopens payment for the same order, no new order', async () => {
     const { RazorpayCtor, instances } = installRazorpayMock();
     createOrderMock.mockResolvedValueOnce({ ok: true, data: liveOrder() });
-    render(<CheckoutForm slug="glow-up-os" title="Glow-Up OS" price={999} />);
+    render(<CheckoutForm slug="glow-up-os" title="Glow-Up OS" price={999} paymentMode="dev" />);
     fillForm();
     fireEvent.click(screen.getByRole('button', { name: /^pay/i }));
 
@@ -198,7 +198,7 @@ describe('CheckoutForm retry state machine', () => {
     const { RazorpayCtor, instances } = installRazorpayMock();
     createOrderMock.mockResolvedValueOnce({ ok: true, data: liveOrder() });
     verifyOrderMock.mockResolvedValueOnce({ ok: false, error: 'server hiccup' });
-    render(<CheckoutForm slug="glow-up-os" title="Glow-Up OS" price={999} />);
+    render(<CheckoutForm slug="glow-up-os" title="Glow-Up OS" price={999} paymentMode="dev" />);
     fillForm();
     fireEvent.click(screen.getByRole('button', { name: /^pay/i }));
 
@@ -226,7 +226,7 @@ describe('CheckoutForm retry state machine', () => {
     const { RazorpayCtor, instances } = installRazorpayMock();
     createOrderMock.mockResolvedValueOnce({ ok: true, data: liveOrder() });
     verifyOrderMock.mockResolvedValueOnce({ ok: true, status: 'completed', product_type: 'course' });
-    render(<CheckoutForm slug="glow-up-os" title="Glow-Up OS" price={999} />);
+    render(<CheckoutForm slug="glow-up-os" title="Glow-Up OS" price={999} paymentMode="dev" />);
     fillForm();
     fireEvent.click(screen.getByRole('button', { name: /^pay/i }));
 
@@ -265,7 +265,7 @@ describe('the interim WhatsApp payment path', () => {
 
   async function reachWhatsappStep() {
     createOrderMock.mockResolvedValue({ ok: true, data: WHATSAPP_ORDER });
-    render(<CheckoutForm slug="30-days-of-focus" title="30 Days of Focus" price={299} />);
+    render(<CheckoutForm slug="30-days-of-focus" title="30 Days of Focus" price={299} paymentMode="dev" />);
     fillForm();
     fireEvent.click(screen.getByRole('button', { name: /pay/i }));
     await screen.findByLabelText(/payment reference/i);

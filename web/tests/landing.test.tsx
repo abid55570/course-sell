@@ -49,7 +49,7 @@ describe('Hero', () => {
   // same at six products or six thousand, so it reports no counts, no prices
   // and no category names, and it reads nothing from the catalog at all.
   it('reports no catalog figures', () => {
-    const { container } = render(<Hero />);
+    const { container } = render(<Hero paymentMode="dev" />);
     const text = container.textContent ?? '';
     expect(text, 'the hero must not print a price').not.toMatch(/₹\s*\d/);
     expect(text, 'the hero must not print a product or category count').not.toMatch(
@@ -58,25 +58,25 @@ describe('Hero', () => {
   });
 
   it('states only terms of sale that hold for any product', () => {
-    render(<Hero />);
+    render(<Hero paymentMode="dev" />);
     for (const term of ['ONE PAYMENT', 'INSTANT DOWNLOAD', 'PAY BY UPI', 'NO ACCOUNT NEEDED']) {
       expect(screen.getAllByText(term).length, `${term} missing from the hero strip`).toBeGreaterThan(0);
     }
   });
 
   it('never counts the catalog as a fixed number in its headline', () => {
-    const { container } = render(<Hero />);
+    const { container } = render(<Hero paymentMode="dev" />);
     expect(container.textContent).not.toMatch(/six systems/i);
   });
 
   it('links its primary CTA to the on-page product grid', () => {
-    render(<Hero />);
-    const link = screen.getByText('Shop the categories').closest('a');
-    expect(link?.getAttribute('href')).toBe('#products');
+    render(<Hero paymentMode="dev" />);
+    const link = screen.getByText('Browse categories').closest('a');
+    expect(link?.getAttribute('href')).toBe('#categories');
   });
 
   it('links its secondary CTA to the full browse page', () => {
-    render(<Hero />);
+    render(<Hero paymentMode="dev" />);
     const link = screen.getByText(/See everything/).closest('a');
     expect(link?.getAttribute('href')).toBe('/products');
   });
@@ -132,7 +132,7 @@ describe('ProductGrid', () => {
 
 describe('InstallSteps', () => {
   it('renders the three install steps as an ordered list of mono-numbered ledger rows', () => {
-    const { container } = render(<InstallSteps />);
+    const { container } = render(<InstallSteps paymentMode="dev" />);
     expect(container.querySelector('ol')).not.toBeNull();
     expect(container.querySelectorAll('ol > li').length).toBe(3);
     expect(screen.getByText('Pick a product')).toBeDefined();
@@ -149,7 +149,7 @@ describe('InstallSteps', () => {
 
 describe('PricingLadder', () => {
   it('shows the single, pair and all-products prices', async () => {
-    render(<PricingLadder {...LADDER_PROPS} />);
+    render(<PricingLadder {...LADDER_PROPS} paymentMode="dev" />);
     expect(screen.getByText(formatRupees(PRICING_LADDER.single))).toBeDefined();
     expect(screen.getByText(formatRupees(PRICING_LADDER.pair))).toBeDefined();
     expect(screen.getByText(formatRupees(PRICING_LADDER.allSix))).toBeDefined();
@@ -187,10 +187,10 @@ describe('no rendered landing section uses shadcn\'s muted namespace', () => {
   it('renders every server-safe section without text-muted anywhere in the output', () => {
     const { container } = render(
       <>
-        <Hero />
+        <Hero paymentMode="dev" />
         <ProductGrid products={listProducts()} />
-        <InstallSteps />
-        <PricingLadder {...LADDER_PROPS} />
+        <InstallSteps paymentMode="dev" />
+        <PricingLadder {...LADDER_PROPS} paymentMode="dev" />
         <BundlesList bundles={ALL_BUNDLES} productsBySlug={PRODUCTS_BY_SLUG} />
         <Footer {...FOOTER_PROPS} />
       </>

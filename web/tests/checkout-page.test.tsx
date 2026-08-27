@@ -87,7 +87,7 @@ describe('CheckoutPage', () => {
 
 describe('CheckoutForm', () => {
   it('disables submit until both name and email are present', () => {
-    render(<CheckoutForm slug="glow-up-os" title="Glow-Up OS" price={999} />);
+    render(<CheckoutForm slug="glow-up-os" title="Glow-Up OS" price={999} paymentMode="dev" />);
 
     const submit = screen.getByRole('button', { name: /pay/i });
     const nameInput = screen.getByLabelText(/full name/i);
@@ -105,7 +105,7 @@ describe('CheckoutForm', () => {
   });
 
   it('stays disabled with only an email and no name', () => {
-    render(<CheckoutForm slug="glow-up-os" title="Glow-Up OS" price={999} />);
+    render(<CheckoutForm slug="glow-up-os" title="Glow-Up OS" price={999} paymentMode="dev" />);
     const submit = screen.getByRole('button', { name: /pay/i });
 
     fireEvent.change(screen.getByLabelText(/email/i), { target: { value: 'asha@example.com' } });

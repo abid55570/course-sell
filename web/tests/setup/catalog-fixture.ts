@@ -12,10 +12,6 @@ import { vi } from 'vitest';
  * same 84 products and 6 bundles the migration itself loads into the database.
  * Every existing assertion keeps its meaning, and no test file needs to know
  * the catalog moved.
- *
- * Registered as a vitest setup file, so it applies before any test module is
- * imported. A test that wants different catalog data can still override this
- * with its own `vi.mock` of the same path.
  */
 vi.mock('@/lib/catalog/loader', async () => {
   const { fixtureCatalog } = await import('@/lib/catalog/fixture-source');
@@ -23,3 +19,14 @@ vi.mock('@/lib/catalog/loader', async () => {
     loadCatalog: async () => fixtureCatalog(),
   };
 });
+
+// IntersectionObserver is not available in jsdom. The StickyBuyBar component
+// depends on it; without this stub every page render throws a ReferenceError.
+class MockIntersectionObserver {
+  constructor(callback: IntersectionObserverCallback) {}
+  observe() {}
+  unobserve() {}
+  disconnect() {}
+}
+
+(globalThis as Record<string, unknown>).IntersectionObserver = MockIntersectionObserver;

@@ -45,7 +45,7 @@ describe('Hero mobile-width overflow guard', () => {
   // overflow-hidden ancestor clipped the copy instead of revealing it. The
   // content column must stay shrinkable.
   it('keeps the hero content column shrinkable so it cannot force the section wider', () => {
-    const { container } = render(<Hero />);
+    const { container } = render(<Hero paymentMode="dev" />);
     const column = container.querySelector('.max-w-6xl > .min-w-0');
     expect(
       column,
@@ -71,7 +71,7 @@ describe('Hero mobile-width overflow guard', () => {
   }
 
   it('pins no width wide enough to overflow the narrowest viewport', () => {
-    const { container } = render(<Hero />);
+    const { container } = render(<Hero paymentMode="dev" />);
     const offenders: string[] = [];
 
     container.querySelectorAll<HTMLElement>('*').forEach((el) => {
@@ -96,7 +96,7 @@ describe('Hero mobile-width overflow guard', () => {
 
 describe('Hero carries no product imagery', () => {
   it('renders no <img> elements at all: no cover, no rack, no featured product', () => {
-    const { container } = render(<Hero />);
+    const { container } = render(<Hero paymentMode="dev" />);
     expect(container.querySelectorAll('img').length).toBe(0);
   });
 });

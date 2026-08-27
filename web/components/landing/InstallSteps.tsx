@@ -1,4 +1,4 @@
-const STEPS = [
+const STEPS_RAZORPAY = [
   {
     title: 'Pick a product',
     body: 'Every product page shows exactly what you get before you pay. Open the one you want.',
@@ -13,21 +13,38 @@ const STEPS = [
   },
 ];
 
+const STEPS_WHATSAPP = [
+  {
+    title: 'Pick a product',
+    body: 'Every product page shows exactly what you get before you pay. Open the one you want.',
+  },
+  {
+    title: 'Transfer by UPI',
+    body: 'Send the amount to the UPI ID on the checkout page. No card or netbanking on this server yet.',
+  },
+  {
+    title: 'Confirm on WhatsApp and download',
+    body: 'Paste your UPI payment reference on the checkout page. We confirm on WhatsApp, then email the download link. No password, no login.',
+  },
+];
+
 // Three ledger rows on carbon-copy paper. The sequence is real (do this,
 // then this, then this): an ordered list carries it for assistive tech, and
 // a mono row number carries it visually, per the corrected design brief.
 // The numbers are aria-hidden because the list already announces position.
-export default function InstallSteps() {
+export default function InstallSteps({ paymentMode }: { paymentMode: 'razorpay' | 'whatsapp' | 'dev' }) {
+  const steps = paymentMode === 'whatsapp' ? STEPS_WHATSAPP : STEPS_RAZORPAY;
+
   return (
     <section className="band-carbon px-5 py-20 sm:py-24 lg:px-12">
       <div className="mx-auto max-w-5xl">
         <h2 className="flex items-center gap-3 font-mono text-xs font-semibold uppercase tracking-[0.2em] text-ink-soft">
           Install
           <span aria-hidden="true" className="h-px flex-1 border-b border-dotted border-ink/25" />
-          <span className="shrink-0 tracking-[0.15em]">{String(STEPS.length).padStart(2, '0')} steps</span>
+          <span className="shrink-0 tracking-[0.15em]">{String(steps.length).padStart(2, '0')} steps</span>
         </h2>
         <ol className="mt-8 border-t border-ink/15">
-          {STEPS.map((step, i) => (
+          {steps.map((step, i) => (
             <li
               key={step.title}
               className="grid grid-cols-[2.75rem_minmax(0,1fr)] gap-y-2 border-b border-ink/15 py-6 sm:grid-cols-[2.75rem_minmax(0,15rem)_1fr] sm:gap-x-8 sm:py-7"

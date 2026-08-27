@@ -6,16 +6,25 @@ import PricingLadder from '@/components/landing/PricingLadder';
 import BundlesList from '@/components/landing/BundlesList';
 import Faq, { type FaqItem } from '@/components/landing/Faq';
 import Footer from '@/components/landing/Footer';
+import { readPaymentMode } from '@/lib/payment-mode';
 import { getBundle, listProducts, listFeatured, listCategories, listBundles, getPricingLadder, groupProductsByCategory } from '@/lib/catalog';
 import { formatRupees } from '@/lib/format';
 
 // Built per render rather than declared as a module constant: the prices it
 // quotes come from the catalog, which is a database read now.
-function buildFaqItems(pairPrice: number, everythingBundlePrice?: number): FaqItem[] {
+// paymentMode affects how the FAQ answers refer to payments and downloads.
+function buildFaqItems(pairPrice: number, everythingBundlePrice: number | undefined, paymentMode: PaymentMode): FaqItem[] {
+  const isWhatsapp = paymentMode === 'whatsapp';
   return [
   {
+    question: 'What if my download link never arrives?',
+    answer: 'Email support@dropdesk.in with your order ID. We fix the delivery problem first — resend the link or the correct file — and refund you only if we cannot. Full policy on the Refund Policy page.',
+  },
+  {
     question: 'How do I get my product after I pay?',
-    answer: 'The moment your payment clears, we email a download link to the address you used at checkout.',
+    answer: isWhatsapp
+      ? 'After we confirm your payment on WhatsApp, we email a download link to the address you gave. Check inbox and spam.'
+      : 'The moment your payment clears, we email a download link to the address you used at checkout.',
   },
   {
     question: 'Do I need an account?',
@@ -23,10 +32,12 @@ function buildFaqItems(pairPrice: number, everythingBundlePrice?: number): FaqIt
   },
   {
     question: 'What payment methods work?',
-    answer: 'UPI, cards and netbanking, all through Razorpay.',
+    answer: isWhatsapp
+      ? 'Transfer to UPI using the details on the checkout page. We confirm on WhatsApp once the money arrives.'
+      : 'UPI, cards and netbanking, all through Razorpay.',
   },
   {
-    question: 'Can I buy more than one product?',
+    question: `Can I buy more than one product?`,
     answer: `Yes. Any pair is ${formatRupees(pairPrice)}${
       everythingBundlePrice !== undefined ? `, and the Everything Bundle is ${formatRupees(everythingBundlePrice)}` : ''
     }. See the bundles above.`,
@@ -44,6 +55,8 @@ function buildFaqItems(pairPrice: number, everythingBundlePrice?: number): FaqIt
   ];
 }
 
+type PaymentMode = 'razorpay' | 'whatsapp' | 'dev';
+
 export default async function Home() {
   // The homepage used to list every product grouped by category
   // (ProductGrid, unfiltered). That doesn't scale: the catalog now holds 84
@@ -56,7 +69,7 @@ export default async function Home() {
   // category-nav grid that hands visitors straight to whichever category
   // they want. Both are still fully catalog-derived — nothing here is a
   // fixed list — so this keeps working unchanged if the catalog grows again.
-  const [products, featured, categories, bundles, pricingLadder, everythingBundle, pairBundle] =
+  const [products, featured, categories, bundles, pricingLadder, everythingBundle, pairBundle, paymentMode] =
     await Promise.all([
       listProducts(),
       listFeatured(),
@@ -65,8 +78,9 @@ export default async function Home() {
       getPricingLadder(),
       getBundle('everything-bundle'),
       getBundle('the-complete-man'),
+      readPaymentMode(),
     ]);
-  const faqItems = buildFaqItems(pricingLadder.pair, everythingBundle?.price);
+  const faqItems = buildFaqItems(pricingLadder.pair, everythingBundle?.price, paymentMode);
 
   // Resolved once here and handed down: the children are synchronous, so the
   // page is the only place allowed to touch the catalog.
@@ -80,7 +94,7 @@ export default async function Home() {
   return (
     <>
       <main>
-        <Hero />
+        <Hero paymentMode={paymentMode} />
         {/* ground-chart carries the hero's chart ruling through the featured
             band. CategoryNav sits outside it and supplies its own dotted
             ground (band-leaders) — nesting it inside .ground-chart would let
@@ -93,11 +107,11 @@ export default async function Home() {
         </div>
         <CategoryNav categories={categories} countBySlug={countBySlug} />
         <div aria-hidden="true" className="tear tear-carbon" />
-        <InstallSteps />
-        <PricingLadder pricingLadder={pricingLadder} everythingBundle={everythingBundle} pairBundle={pairBundle} />
+        <InstallSteps paymentMode={paymentMode} />
+        <PricingLadder paymentMode={paymentMode} pricingLadder={pricingLadder} everythingBundle={everythingBundle} pairBundle={pairBundle} />
         <BundlesList bundles={bundles} productsBySlug={productsBySlug} />
         <Faq items={faqItems} />
-        <Footer {...footer} />
+        <Footer {...footer} paymentMode={paymentMode} />
       </main>
     </>
   );

@@ -64,10 +64,12 @@ function describeCreateError(message: string): string {
 }
 
 export default function CheckoutForm({
+  paymentMode,
   slug,
   title,
   price,
 }: {
+  paymentMode: 'razorpay' | 'whatsapp' | 'dev';
   slug: string;
   title: string;
   price: number;
@@ -99,6 +101,11 @@ export default function CheckoutForm({
   const canSubmit = buyerName.trim().length > 0 && isEmailShaped(buyerEmail) && (phase === 'form' || canRetry);
   const busy = (phase !== 'form' && phase !== 'error') || chargeUncertain;
 
+  function orderUrl(): string {
+    if (!order) return '/';
+    return `/order/${order.order_id}`;
+  }
+
   async function completeWithoutLiveKeys(target: CreateOrderResponse) {
     setPhase('dev-completing');
     const result = await verifyOrder(target.order_id, {
@@ -111,7 +118,7 @@ export default function CheckoutForm({
       // Retrying re-attempts verification on this same order.
       setChargeUncertain(false);
       setPhase('error');
-      setError(`Could not finish the order: ${result.error}. No real payment is involved in this test mode. Select Pay again to retry.`);
+      setError(`Could not finish the order: ${result.error}. No real payment is involved in this test mode. Select Continue to payment to retry.`);
       return;
     }
     router.push(`/order/${target.order_id}`);
@@ -139,7 +146,7 @@ export default function CheckoutForm({
     if (!window.Razorpay) {
       setChargeUncertain(false);
       setPhase('error');
-      setError('The payment window is not ready yet. Select Pay again to retry, or refresh the page.');
+      setError('The payment window is not ready yet. Select Continue to payment again to retry, or refresh the page.');
       return;
     }
     const rz = new window.Razorpay({
@@ -172,7 +179,7 @@ export default function CheckoutForm({
         ondismiss: () => {
           setChargeUncertain(false);
           setPhase('error');
-          setError('You closed the payment window before finishing. Nothing was charged. Select Pay again when you are ready.');
+          setError('You closed the payment window before finishing. Nothing was charged. Select Continue to payment again when you are ready.');
         },
       },
     });
@@ -180,7 +187,7 @@ export default function CheckoutForm({
       setChargeUncertain(false);
       setPhase('error');
       setError(
-        `Payment failed: ${response.error?.description || 'the bank or card declined it.'} You were not charged for this attempt. Select Pay again to retry.`
+        `Payment failed: ${response.error?.description || 'the bank or card declined it.'} You were not charged for this attempt. Select Continue to payment to retry.`
       );
     });
     setPhase('awaiting-payment');
@@ -255,7 +262,7 @@ export default function CheckoutForm({
           onError={() => {
             setChargeUncertain(false);
             setPhase('error');
-            setError('The payment window did not load. This is often an ad blocker or a network issue. Select Pay again to retry, or refresh the page.');
+            setError('The payment window did not load. This is often an ad blocker or a network issue. Select Continue to payment again to retry, or refresh the page.');
           }}
         />
       ) : null}
@@ -318,7 +325,7 @@ export default function CheckoutForm({
         ) : null}
         {phase === 'awaiting-payment' ? (
           <p className="text-sm text-ink-soft" role="status">
-            Complete your payment in the window that opened. If you closed it by mistake, select Pay again below.
+            Complete your payment in the window that opened. If you closed it by mistake, select Continue to payment again below.
           </p>
         ) : null}
         {phase === 'verifying' ? (
@@ -326,24 +333,35 @@ export default function CheckoutForm({
             Payment received — confirming your order…
           </p>
         ) : null}
-        {(phase === 'whatsapp' || phase === 'reporting') && order?.whatsapp ? (
+        {(phase === 'whatsapp' || phase === 'reporting') && order ? (
           <div className="space-y-4 border border-ink/15 bg-canvas-2 p-5">
             <div>
               <p className="font-mono text-xs font-semibold uppercase tracking-[0.15em] text-ink-soft">
-                Step 1 &mdash; Pay on WhatsApp
+                Step 1 &mdash; Pay by UPI transfer
               </p>
               <p className="mt-2 text-sm text-ink">
-                Card payments aren&rsquo;t switched on yet, so orders are taken over WhatsApp for now.
-                The message below already has your order number in it.
+                Card payments aren&rsquo;t switched on yet. Send the amount by UPI to the
+                details on the next screen, then paste your payment reference below.
               </p>
-              <a
-                href={order.whatsapp.link}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="mt-3 inline-flex min-h-[44px] items-center bg-[#25D366] px-5 py-3 font-semibold text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-              >
-                Message us to pay &rarr;
-              </a>
+              <p className="mt-2 text-xs text-ink-soft">
+                Nothing to retype — your name and email are already saved on this order.
+              </p>
+              <div className="mt-3 flex flex-wrap items-center gap-3">
+                <a
+                  href={order.whatsapp?.link ?? '#'}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex min-h-[44px] items-center bg-[#25D366] px-5 py-3 font-semibold text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+                >
+                  Message us to pay &rarr;
+                </a>
+                <Link
+                  href={orderUrl()}
+                  className="inline-flex min-h-[44px] items-center font-mono text-xs font-semibold uppercase tracking-wide text-primary underline underline-offset-4"
+                >
+                  Save this order link
+                </Link>
+              </div>
             </div>
 
             <div className="border-t border-dashed border-ink/25 pt-4">
@@ -385,7 +403,7 @@ export default function CheckoutForm({
               </button>
               <p className="mt-3 text-xs text-ink-soft">
                 We check every payment by hand before sending your files, so your download arrives
-                once we&rsquo;ve confirmed it &mdash; usually within a few hours.
+                once we&rsquo;ve confirmed it — usually within a few hours.
               </p>
             </div>
           </div>
@@ -416,7 +434,13 @@ export default function CheckoutForm({
             disabled={!canSubmit}
             className="w-full rounded-lg bg-primary px-6 py-4 text-center text-sm font-semibold uppercase tracking-wide text-primary-foreground transition-opacity hover:opacity-90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-not-allowed disabled:opacity-40"
           >
-            {phase === 'error' ? `Pay ${formatRupees(price)} again` : `Pay ${formatRupees(price)}`}
+            {paymentMode === 'whatsapp' && phase === 'error'
+              ? `Continue to payment — ${formatRupees(price)}`
+              : paymentMode === 'whatsapp'
+                ? `Continue to payment — ${formatRupees(price)}`
+                : phase === 'error'
+                  ? `Pay ${formatRupees(price)} again`
+                  : `Pay ${formatRupees(price)}`}
           </button>
         )}
       </form>

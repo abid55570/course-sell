@@ -19,9 +19,15 @@ import ProductCard from './ProductCard';
  * `findPairBundle` returns one that is actually on sale AND that genuinely
  * costs less than buying the pair separately.
  */
-export default function CrossSell({ product, pair, bundle }: { product: Product; pair: Product; bundle?: Bundle }) {
+export default function CrossSell({ product, pair, bundle, paymentMode }: {
+  product: Product;
+  pair: Product;
+  bundle?: Bundle;
+  paymentMode: 'razorpay' | 'whatsapp' | 'dev';
+}) {
   const separately = product.price + pair.price;
   const saves = bundle ? separately - bundle.price : 0;
+  const paymentLabel = paymentMode === 'whatsapp' ? 'UPI' : 'card or UPI';
 
   return (
     <div className="border-t border-ink/10 pt-8">
@@ -42,7 +48,7 @@ export default function CrossSell({ product, pair, bundle }: { product: Product;
         </p>
       ) : (
         <p className="mt-2 text-sm text-ink-soft">
-          People who buy {product.shortTitle ?? product.title} tend to want this next.
+          This is a common pairing — they cover different needs that often go together.
         </p>
       )}
 

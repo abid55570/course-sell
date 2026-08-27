@@ -143,3 +143,5 @@ export function submitPaymentReference(
 export function getOrder(orderId: string): Promise<ApiResult<OrderStatusResponse>> {
   return apiFetch<OrderStatusResponse>(`/api/orders/${encodeURIComponent(orderId)}`);
 }
+
+export { getPaymentMode } from './payment-mode';

@@ -14,7 +14,47 @@ const cors = require('cors');
 
 const app = express();
 
-app.use(cors({ origin: true, credentials: true }));
+// Behind Cloudflare and a reverse proxy, req.ip is the proxy's address for
+// every request unless this is set — so express-rate-limit counts all callers
+// in one bucket. The login limiter then becomes a global counter that one
+// attacker can exhaust to lock the admin out, while doing nothing to throttle
+// them individually.
+//
+// A hop count, never `true`: blind trust takes the client's own
+// X-Forwarded-For at face value, which lets anyone spoof an IP and skip every
+// limit. TRUST_PROXY_HOPS makes it configurable, since the number depends on
+// the deployment (Cloudflare + nginx = 2).
+app.set('trust proxy', Number(process.env.TRUST_PROXY_HOPS || 1));
+
+// `origin: true` reflected whatever Origin the caller sent, with
+// credentials — so any site could make credentialed calls to this API. The
+// SameSite=Lax admin cookie limits the damage today, but that is one cookie
+// setting away from being exploitable. Whitelist instead.
+//
+// Same-origin and server-to-server callers send no Origin header at all, so
+// those are allowed through; only a browser declaring a foreign origin is
+// checked against the list.
+const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGINS || process.env.SITE_URL || '')
+  .split(',')
+  .map((o) => o.trim().replace(/\/$/, ''))
+  .filter(Boolean);
+
+app.use(cors({
+  origin(origin, callback) {
+    if (!origin) return callback(null, true);
+    const normalised = origin.replace(/\/$/, '');
+    if (ALLOWED_ORIGINS.includes(normalised)) return callback(null, true);
+    // Local development: the storefront runs on a different port to the API.
+    if (process.env.NODE_ENV !== 'production' && /^https?:\/\/localhost(:\d+)?$/.test(normalised)) {
+      return callback(null, true);
+    }
+    // Deny by omitting the header, not by throwing. Throwing lands in the
+    // error handler and answers 500, which reads as a broken server; the
+    // browser blocks the response either way. `false` is the clean refusal.
+    return callback(null, false);
+  },
+  credentials: true,
+}));
 
 // Razorpay webhook needs the raw body for signature verification, so it is
 // mounted with a raw parser BEFORE the JSON parser.
@@ -101,7 +141,12 @@ app.get('/admin/dashboard', (req, res) => {
 
 app.use((err, req, res, next) => {
   console.error(err);
-  res.status(500).json({ error: err.message || 'server error' });
+  // The detail goes to the log, not the response. Returning err.message handed
+  // driver and query text to the caller, which is free reconnaissance.
+  const exposeDetail = process.env.NODE_ENV !== 'production';
+  res.status(500).json({
+    error: exposeDetail ? (err.message || 'server error') : 'server error',
+  });
 });
 
 const PORT = process.env.PORT || 4000;

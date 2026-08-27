@@ -34,8 +34,20 @@ function pct(orig, disc) {
   return 0;
 }
 
-const TABS = ['overview', 'courses', 'products', 'templates', 'orders', 'transactions'];
-const TAB_TITLES = { overview: 'Overview', courses: 'Courses', products: 'Products', templates: 'Video Templates', orders: 'Orders', transactions: 'Transactions' };
+const TABS = ['overview', 'catalog', 'courses', 'products', 'templates', 'orders', 'transactions'];
+const TAB_TITLES = {
+  catalog: 'Catalogue', orders: 'Orders', overview: 'Overview', transactions: 'Transactions',
+  courses: 'Courses', products: 'Products', templates: 'Video templates',
+};
+const TAB_SUBTITLES = {
+  catalog: 'Everything the storefront sells.',
+  orders: 'Confirm payments and deliver.',
+  overview: 'At a glance.',
+  transactions: 'Every order event, in order.',
+  courses: 'Legacy — the storefront does not read this.',
+  products: 'Legacy — the storefront does not read this.',
+  templates: 'Only relevant if you sell invite videos.',
+};
 
 function activateTab(name) {
   TABS.forEach((t) => {
@@ -43,8 +55,11 @@ function activateTab(name) {
     const a = document.querySelector(`.admin-nav a[data-tab="${t}"]`);
     if (a) a.classList.toggle('active', t === name);
   });
-  document.getElementById('tabTitle').textContent = TAB_TITLES[name];
+  document.getElementById('tabTitle').textContent = TAB_TITLES[name] || name;
+  const sub = document.getElementById('tabSubtitle');
+  if (sub) sub.textContent = TAB_SUBTITLES[name] || '';
   if (name === 'overview') loadStats();
+  if (name === 'catalog') loadCatalog();
   if (name === 'courses') loadCourses();
   if (name === 'products') loadProducts();
   if (name === 'templates') loadVideoTemplates();
@@ -559,6 +574,7 @@ async function init() {
   document.querySelectorAll('[data-tab-link]').forEach((el) => {
     el.addEventListener('click', () => activateTab(el.dataset.tabLink));
   });
+  document.getElementById('catalogFilter')?.addEventListener('input', renderCatalog);
   document.getElementById('addCourseBtn')?.addEventListener('click', () => openCourseModal(null, 'course'));
   document.getElementById('addProductBtn')?.addEventListener('click', () => openCourseModal(null, 'product'));
   document.getElementById('addTemplateBtn')?.addEventListener('click', () => openTemplateModal(null));
@@ -566,7 +582,7 @@ async function init() {
   document.getElementById('logoutBtn')?.addEventListener('click', async () => {
     await api.post('/api/auth/logout', {}); location.href = '/admin';
   });
-  activateTab('overview');
+  activateTab('catalog');
 }
 
 document.addEventListener('DOMContentLoaded', init);

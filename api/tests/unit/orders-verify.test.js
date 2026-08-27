@@ -51,7 +51,9 @@ function stubDb(order) {
     return null;
   };
   db.run = async (sql) => {
-    if (/UPDATE orders SET status/i.test(sql)) state.status = 'completed';
+    // Whitespace-tolerant: the real statement spans several lines now that
+    // it carries the `AND status <> 'completed'` claim condition.
+    if (/UPDATE\s+orders\s+SET\s+status/i.test(sql)) state.status = 'completed';
     return { rowCount: 1, rows: [] };
   };
   db.logTransaction = async () => {};

@@ -4,6 +4,7 @@ import SmoothScroll from '@/lib/motion/SmoothScroll';
 import SiteHeader from '@/components/chrome/SiteHeader';
 import SearchBox from '@/components/search/SearchBox';
 import { listProducts } from '@/lib/catalog';
+import { SITE_URL } from '@/lib/env';
 import './globals.css';
 
 // Google Fonts merged "Big Shoulders Display" into the single variable
@@ -19,6 +20,10 @@ const deva = Noto_Sans_Devanagari({ subsets: ['devanagari'], variable: '--font-n
 export async function generateMetadata(): Promise<Metadata> {
   const products = await listProducts();
   return {
+    // Without this, Next resolves Open Graph and Twitter image paths against
+    // localhost, so a link shared to WhatsApp or Instagram previews with no
+    // image at all. It has to be the public origin, which is what SITE_URL is.
+    metadataBase: new URL(SITE_URL),
     title: 'Dropdesk — digital products, instant download',
     description: `${products.length} finished digital products for Indians building their next move. Instant download, pay by UPI.`,
   };

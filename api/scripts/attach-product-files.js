@@ -13,10 +13,9 @@
  * plus a small set of names that do not follow from the slug, listed in
  * EXPLICIT below.
  *
- * Files are copied into public/uploads/pdfs/ — the same place the admin
- * panel's own upload writes to, and what routes/orders.js resolves
- * `public/<pdf_file>` against — so the gated download route serves them with
- * no special casing.
+ * Files are copied into api/storage/deliverables/, which is NOT under public/
+ * and so is not reachable over HTTP at all. The gated download route in
+ * routes/orders.js is the only way to them.
  *
  * Idempotent: re-running re-copies and re-points, which is what you want after
  * regenerating a PDF. It never sets send_pdf_in_email on a row whose file is
@@ -32,7 +31,11 @@ require('dotenv').config({ path: path.join(__dirname, '..', '..', '.env') });
 const fs = require('fs');
 const db = require('../utils/db');
 
-const UPLOAD_DIR = path.join(__dirname, '..', '..', 'public', 'uploads', 'pdfs');
+// Outside public/ deliberately: anything under public/ is served by
+// express.static with no auth, which made every product downloadable at a
+// URL guessable from its own slug. api/routes/orders.js resolves names
+// against this same directory.
+const UPLOAD_DIR = path.join(__dirname, '..', 'storage', 'deliverables');
 
 /**
  * Catalog entries whose file name cannot be derived from the slug.
@@ -109,7 +112,9 @@ async function main() {
     const ext = path.extname(src).toLowerCase();
     const filename = `${row.slug}${ext}`;
     const dest = path.join(UPLOAD_DIR, filename);
-    const publicPath = `/uploads/pdfs/${filename}`;
+    // Stored as a bare filename now. The download route takes the basename
+    // either way, so legacy `/uploads/pdfs/x.zip` values still resolve.
+    const publicPath = filename;
 
     if (dryRun) {
       console.log(`  would attach ${row.slug} -> ${path.basename(src)} (${publicPath})`);

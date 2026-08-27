@@ -15,10 +15,26 @@ async function markOrderPaid(orderId, { paymentId = null, actor = 'razorpay' } =
   if (order.status === 'completed') return { ok: true, alreadyDone: true, productType: order.product_type };
   if (order.status === 'cancelled') return { ok: false, error: 'order cancelled' };
 
-  await db.run(
-    "UPDATE orders SET status='completed', razorpay_payment_id = COALESCE($1, razorpay_payment_id), updated_at=NOW() WHERE order_id=$2",
+  // The UPDATE is the concurrency gate, not the SELECT above it.
+  //
+  // The browser's verify call and the Razorpay webhook both land here for the
+  // same order, which is the normal case rather than a rare race. Both could
+  // pass the status check above and both then run the fulfil* branch below —
+  // sending the delivery email twice, or enqueueing a render twice. Making the
+  // transition conditional means exactly one caller can claim the order, and
+  // the rest see rowCount 0 and stop.
+  const claimed = await db.run(
+    `UPDATE orders
+        SET status='completed',
+            razorpay_payment_id = COALESCE($1, razorpay_payment_id),
+            updated_at=NOW()
+      WHERE order_id=$2 AND status <> 'completed'`,
     [paymentId, orderId]
   );
+  if (!claimed || claimed.rowCount !== 1) {
+    // Someone else completed it between the SELECT and here.
+    return { ok: true, alreadyDone: true, productType: order.product_type };
+  }
   await db.logTransaction({
     order_id: orderId, event: 'completed', actor,
     amount: order.amount, upi_txn_ref: paymentId, detail: `product=${order.product_type}`,

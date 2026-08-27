@@ -11,7 +11,9 @@ const router = express.Router();
 
 
 // public/ stays at the repo root; this route now runs from api/routes/.
-const pdfDir = path.join(__dirname, '..', '..', 'public', 'uploads', 'pdfs');
+// Outside public/: express.static would otherwise serve every uploaded
+// deliverable with no payment check. See routes/orders.js DELIVERABLES_ROOT.
+const pdfDir = path.join(__dirname, '..', 'storage', 'deliverables');
 if (!fs.existsSync(pdfDir)) fs.mkdirSync(pdfDir, { recursive: true });
 
 // In-memory storage so thumbnails go straight to the database as BYTEA. PDF
@@ -34,7 +36,7 @@ function persistPdf(file) {
   const safe = file.originalname.replace(/[^a-zA-Z0-9._-]/g, '_');
   const filename = `${Date.now()}-${safe}`;
   fs.writeFileSync(path.join(pdfDir, filename), file.buffer);
-  return `/uploads/pdfs/${filename}`;
+  return filename;
 }
 
 router.use(requireAdmin);

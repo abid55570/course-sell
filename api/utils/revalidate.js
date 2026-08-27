@@ -8,9 +8,16 @@
  * Best-effort by design: the save has already committed by the time this runs,
  * so a failed or unconfigured revalidation must not turn a successful save into
  * an error response. It warns and moves on.
+ *
+ * STOREFRONT_URL, not SITE_URL. The two are the same in production and differ
+ * everywhere else: SITE_URL is the public address that goes into delivery
+ * emails, so it has to be the real domain even while developing — which meant
+ * revalidation was posting to the live site instead of the storefront actually
+ * running, and admin edits appeared to save without ever reaching the page.
+ * Falls back to SITE_URL, so a deploy that sets only that still works.
  */
 async function revalidateStorefront() {
-  const base = (process.env.SITE_URL || '').replace(/\/$/, '');
+  const base = (process.env.STOREFRONT_URL || process.env.SITE_URL || '').replace(/\/$/, '');
   const secret = process.env.REVALIDATE_SECRET;
   if (!base || !secret) return { skipped: true };
   try {

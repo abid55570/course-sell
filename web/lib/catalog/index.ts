@@ -20,10 +20,9 @@ export type { CatalogPayload } from './loader';
  * The pricing ladder, still computed from real catalog data rather than
  * restated as hardcoded numbers.
  *
- * `single` is the real catalog-wide minimum price — ₹499, the guide price, now
- * that guides exist. It is deliberately NOT hardcoded to either 499 or 999: if
- * the cheapest product in the catalog ever changes again, this keeps reading
- * correctly without a second edit.
+ * `single` is the real catalog-wide minimum price — currently ₹299, the cheapest
+ * single product. It is deliberately NOT hardcoded: if the cheapest product in
+ * the catalog ever changes, this keeps reading correctly without a second edit.
  *
  * `pair` and `allSix` are read off the two bundles that already carry those
  * exact ladder prices as real, shipped catalog data (The Complete Man and the

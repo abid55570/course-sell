@@ -197,16 +197,25 @@ export default function OrderView({ footer }: { footer: FooterData }) {
           </span>
           <h1 className="font-display text-2xl font-bold text-ink sm:text-3xl">{title}</h1>
           <p className="mt-3 text-ink-soft">
-            If you just paid, this can take a few seconds to update. If it stays like this, email {SUPPORT_EMAIL}{' '}
-            with order ID <strong>{order.order_id}</strong>. Do not pay a second time.
+            We&rsquo;re waiting for payment confirmation for order <strong>{order.order_id}</strong>.{' '}
+            If you paid by UPI, return to the checkout page to paste your payment reference.
+            If you paid by card or UPI through Razorpay, it usually confirms within a few minutes — select Check again to refresh.
           </p>
-          <button
-            type="button"
-            onClick={retry}
-            className="mt-6 inline-block rounded-lg bg-primary px-6 py-3 text-sm font-semibold uppercase tracking-wide text-primary-foreground"
-          >
-            Check again
-          </button>
+          <div className="mt-5 flex flex-wrap items-center justify-center gap-3">
+            <button
+              type="button"
+              onClick={retry}
+              className="inline-block rounded-lg bg-primary px-6 py-3 text-sm font-semibold uppercase tracking-wide text-primary-foreground"
+            >
+              Check again
+            </button>
+            <Link
+              href={`/order/${order.order_id}`}
+              className="inline-flex min-h-[44px] items-center rounded-lg border border-ink/20 bg-canvas px-5 py-3 font-mono text-xs font-semibold uppercase tracking-wide text-ink"
+            >
+              Save order link
+            </Link>
+          </div>
         </>
       ) : (
         <>

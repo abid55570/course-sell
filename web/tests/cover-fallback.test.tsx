@@ -184,7 +184,7 @@ describe('the new categories appear across the storefront', () => {
 
 describe('the price ladder reflects the real catalog minimum', () => {
   it('PricingLadder renders ₹299, not the old flat ₹999, as its lowest tier', async () => {
-    render(<PricingLadder {...LADDER_PROPS} />);
+    render(<PricingLadder {...LADDER_PROPS} paymentMode="dev" />);
     expect(screen.getByText(formatRupees(299))).toBeDefined();
     expect(screen.queryByText(formatRupees(999))).toBeNull();
     expect(PRICING_LADDER.single).toBe(299);

@@ -228,6 +228,12 @@ router.post('/:orderId/reference', async (req, res, next) => {
   } catch (e) { next(e); }
 });
 
+// Which payment path this server is offering. Cached by the storefront via
+// revalidation — cheap to hit and never stale enough to mislead.
+router.get('/payment-mode', (req, res) => {
+  res.json({ payment_mode: manualPayment.paymentMode() });
+});
+
 // Order status for the delivery page (works for both product types).
 router.get('/:orderId', async (req, res, next) => {
   try {

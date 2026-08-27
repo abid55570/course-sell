@@ -11,6 +11,7 @@ import {
   SUPPORT_EMAIL,
 } from '@/lib/catalog';
 import { formatRupees, titleLead } from '@/lib/format';
+import { readPaymentMode } from '@/lib/payment-mode';
 import ProductCoverParallax from '@/components/landing/ProductCoverParallax';
 import CoverFallback from '@/components/product/CoverFallback';
 import Gallery from '@/components/product/Gallery';
@@ -19,6 +20,9 @@ import Disclaimer from '@/components/product/Disclaimer';
 import BuyButton from '@/components/product/BuyButton';
 import CrossSell from '@/components/product/CrossSell';
 import SetAnchor from '@/components/product/SetAnchor';
+import BuyReassurance from '@/components/product/BuyReassurance';
+import StickyBuyBar from '@/components/product/StickyBuyBar';
+import DeliveryManifest from '@/components/product/DeliveryManifest';
 import Faq from '@/components/landing/Faq';
 import Footer from '@/components/landing/Footer';
 
@@ -57,10 +61,11 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
   const product = await getProduct(slug);
   if (!product) notFound();
 
-  const [pair, set, allProducts] = await Promise.all([
+  const [pair, set, allProducts, paymentMode] = await Promise.all([
     getPairFor(slug),
     getSetFor(slug),
     listProducts(),
+    readPaymentMode(),
   ]);
 
   // Resolved here because CrossSell and SetAnchor are synchronous: only the
@@ -81,7 +86,6 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
     product.pageCount ? `${product.pageCount} PAGES` : null,
     product.trackerCount ? `${product.trackerCount} TRACKERS` : null,
     formatRupees(product.price),
-    product.anchorPrice ? `${formatRupees(product.anchorPrice)} SEPARATELY` : null,
   ]
     .filter((part): part is string => Boolean(part))
     .join(' · ');
@@ -98,6 +102,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
 
   return (
     <main>
+      <StickyBuyBar slug={product.slug} title={product.title} price={product.price} paymentMode={paymentMode} />
       <section className="relative overflow-hidden bg-ink px-5 py-16 sm:px-10 sm:py-20 lg:px-16 lg:py-24">
         <div
           aria-hidden="true"
@@ -141,6 +146,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
             </p>
             <div className="mt-7 flex flex-wrap items-center gap-5">
               <BuyButton slug={product.slug} title={product.title} price={product.price} className="bg-white text-primary" />
+              <BuyReassurance tone="dark" />
               <Link href={`/category/${product.category.slug}`} className={LINK_ON_INK}>
                 See more {product.category.label}
               </Link>
@@ -165,6 +171,8 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
           </ul>
         </div>
       </section>
+
+      <DeliveryManifest product={product} />
 
       <section className="bg-canvas px-5 py-4 sm:px-10 lg:px-16">
         <div className="mx-auto max-w-3xl space-y-10">
@@ -208,7 +216,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
       {pair ? (
         <section className="bg-canvas px-5 py-12 sm:px-10 lg:px-16">
           <div className="mx-auto max-w-3xl">
-            <CrossSell product={product} pair={pair} bundle={pairBundle} />
+            <CrossSell product={product} pair={pair} bundle={pairBundle} paymentMode={paymentMode} />
           </div>
         </section>
       ) : null}
@@ -216,7 +224,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
       {set ? (
         <section className="bg-canvas px-5 py-12 sm:px-10 lg:px-16">
           <div className="mx-auto max-w-3xl">
-            <SetAnchor guide={product} set={set} guideCount={setGuideCount} />
+            <SetAnchor guide={product} set={set} guideCount={setGuideCount} paymentMode={paymentMode} />
           </div>
         </section>
       ) : null}
@@ -234,9 +242,16 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
       <section className="bg-ink px-5 py-16 text-center text-white sm:py-20">
         <div className="mx-auto max-w-2xl">
           <h2 className="font-display text-3xl font-bold uppercase">{name}</h2>
-          <p className="mt-2 text-white/80">{formatRupees(product.price)}, instant download, pay by UPI.</p>
+          <p className="mt-2 text-white/80">
+            {formatRupees(product.price)}
+            {paymentMode === 'whatsapp'
+              ? ', delivered by email after we confirm your UPI payment.'
+              : ', instant download by email.'}{' '}
+            Pay by {paymentMode === 'whatsapp' ? 'UPI' : 'card or UPI'}.
+          </p>
           <div className="mt-6 flex flex-wrap items-center justify-center gap-5">
             <BuyButton slug={product.slug} title={product.title} price={product.price} className="bg-white text-primary" />
+            <BuyReassurance tone="dark" />
             <Link href="/products" className={LINK_ON_INK}>
               See every product
             </Link>
@@ -245,7 +260,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
         </div>
       </section>
 
-      <Footer {...footer} />
+      <Footer {...footer} paymentMode={paymentMode} />
     </main>
   );
 }

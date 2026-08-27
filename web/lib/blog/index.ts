@@ -1,6 +1,8 @@
 import type { BlogPost } from './types';
 import { howDeliveryWorks } from './posts/how-delivery-works';
 import { whyOnePayment } from './posts/why-one-payment';
+import { theDownloadExperience } from './posts/the-download-experience';
+import { honestPricing } from './posts/honest-pricing';
 
 export type { BlogPost, BlogSection } from './types';
 
@@ -8,7 +10,7 @@ export type { BlogPost, BlogSection } from './types';
  * Every post. Adding one means adding a file and a line here — no database, no
  * CMS, no build-time fetch. Each post statically generates.
  */
-const posts: BlogPost[] = [howDeliveryWorks, whyOnePayment];
+const posts: BlogPost[] = [howDeliveryWorks, whyOnePayment, theDownloadExperience, honestPricing];
 
 const bySlug = new Map(posts.map((p) => [p.slug, p]));
 

@@ -15,11 +15,11 @@ export const SUPPORT_EMAIL = 'support@dropdesk.in' as const;
  * PRICING_LADDER used to live here as three hardcoded numbers straight off
  * Dashrize-Products/READ-ME-FIRST.txt (single 999 / pair 1499 / allSix
  * 2999). That was true when every product in the catalog cost exactly ₹999
- * — it stopped being true the moment the ₹499 character/parents/ten-series
- * guides joined the catalog, so "single" is now computed in index.ts from
- * the real catalog minimum instead of restated here as a second, driftable
- * copy of the number. See index.ts's PRICING_LADDER export for the
- * computation and lib/catalog build report for why this moved.
+ * — it stopped being true once guides at lower prices joined the catalog,
+ * so "single" is now computed in index.ts from the real catalog minimum
+ * instead of restated here as a second, driftable copy of the number. See
+ * index.ts's getPricingLadder export for the computation and the catalog
+ * build report for why this moved.
  *
  * config.ts can't compute it itself: doing so would mean importing the
  * product list here, and index.ts (which assembles that list) imports

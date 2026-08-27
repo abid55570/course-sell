@@ -9,7 +9,7 @@ import HeroHeadline from './HeroHeadline';
  * None of it changes when a product is added, so it holds at six items or six
  * thousand.
  */
-const TERMS = [
+const RAZORPAY_TERMS = [
   'ONE PAYMENT',
   'INSTANT DOWNLOAD',
   'PAY BY UPI',
@@ -18,7 +18,27 @@ const TERMS = [
   'NO SUBSCRIPTION',
 ] as const;
 
-export default function Hero() {
+const WHATSAPP_TERMS = [
+  'ONE PAYMENT',
+  'INSTANT DOWNLOAD',
+  'PAY BY UPI TRANSFER',
+  'WHATSAPP CONFIRMATION',
+  'NO ACCOUNT NEEDED',
+  'NO SUBSCRIPTION',
+] as const;
+
+const RAZORPAY_SUB =
+  'Dropdesk sells finished digital products you can start using the day you buy them. ' +
+  'Pay once, download immediately, priced honestly in rupees. No subscription, no login, no waiting.';
+
+const WHATSAPP_SUB =
+  'Dropdesk sells finished digital products delivered by email. ' +
+  'Pay by UPI, confirm on WhatsApp, download immediately. No subscription, no login, no waiting.';
+
+export default function Hero({ paymentMode }: { paymentMode: 'razorpay' | 'whatsapp' | 'dev' }) {
+  const terms = paymentMode === 'whatsapp' ? WHATSAPP_TERMS : RAZORPAY_TERMS;
+  const sub = paymentMode === 'whatsapp' ? WHATSAPP_SUB : RAZORPAY_SUB;
+
   return (
     <>
       <section className="relative overflow-hidden hero-field px-5 pb-0 pt-24 text-white sm:px-10 sm:pt-28 lg:px-12 lg:pt-32">
@@ -27,17 +47,15 @@ export default function Hero() {
             <HeroHeadline lines={['PAY ONCE.', 'DOWNLOAD NOW.', 'USE IT TONIGHT.']} />
 
             <p className="mt-6 max-w-xl text-base text-white/90 sm:text-lg">
-              Dropdesk sells finished digital products you can start using the day you buy them.
-              Pay once, download immediately, priced honestly in rupees. No subscription, no
-              login, no waiting.
+              {sub}
             </p>
 
             <div className="mt-8 flex flex-wrap items-center justify-center gap-x-6 gap-y-3">
               <Link
-                href="#products"
+                href="#categories"
                 className="inline-block bg-white px-7 py-3.5 text-sm font-semibold uppercase tracking-wide text-ink transition-colors hover:bg-white/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
               >
-                Shop the categories
+                Browse categories
               </Link>
               <Link
                 href="/products"
@@ -57,7 +75,7 @@ export default function Hero() {
           <div className="dep-track flex w-max">
             {[0, 1].map((copy) => (
               <div key={copy} className="flex items-center gap-10 py-2.5 pl-10">
-                {TERMS.map((term) => (
+                {terms.map((term) => (
                   <span
                     key={`${copy}-${term}`}
                     className="flex items-center gap-2 whitespace-nowrap font-mono text-[11px] font-semibold uppercase tracking-[0.2em] text-white"

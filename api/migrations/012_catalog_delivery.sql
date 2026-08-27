@@ -23,3 +23,6 @@ ALTER TABLE catalog_products ADD COLUMN IF NOT EXISTS send_drive_in_email BOOLEA
 CREATE INDEX IF NOT EXISTS idx_catalog_deliverable
   ON catalog_products(kind)
   WHERE pdf_file IS NOT NULL OR drive_link IS NOT NULL;
+
+INSERT INTO schema_migrations (version) VALUES ('012_catalog_delivery')
+ON CONFLICT (version) DO NOTHING;

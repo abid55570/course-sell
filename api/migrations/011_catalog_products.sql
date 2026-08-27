@@ -76,3 +76,6 @@ BEGIN
   + (catalog_product_id IS NOT NULL)::int = 1
   );
 END$$;
+
+INSERT INTO schema_migrations (version) VALUES ('011_catalog_products')
+ON CONFLICT (version) DO NOTHING;

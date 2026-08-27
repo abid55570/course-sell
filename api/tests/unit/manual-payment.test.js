@@ -32,6 +32,13 @@ test('normaliseNumber strips whatever formatting the number was stored with', ()
   assert.equal(manual.normaliseNumber('+91-9559-872757'), '919559872757');
 });
 
+test('normaliseNumber adds the +91 code to a bare 10-digit Indian mobile', () => {
+  // The number the owner actually configures ("9559872757") has no country
+  // code; wa.me needs one, so it must become 919559872757, not stay 10 digits.
+  assert.equal(manual.normaliseNumber('9559872757'), '919559872757');
+  assert.equal(manual.normaliseNumber('95598 72757'), '919559872757');
+});
+
 test('normaliseNumber rejects anything too short to be a real number', () => {
   assert.equal(manual.normaliseNumber('12345'), '');
   assert.equal(manual.normaliseNumber(''), '');

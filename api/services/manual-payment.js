@@ -13,10 +13,12 @@
  */
 const payments = require('./payments');
 
-/** Digits only, so a number stored as "+91 95598 72757" still builds a valid link. */
+/** Digits only, country code guaranteed: a bare 10-digit Indian mobile (e.g.
+ *  "9559872757") gets 91 prefixed (India-only store); a coded number is kept. */
 function normaliseNumber(raw) {
   const digits = String(raw || '').replace(/\D/g, '');
-  return digits.length >= 10 ? digits : '';
+  if (digits.length === 10) return `91${digits}`;
+  return digits.length >= 11 ? digits : '';
 }
 
 function whatsappNumber() {

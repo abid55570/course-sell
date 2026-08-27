@@ -239,6 +239,26 @@ router.post('/orders/:orderId/confirm', async (req, res, next) => {
     const order = await db.get('SELECT * FROM orders WHERE order_id = $1', [req.params.orderId]);
     if (!order) return res.status(404).json({ error: 'not found' });
     if (order.status === 'completed') return res.status(400).json({ error: 'already completed' });
+
+    // Catalog orders deliver an attached file/drive link by email; confirming with
+    // none attached takes the money and delivers nothing. Fail open; force:true overrides.
+    if (order.product_type === 'catalog' && req.body?.force !== true) {
+      try {
+        const item = await db.get(
+          `SELECT (send_pdf_in_email AND pdf_file IS NOT NULL) AS pdf_ready,
+                  (send_drive_in_email AND drive_link IS NOT NULL) AS drive_ready
+             FROM catalog_products WHERE id = $1`,
+          [order.catalog_product_id]
+        );
+        if (item && !item.pdf_ready && !item.drive_ready) {
+          return res.status(400).json({
+            error:
+              'No deliverable attached to this product yet. Add a PDF or drive link and turn on its "send in email" toggle before confirming — or resend with force to hand it off manually.',
+          });
+        }
+      } catch { /* fail open: the guard must never block a legitimate confirm */ }
+    }
+
     const result = await markOrderPaid(order.order_id, {
       paymentId: req.body?.upi_txn_ref || order.razorpay_payment_id || null,
       actor: req.admin.email,

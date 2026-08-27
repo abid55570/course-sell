@@ -124,6 +124,10 @@ export default function CheckoutForm({
       setReferenceError('Enter the reference from your UPI app or bank — usually 12 digits.');
       return;
     }
+    if (trimmed.length > 64) {
+      setReferenceError('That looks too long — paste just the reference/UTR number, usually 12 digits.');
+      return;
+    }
     setReferenceError(null);
     setPhase('reporting');
     const result = await submitPaymentReference(order.order_id, trimmed);
@@ -362,9 +366,18 @@ export default function CheckoutForm({
                 name="payment-reference"
                 value={reference}
                 onChange={(e) => setReference(e.target.value)}
+                onKeyDown={(e) => {
+                  // Enter after typing the reference is the natural habit; without
+                  // this the outer form's guarded submit swallows it and nothing happens.
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    if (phase !== 'reporting') reportReference();
+                  }
+                }}
                 disabled={phase === 'reporting'}
                 autoComplete="off"
                 inputMode="numeric"
+                maxLength={64}
                 placeholder="e.g. 512345678901"
                 aria-describedby={referenceError ? 'payment-reference-error' : undefined}
                 aria-invalid={referenceError ? true : undefined}

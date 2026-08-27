@@ -317,7 +317,7 @@ async function loadOrders() {
               <td><span class="badge ${o.status}">${o.status}</span></td>
               <td class="text-muted" style="font-size:12px">${fmtDate(o.created_at)}</td>
               <td>
-                ${o.status !== 'completed' ? `<button class="btn btn-sm btn-success" data-confirm="${o.order_id}">Confirm</button>` : ''}
+                ${o.status !== 'completed' && o.status !== 'cancelled' ? `<button class="btn btn-sm btn-success" data-confirm="${o.order_id}">Confirm</button>` : ''}
                 ${o.status !== 'cancelled' && o.status !== 'completed' ? `<button class="btn btn-sm btn-danger" data-cancel="${o.order_id}">Cancel</button>` : ''}
               </td>
             </tr>`;

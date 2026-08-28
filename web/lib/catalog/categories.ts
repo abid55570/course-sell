@@ -91,3 +91,21 @@ export const THE_SCAM_FILES: Category = {
   label: 'The Scam Files',
   accent: { name: 'cyan', hex: '#0c8599' },
 };
+
+export const AUTOMATION_AND_AI: Category = {
+  slug: 'automation-and-ai',
+  label: 'Automation & AI',
+  accent: { name: 'orange', hex: '#e67700' },
+};
+
+export const VIDEO_COURSES: Category = {
+  slug: 'video-courses',
+  label: 'Video Courses',
+  accent: { name: 'gold', hex: '#c49a00' },
+};
+
+export const DIGITAL_LIBRARY: Category = {
+  slug: 'digital-library',
+  label: 'Digital Library',
+  accent: { name: 'violet', hex: '#6741d9' },
+};

@@ -28,6 +28,7 @@ export default function ProductCard({ product }: { product: Product }) {
             src={`/products/${product.slug}/${cover.filename}`}
             alt={cover.alt}
             fill
+            unoptimized
             sizes="(min-width: 1024px) 260px, (min-width: 640px) 33vw, 50vw"
             className="object-cover object-top"
           />

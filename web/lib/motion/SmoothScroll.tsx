@@ -1,6 +1,13 @@
 'use client';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
+import { usePathname } from 'next/navigation';
 import { prefersReducedMotion } from './reduced-motion';
+
+type LenisInstance = {
+  raf: (t: number) => void;
+  destroy: () => void;
+  scrollTo: (target: number, opts?: { immediate?: boolean }) => void;
+};
 
 /**
  * Smooth scrolling, tuned to feel immediate rather than floaty.
@@ -27,25 +34,27 @@ import { prefersReducedMotion } from './reduced-motion';
  *    burning frames.
  */
 export default function SmoothScroll({ children }: { children: React.ReactNode }) {
+  const lenisRef = useRef<LenisInstance | null>(null);
+  const pathname = usePathname();
+
   useEffect(() => {
     if (prefersReducedMotion()) return;
 
     // A coarse pointer means a touchscreen, where native scrolling wins.
     if (typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches) return;
 
-    let lenis: { raf: (t: number) => void; destroy: () => void } | null = null;
     let frame = 0;
     let cancelled = false;
 
     const loop = (time: number) => {
-      lenis?.raf(time);
+      lenisRef.current?.raf(time);
       frame = requestAnimationFrame(loop);
     };
 
     function onVisibility() {
       if (document.hidden) {
         cancelAnimationFrame(frame);
-      } else if (lenis) {
+      } else if (lenisRef.current) {
         frame = requestAnimationFrame(loop);
       }
     }
@@ -53,12 +62,12 @@ export default function SmoothScroll({ children }: { children: React.ReactNode }
     (async () => {
       const Lenis = (await import('lenis')).default;
       if (cancelled) return;
-      lenis = new Lenis({
+      lenisRef.current = new Lenis({
         lerp: 0.12,
         wheelMultiplier: 1,
         smoothWheel: true,
         syncTouch: false,
-      });
+      }) as unknown as LenisInstance;
       frame = requestAnimationFrame(loop);
       document.addEventListener('visibilitychange', onVisibility);
     })();
@@ -67,9 +76,20 @@ export default function SmoothScroll({ children }: { children: React.ReactNode }
       cancelled = true;
       cancelAnimationFrame(frame);
       document.removeEventListener('visibilitychange', onVisibility);
-      lenis?.destroy();
+      lenisRef.current?.destroy();
+      lenisRef.current = null;
     };
   }, []);
+
+  // Reset to the top on client-side navigation. Lenis keeps its own target
+  // scroll position and re-applies it every frame, which overrides the App
+  // Router's scroll-to-top — so a product opened from a scrolled listing would
+  // otherwise open at that same offset, often down at the footer. Sync Lenis to
+  // 0 (or the native scroll when Lenis is disabled: reduced-motion / touch).
+  useEffect(() => {
+    if (lenisRef.current) lenisRef.current.scrollTo(0, { immediate: true });
+    else window.scrollTo(0, 0);
+  }, [pathname]);
 
   return <>{children}</>;
 }

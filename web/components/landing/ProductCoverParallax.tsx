@@ -113,7 +113,7 @@ export default function ProductCoverParallax({
   return (
     <div
       ref={frameRef}
-      className="parallax-frame relative aspect-square w-full overflow-hidden bg-ink"
+      className="parallax-frame relative aspect-[3/4] w-full overflow-hidden bg-ink"
       style={{ '--parallax': 0 } as React.CSSProperties}
     >
       <div className="parallax-layer absolute inset-[-20px] sm:inset-[-24px]">

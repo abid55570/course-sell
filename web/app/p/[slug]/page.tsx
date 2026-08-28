@@ -119,7 +119,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
                 priority
               />
             ) : (
-              <div className="relative aspect-square w-full overflow-hidden bg-ink">
+              <div className="relative aspect-[3/4] w-full overflow-hidden bg-ink">
                 <CoverFallback
                   title={product.title}
                   kicker={product.category.label}

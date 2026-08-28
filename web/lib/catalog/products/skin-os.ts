@@ -141,7 +141,7 @@ export const skinOs: Product = {
     'back acne',
     'sunscreen india',
   ],
-  gallery: [],
+  gallery: [{ filename: '1-cover-thumbnail.png', role: 'cover', alt: 'Skin OS cover — The Barrier, The Actives, The Hard Problems.' }],
   deliveryFiles: [
     'Module-01-THE-BARRIER.pdf',
     'Module-02-ACTIVES-PROPERLY.pdf',

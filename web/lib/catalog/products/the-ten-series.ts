@@ -55,7 +55,7 @@ export const guide10MoneyHabitsThatActuallyCompound: Product = {
   disclaimer: TEN_SERIES_DISCLAIMER,
   helplines: [],
   tags: ['the ten series', 'honest self improvement'],
-  gallery: [],
+  gallery: [{ filename: '1-cover-thumbnail.png', role: 'cover', alt: 'Product cover.' }],
   deliveryFiles: ['10-Money-Habits-That-Actually-Compound.pdf'],
   setSlug: 'the-ten-series-full-set',
 };
@@ -77,7 +77,7 @@ export const guide10ThingsBodyLanguageActuallyTellsYou: Product = {
   disclaimer: TEN_SERIES_DISCLAIMER,
   helplines: [],
   tags: ['the ten series', 'honest self improvement'],
-  gallery: [],
+  gallery: [{ filename: '1-cover-thumbnail.png', role: 'cover', alt: 'Product cover.' }],
   deliveryFiles: ['10-Things-Body-Language-Actually-Tells-You.pdf'],
   setSlug: 'the-ten-series-full-set',
 };
@@ -99,7 +99,7 @@ export const guide10WaysToActuallyBecomeAnEarlyRiser: Product = {
   disclaimer: TEN_SERIES_DISCLAIMER,
   helplines: [],
   tags: ['the ten series', 'honest self improvement'],
-  gallery: [],
+  gallery: [{ filename: '1-cover-thumbnail.png', role: 'cover', alt: 'Product cover.' }],
   deliveryFiles: ['10-Ways-to-Actually-Become-an-Early-Riser.pdf'],
   setSlug: 'the-ten-series-full-set',
 };
@@ -121,7 +121,7 @@ export const guide10WaysToBeDangerouslyDisciplined: Product = {
   disclaimer: TEN_SERIES_DISCLAIMER,
   helplines: [],
   tags: ['the ten series', 'honest self improvement'],
-  gallery: [],
+  gallery: [{ filename: '1-cover-thumbnail.png', role: 'cover', alt: 'Product cover.' }],
   deliveryFiles: ['10-Ways-to-Be-Dangerously-Disciplined.pdf'],
   setSlug: 'the-ten-series-full-set',
 };
@@ -143,7 +143,7 @@ export const guide10WaysToBeDangerouslyHardToKill: Product = {
   disclaimer: TEN_SERIES_DISCLAIMER,
   helplines: [],
   tags: ['the ten series', 'honest self improvement'],
-  gallery: [],
+  gallery: [{ filename: '1-cover-thumbnail.png', role: 'cover', alt: 'Product cover.' }],
   deliveryFiles: ['10-Ways-to-Be-Dangerously-Hard-to-Kill.pdf'],
   setSlug: 'the-ten-series-full-set',
 };
@@ -165,7 +165,7 @@ export const guide10WaysToBeDangerouslyLikeable: Product = {
   disclaimer: TEN_SERIES_DISCLAIMER,
   helplines: [],
   tags: ['the ten series', 'honest self improvement'],
-  gallery: [],
+  gallery: [{ filename: '1-cover-thumbnail.png', role: 'cover', alt: 'Product cover.' }],
   deliveryFiles: ['10-Ways-to-Be-Dangerously-Likeable.pdf'],
   setSlug: 'the-ten-series-full-set',
 };
@@ -187,7 +187,7 @@ export const guide10WaysToBeDangerouslySmart: Product = {
   disclaimer: TEN_SERIES_DISCLAIMER,
   helplines: [],
   tags: ['the ten series', 'honest self improvement'],
-  gallery: [],
+  gallery: [{ filename: '1-cover-thumbnail.png', role: 'cover', alt: 'Product cover.' }],
   deliveryFiles: ['10-Ways-to-Be-Dangerously-Smart.pdf'],
   setSlug: 'the-ten-series-full-set',
 };
@@ -209,7 +209,7 @@ export const guide10WaysToBeDangerouslyUnbothered: Product = {
   disclaimer: TEN_SERIES_DISCLAIMER,
   helplines: [],
   tags: ['the ten series', 'honest self improvement'],
-  gallery: [],
+  gallery: [{ filename: '1-cover-thumbnail.png', role: 'cover', alt: 'Product cover.' }],
   deliveryFiles: ['10-Ways-to-Be-Dangerously-Unbothered.pdf'],
   setSlug: 'the-ten-series-full-set',
 };
@@ -231,7 +231,7 @@ export const guide10WaysToBeGoodAtBeingAlone: Product = {
   disclaimer: TEN_SERIES_DISCLAIMER,
   helplines: [],
   tags: ['the ten series', 'honest self improvement'],
-  gallery: [],
+  gallery: [{ filename: '1-cover-thumbnail.png', role: 'cover', alt: 'Product cover.' }],
   deliveryFiles: ['10-Ways-to-Be-Good-at-Being-Alone.pdf'],
   setSlug: 'the-ten-series-full-set',
 };
@@ -253,7 +253,7 @@ export const guide10WaysToBeImpossibleToManipulate: Product = {
   disclaimer: TEN_SERIES_DISCLAIMER,
   helplines: [],
   tags: ['the ten series', 'honest self improvement'],
-  gallery: [],
+  gallery: [{ filename: '1-cover-thumbnail.png', role: 'cover', alt: 'Product cover.' }],
   deliveryFiles: ['10-Ways-to-Be-Impossible-to-Manipulate.pdf'],
   setSlug: 'the-ten-series-full-set',
 };
@@ -275,7 +275,7 @@ export const guide10WaysToBeTakenSeriouslyBeforeYoure25: Product = {
   disclaimer: TEN_SERIES_DISCLAIMER,
   helplines: [],
   tags: ['the ten series', 'honest self improvement'],
-  gallery: [],
+  gallery: [{ filename: '1-cover-thumbnail.png', role: 'cover', alt: 'Product cover.' }],
   deliveryFiles: ['10-Ways-to-Be-Taken-Seriously-Before-Youre-25.pdf'],
   setSlug: 'the-ten-series-full-set',
 };
@@ -297,7 +297,7 @@ export const guide10WaysToBeUnforgettableInSixtySeconds: Product = {
   disclaimer: TEN_SERIES_DISCLAIMER,
   helplines: [],
   tags: ['the ten series', 'honest self improvement'],
-  gallery: [],
+  gallery: [{ filename: '1-cover-thumbnail.png', role: 'cover', alt: 'Product cover.' }],
   deliveryFiles: ['10-Ways-to-Be-Unforgettable-in-Sixty-Seconds.pdf'],
   setSlug: 'the-ten-series-full-set',
 };
@@ -319,7 +319,7 @@ export const guide10WaysToBuildConfidenceThatIsReal: Product = {
   disclaimer: TEN_SERIES_DISCLAIMER,
   helplines: [],
   tags: ['the ten series', 'honest self improvement'],
-  gallery: [],
+  gallery: [{ filename: '1-cover-thumbnail.png', role: 'cover', alt: 'Product cover.' }],
   deliveryFiles: ['10-Ways-to-Build-Confidence-That-Is-Real.pdf'],
   setSlug: 'the-ten-series-full-set',
 };
@@ -341,7 +341,7 @@ export const guide10WaysToGetDangerouslyLucky: Product = {
   disclaimer: TEN_SERIES_DISCLAIMER,
   helplines: [],
   tags: ['the ten series', 'honest self improvement'],
-  gallery: [],
+  gallery: [{ filename: '1-cover-thumbnail.png', role: 'cover', alt: 'Product cover.' }],
   deliveryFiles: ['10-Ways-to-Get-Dangerously-Lucky.pdf'],
   setSlug: 'the-ten-series-full-set',
 };
@@ -363,7 +363,7 @@ export const guide10WaysToHaveADangerouslyGoodMemory: Product = {
   disclaimer: TEN_SERIES_DISCLAIMER,
   helplines: [],
   tags: ['the ten series', 'honest self improvement'],
-  gallery: [],
+  gallery: [{ filename: '1-cover-thumbnail.png', role: 'cover', alt: 'Product cover.' }],
   deliveryFiles: ['10-Ways-to-Have-a-Dangerously-Good-Memory.pdf'],
   setSlug: 'the-ten-series-full-set',
 };
@@ -385,7 +385,7 @@ export const guide10WaysToLearnAnythingFaster: Product = {
   disclaimer: TEN_SERIES_DISCLAIMER,
   helplines: [],
   tags: ['the ten series', 'honest self improvement'],
-  gallery: [],
+  gallery: [{ filename: '1-cover-thumbnail.png', role: 'cover', alt: 'Product cover.' }],
   deliveryFiles: ['10-Ways-to-Learn-Anything-Faster.pdf'],
   setSlug: 'the-ten-series-full-set',
 };
@@ -407,7 +407,7 @@ export const guide10WaysToNeverLoseYourTemper: Product = {
   disclaimer: TEN_SERIES_DISCLAIMER,
   helplines: [],
   tags: ['the ten series', 'honest self improvement'],
-  gallery: [],
+  gallery: [{ filename: '1-cover-thumbnail.png', role: 'cover', alt: 'Product cover.' }],
   deliveryFiles: ['10-Ways-to-Never-Lose-Your-Temper.pdf'],
   setSlug: 'the-ten-series-full-set',
 };
@@ -429,7 +429,7 @@ export const guide10WaysToReadPeople: Product = {
   disclaimer: TEN_SERIES_DISCLAIMER,
   helplines: [],
   tags: ['the ten series', 'honest self improvement'],
-  gallery: [],
+  gallery: [{ filename: '1-cover-thumbnail.png', role: 'cover', alt: 'Product cover.' }],
   deliveryFiles: ['10-Ways-to-Read-People.pdf'],
   setSlug: 'the-ten-series-full-set',
 };
@@ -451,7 +451,7 @@ export const guide10WaysToSayNoWithoutLosingPeople: Product = {
   disclaimer: TEN_SERIES_DISCLAIMER,
   helplines: [],
   tags: ['the ten series', 'honest self improvement'],
-  gallery: [],
+  gallery: [{ filename: '1-cover-thumbnail.png', role: 'cover', alt: 'Product cover.' }],
   deliveryFiles: ['10-Ways-to-Say-No-Without-Losing-People.pdf'],
   setSlug: 'the-ten-series-full-set',
 };
@@ -473,7 +473,7 @@ export const guide10WaysToStopBeingTiredAllTheTime: Product = {
   disclaimer: TEN_SERIES_DISCLAIMER,
   helplines: [],
   tags: ['the ten series', 'honest self improvement'],
-  gallery: [],
+  gallery: [{ filename: '1-cover-thumbnail.png', role: 'cover', alt: 'Product cover.' }],
   deliveryFiles: ['10-Ways-to-Stop-Being-Tired-All-the-Time.pdf'],
   setSlug: 'the-ten-series-full-set',
 };
@@ -495,7 +495,7 @@ export const guide10WaysToStopBeingUnderpaid: Product = {
   disclaimer: TEN_SERIES_DISCLAIMER,
   helplines: [],
   tags: ['the ten series', 'honest self improvement'],
-  gallery: [],
+  gallery: [{ filename: '1-cover-thumbnail.png', role: 'cover', alt: 'Product cover.' }],
   deliveryFiles: ['10-Ways-to-Stop-Being-Underpaid.pdf'],
   setSlug: 'the-ten-series-full-set',
 };
@@ -517,7 +517,7 @@ export const guide10WaysToWriteSoPeopleActuallyReadIt: Product = {
   disclaimer: TEN_SERIES_DISCLAIMER,
   helplines: [],
   tags: ['the ten series', 'honest self improvement'],
-  gallery: [],
+  gallery: [{ filename: '1-cover-thumbnail.png', role: 'cover', alt: 'Product cover.' }],
   deliveryFiles: ['10-Ways-to-Write-So-People-Actually-Read-It.pdf'],
   setSlug: 'the-ten-series-full-set',
 };
@@ -540,7 +540,7 @@ export const whatYourScreentimeCostsYou: Product = {
   disclaimer: TEN_SERIES_DISCLAIMER,
   helplines: [],
   tags: ['the ten series', 'honest self improvement'],
-  gallery: [],
+  gallery: [{ filename: '1-cover-thumbnail.png', role: 'cover', alt: 'Product cover.' }],
   deliveryFiles: ['What-Your-Screentime-Costs-You.pdf'],
   setSlug: 'the-ten-series-full-set',
 };

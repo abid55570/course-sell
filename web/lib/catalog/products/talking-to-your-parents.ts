@@ -66,7 +66,7 @@ export const beingTreatedAsAnAdultInYourOwnHome: Product = {
   disclaimer: PARENTS_DISCLAIMER,
   helplines: PARENTS_HELPLINES,
   tags: ['talking to your parents', 'family conversations', 'indian family'],
-  gallery: [],
+  gallery: [{ filename: '1-cover-thumbnail.png', role: 'cover', alt: 'Product cover.' }],
   deliveryFiles: ['Being-Treated-as-an-Adult-in-Your-Own-Home.pdf'],
   setSlug: 'talking-to-your-parents-full-set',
 };
@@ -88,7 +88,7 @@ export const gettingYourParentsToSeeADoctor: Product = {
   disclaimer: PARENTS_DISCLAIMER,
   helplines: PARENTS_HELPLINES,
   tags: ['talking to your parents', 'family conversations', 'indian family'],
-  gallery: [],
+  gallery: [{ filename: '1-cover-thumbnail.png', role: 'cover', alt: 'Product cover.' }],
   deliveryFiles: ['Getting-Your-Parents-to-See-a-Doctor.pdf'],
   setSlug: 'talking-to-your-parents-full-set',
 };
@@ -110,7 +110,7 @@ export const sayingNoToYourFamilyWithoutLosingThem: Product = {
   disclaimer: PARENTS_DISCLAIMER,
   helplines: PARENTS_HELPLINES,
   tags: ['talking to your parents', 'family conversations', 'indian family'],
-  gallery: [],
+  gallery: [{ filename: '1-cover-thumbnail.png', role: 'cover', alt: 'Product cover.' }],
   deliveryFiles: ['Saying-No-to-Your-Family-Without-Losing-Them.pdf'],
   setSlug: 'talking-to-your-parents-full-set',
 };
@@ -132,7 +132,7 @@ export const talkingToYourParentsAboutMoney: Product = {
   disclaimer: PARENTS_DISCLAIMER,
   helplines: PARENTS_HELPLINES,
   tags: ['talking to your parents', 'family conversations', 'indian family'],
-  gallery: [],
+  gallery: [{ filename: '1-cover-thumbnail.png', role: 'cover', alt: 'Product cover.' }],
   deliveryFiles: ['Talking-to-Your-Parents-About-Money.pdf'],
   setSlug: 'talking-to-your-parents-full-set',
 };
@@ -154,7 +154,7 @@ export const tellingYourParentsAboutBadResults: Product = {
   disclaimer: PARENTS_DISCLAIMER,
   helplines: PARENTS_HELPLINES,
   tags: ['talking to your parents', 'family conversations', 'indian family'],
-  gallery: [],
+  gallery: [{ filename: '1-cover-thumbnail.png', role: 'cover', alt: 'Product cover.' }],
   deliveryFiles: ['Telling-Your-Parents-About-Bad-Results.pdf'],
   setSlug: 'talking-to-your-parents-full-set',
 };
@@ -176,7 +176,7 @@ export const tellingYourParentsSomethingWentWrong: Product = {
   disclaimer: PARENTS_DISCLAIMER,
   helplines: PARENTS_HELPLINES,
   tags: ['talking to your parents', 'family conversations', 'indian family'],
-  gallery: [],
+  gallery: [{ filename: '1-cover-thumbnail.png', role: 'cover', alt: 'Product cover.' }],
   deliveryFiles: ['Telling-Your-Parents-Something-Went-Wrong.pdf'],
   setSlug: 'talking-to-your-parents-full-set',
 };
@@ -198,7 +198,7 @@ export const tellingYourParentsYouAreMovingAway: Product = {
   disclaimer: PARENTS_DISCLAIMER,
   helplines: PARENTS_HELPLINES,
   tags: ['talking to your parents', 'family conversations', 'indian family'],
-  gallery: [],
+  gallery: [{ filename: '1-cover-thumbnail.png', role: 'cover', alt: 'Product cover.' }],
   deliveryFiles: ['Telling-Your-Parents-You-Are-Moving-Away.pdf'],
   setSlug: 'talking-to-your-parents-full-set',
 };
@@ -220,7 +220,7 @@ export const tellingYourParentsYouAreNotReadyToGetMarried: Product = {
   disclaimer: PARENTS_DISCLAIMER,
   helplines: PARENTS_HELPLINES,
   tags: ['talking to your parents', 'family conversations', 'indian family'],
-  gallery: [],
+  gallery: [{ filename: '1-cover-thumbnail.png', role: 'cover', alt: 'Product cover.' }],
   deliveryFiles: ['Telling-Your-Parents-You-Are-Not-Ready-to-Get-Married.pdf'],
   setSlug: 'talking-to-your-parents-full-set',
 };
@@ -242,7 +242,7 @@ export const tellingYourParentsYouWantToChangeYourCareer: Product = {
   disclaimer: PARENTS_DISCLAIMER,
   helplines: PARENTS_HELPLINES,
   tags: ['talking to your parents', 'family conversations', 'indian family'],
-  gallery: [],
+  gallery: [{ filename: '1-cover-thumbnail.png', role: 'cover', alt: 'Product cover.' }],
   deliveryFiles: ['Telling-Your-Parents-You-Want-to-Change-Your-Career.pdf'],
   setSlug: 'talking-to-your-parents-full-set',
 };
@@ -264,7 +264,7 @@ export const tellingYourParentsYouWantToMoveOut: Product = {
   disclaimer: PARENTS_DISCLAIMER,
   helplines: PARENTS_HELPLINES,
   tags: ['talking to your parents', 'family conversations', 'indian family'],
-  gallery: [],
+  gallery: [{ filename: '1-cover-thumbnail.png', role: 'cover', alt: 'Product cover.' }],
   deliveryFiles: ['Telling-Your-Parents-You-Want-to-Move-Out.pdf'],
   setSlug: 'talking-to-your-parents-full-set',
 };
@@ -286,7 +286,7 @@ export const tellingYourParentsYouWantToSeeATherapist: Product = {
   disclaimer: PARENTS_DISCLAIMER,
   helplines: PARENTS_HELPLINES,
   tags: ['talking to your parents', 'family conversations', 'indian family'],
-  gallery: [],
+  gallery: [{ filename: '1-cover-thumbnail.png', role: 'cover', alt: 'Product cover.' }],
   deliveryFiles: ['Telling-Your-Parents-You-Want-to-See-a-Therapist.pdf'],
   setSlug: 'talking-to-your-parents-full-set',
 };
@@ -308,7 +308,7 @@ export const whenYourParentsDoNotApproveOfWhoYouAreWith: Product = {
   disclaimer: PARENTS_DISCLAIMER,
   helplines: PARENTS_HELPLINES,
   tags: ['talking to your parents', 'family conversations', 'indian family'],
-  gallery: [],
+  gallery: [{ filename: '1-cover-thumbnail.png', role: 'cover', alt: 'Product cover.' }],
   deliveryFiles: ['When-Your-Parents-Do-Not-Approve-of-Who-You-Are-With.pdf'],
   setSlug: 'talking-to-your-parents-full-set',
 };

@@ -125,7 +125,7 @@ export const weddingGlowUpOs: Product = {
     'wedding countdown',
     'shaadi preparation',
   ],
-  gallery: [],
+  gallery: [{ filename: '1-cover-thumbnail.png', role: 'cover', alt: 'Wedding Glow-Up OS cover — look your best on the day.' }],
   deliveryFiles: [
     'Module-01-THE-COUNTDOWN.pdf',
     'Module-02-SKIN-HAIR-BODY.pdf',

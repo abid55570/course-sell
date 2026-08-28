@@ -104,7 +104,7 @@ export const thirtyDaysOfFocus: Product = {
     'habit tracker',
     '30 day challenge',
   ],
-  gallery: [],
+  gallery: [{ filename: '1-cover-thumbnail.png', role: 'cover', alt: '30 Days of Focus cover — rebuild your attention in 30 days.' }],
   deliveryFiles: ['30-Days-of-Focus.pdf'],
   // BRIEF: "Upsell to Study OS, Glow-Up OS or Aura OS".
   pairSlug: 'study-os',

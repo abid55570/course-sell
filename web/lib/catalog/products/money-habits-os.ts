@@ -146,7 +146,7 @@ export const moneyHabitsOs: Product = {
     'money habits',
     'expense tracking',
   ],
-  gallery: [],
+  gallery: [{ filename: '1-cover-thumbnail.png', role: 'cover', alt: 'Money Habits OS cover — what happens to your first salary.' }],
   deliveryFiles: [
     'Module-01-WHERE-IT-GOES.pdf',
     'Module-02-THE-FOUNDATIONS.pdf',

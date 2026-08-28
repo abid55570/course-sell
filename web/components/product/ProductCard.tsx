@@ -22,14 +22,15 @@ export default function ProductCard({ product }: { product: Product }) {
       href={`/p/${product.slug}`}
       className="group flex min-h-[44px] flex-col overflow-hidden bg-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
     >
-      <div className="relative aspect-square w-full bg-ink">
+      <div className="relative aspect-[3/4] w-full bg-ink">
         {cover ? (
           <Image
             src={`/products/${product.slug}/${cover.filename}`}
             alt={cover.alt}
             fill
+            unoptimized
             sizes="(min-width: 1024px) 260px, (min-width: 640px) 33vw, 50vw"
-            className="object-cover"
+            className="object-cover object-top"
           />
         ) : (
           <CoverFallback title={title} kicker={product.category.label} accentHex={product.accent.hex} />

@@ -127,7 +127,7 @@ export const creatorOs: Product = {
     'content batching',
     'creator beginner',
   ],
-  gallery: [],
+  gallery: [{ filename: '1-cover-thumbnail.png', role: 'cover', alt: 'Creator OS cover — the honest creator system.' }],
   deliveryFiles: [
     'Module-01-THE-PAGE.pdf',
     'Module-02-THE-CONTENT.pdf',

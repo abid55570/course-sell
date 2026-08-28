@@ -154,7 +154,7 @@ export const englishConfidenceOs: Product = {
     'sentence bank',
     'english hesitation',
   ],
-  gallery: [],
+  gallery: [{ filename: '1-cover-thumbnail.png', role: 'cover', alt: 'English Confidence OS cover — speaking under pressure.' }],
   deliveryFiles: [
     'Module-01-WHY-YOU-FREEZE.pdf',
     'Module-02-SENTENCE-BANK.pdf',

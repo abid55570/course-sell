@@ -387,6 +387,51 @@ const HEADLINES: Record<string, string[]> = {
   '10-ways-to-be-impossible-to-manipulate': ['NOBODY', 'PLAYS YOU', 'TWICE.'],
 };
 
+/* ── per-character accent colours ────────────────────────────────────────── */
+
+const CHARACTER_ACCENTS: Record<string, string> = {
+  'how-to-be-like-andy-dufresne':      '#1E88E5', // hope blue — Shawshank sky
+  'how-to-be-like-atticus-finch':      '#B07A35', // amber-wood — justice, the South
+  'how-to-be-like-baki-hanma':         '#D32F2F', // fighter red — blood sport
+  'how-to-be-like-bhuvan':             '#F4841A', // Lagaan saffron — Indian sun
+  'how-to-be-like-bruce-wayne':        '#F5C518', // Batman classic yellow
+  'how-to-be-like-edward-elric':       '#E8A020', // alchemist gold — FMA
+  'how-to-be-like-forrest-gump':       '#43A047', // forest green — run Forrest run
+  'how-to-be-like-gojo-satoru':        '#7C4DFF', // infinity purple-blue — Jujutsu Kaisen
+  'how-to-be-like-goku':               '#FF6B35', // Saiyan orange
+  'how-to-be-like-guts':               '#9B1C1C', // Berserk dark blood red
+  'how-to-be-like-harvey-specter':     '#C9A000', // Suits gold
+  'how-to-be-like-hermione-granger':   '#7B2FBE', // Gryffindor magic violet
+  'how-to-be-like-iqbal':              '#00897B', // teal — cricket hope
+  'how-to-be-like-kabir-khan':         '#F57F17', // Chak De amber-orange
+  'how-to-be-like-kakashi-hatake':     '#5C7A8E', // steel-blue — ANBU calm
+  'how-to-be-like-killua-zoldyck':     '#42A5F5', // lightning ice-blue — Godspeed
+  'how-to-be-like-l':                  '#3F51B5', // indigo — analytical, Death Note
+  'how-to-be-like-levi-ackerman':      '#546E7A', // Survey Corps steel
+  'how-to-be-like-michael-scofield':   '#1565C0', // blueprint navy — Prison Break
+  'how-to-be-like-mob':                '#9575CD', // psychic lavender — Mob Psycho
+  'how-to-be-like-naruto-uzumaki':     '#FF4D00', // Naruto red-orange
+  'how-to-be-like-patrick-jane':       '#F57C00', // warm amber — The Mentalist
+  'how-to-be-like-peter-parker':       '#CC1010', // Spider-Man red
+  'how-to-be-like-rancho':             '#0288D1', // sky blue — 3 Idiots
+  'how-to-be-like-rock-lee':           '#2E7D32', // green jumpsuit
+  'how-to-be-like-rocket-singh':       '#E65100', // sales energy orange
+  'how-to-be-like-rocky-balboa':       '#C62828', // Rocky red
+  'how-to-be-like-roronoa-zoro':       '#1B7A28', // Zoro forest green
+  'how-to-be-like-saitama':            '#F9A825', // hero yellow suit
+  'how-to-be-like-senku-ishigami':     '#00C853', // science bright green — Dr. Stone
+  'how-to-be-like-sherlock-holmes':    '#AB7C21', // Victorian amber-brown
+  'how-to-be-like-shikamaru-nara':     '#558B2F', // shadow forest green
+  'how-to-be-like-steve-rogers':       '#0D47A1', // Captain America deep navy
+  'how-to-be-like-tanjiro-kamado':     '#B71C1C', // haori red-maroon
+  'how-to-be-like-ted-lasso':          '#1A6B2A', // AFC Richmond green
+  'how-to-be-like-thomas-shelby':      '#8B6914', // Peaky Blinders gunmetal-gold
+  'how-to-be-like-thorfinn':           '#01579B', // Norse dark blue — Vinland Saga
+  'how-to-be-like-tony-stark':         '#E53935', // Iron Man red
+  'how-to-be-like-tyrion-lannister':   '#B8860B', // Lannister dark gold
+  'how-to-be-like-vegeta':             '#283593', // Saiyan armor deep navy
+};
+
 function capitalise(s: string) { return s.charAt(0).toUpperCase() + s.slice(1); }
 
 function headlineFor(p: Product): string[] {
@@ -627,7 +672,7 @@ async function main() {
     const variant = variantFor(p);
     const buf = await renderCover({
       headline:  headlineFor(p),
-      accent:    p.accent.hex,
+      accent:    CHARACTER_ACCENTS[p.slug] ?? p.accent.hex,
       chip:      (p.shortTitle ?? p.title).split(' — ')[0].toUpperCase(),
       edition:   editionFor(p),
       pill:      pillFor(p),

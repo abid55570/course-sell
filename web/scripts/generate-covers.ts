@@ -1,484 +1,408 @@
 /**
- * Generate cover images for every product and bundle.
+ * generate-covers.ts  v3
  *
- * v2: real Unsplash photo backgrounds with dark gradient overlays,
- * so covers look like actual product thumbnails rather than typography
- * rendered on a flat background.
- *
- * Design
- * ──────
- *   1200×1600 portrait
- *   · Unsplash photo, full-bleed, scaled to cover
- *   · Dark gradient overlay: 45% opacity at top → 97% at bottom
- *   · 10px left accent bar in the product's own accent hex
- *   · Category label + price (top, monospace)
- *   · Product name (large Impact, lower third)
- *   · Subtitle / tagline line  (mono, smaller)
- *   · Key stats row  (pages, trackers)
- *   · DROPDESK wordmark (bottom)
+ * Marketing-style dark covers matching the product-page hero design:
+ *   · Dark navy background + accent radial glow
+ *   · Product-name chip + module pill badge (all module titles joined)
+ *   · Large 2–3 line headline (last line in accent colour)
+ *   · Short tagline paragraph
+ *   · Stats grid  (modules · pages · trackers · files)
+ *   · Price block + "INSTANT DOWNLOAD · LIFETIME ACCESS"
+ *   · DROPDESK wordmark
  *
  * Usage
  * ─────
  *   npx tsx scripts/generate-covers.ts          # skip existing
  *   npx tsx scripts/generate-covers.ts --force  # overwrite all
- *   npx tsx scripts/generate-covers.ts --only=glow-up-os,aura-os
- *
- * Unsplash photos are cached in scripts/.photo-cache/ so subsequent
- * runs do not re-fetch. Delete the cache to get fresh photos.
+ *   npx tsx scripts/generate-covers.ts --only=glow-up-os,money-os
  */
 
-import { createCanvas, loadImage, registerFont } from 'canvas';
-import { mkdirSync, existsSync, writeFileSync, readFileSync } from 'node:fs';
+import { createCanvas, registerFont } from 'canvas';
+import { mkdirSync, existsSync, writeFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { fixtureCatalog } from '../lib/catalog/fixture-source';
 import type { Product, Bundle } from '../lib/catalog/types';
 
-/* ── env / paths ─────────────────────────────────────────────────────────── */
-
-// Load .env from repo root so UNSPLASH_ACCESS_KEY is available
-import { config as dotenvConfig } from 'dotenv';
-dotenvConfig({ path: join(process.cwd(), '..', '.env') });
-dotenvConfig({ path: join(process.cwd(), '.env.local') });
+/* ── paths ───────────────────────────────────────────────────────────────── */
 
 const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
+const __dirname  = dirname(__filename);
 const PUBLIC_DIR = join(__dirname, '..', 'public');
-const PHOTO_CACHE = join(__dirname, '.photo-cache');
-if (!existsSync(PHOTO_CACHE)) mkdirSync(PHOTO_CACHE, { recursive: true });
 
-/* ── canvas dims ─────────────────────────────────────────────────────────── */
+/* ── fonts ───────────────────────────────────────────────────────────────── */
 
-const W = 1200;
-const H = 1600;
-const INK = '#0B1020';
-
-/* ── font registration ───────────────────────────────────────────────────── */
-
-const NEXT_OG = join(process.cwd(), 'node_modules', 'next', 'dist', 'compiled', '@vercel', 'og');
-if (existsSync(join(NEXT_OG, 'Geist-Regular.ttf'))) {
-  registerFont(join(NEXT_OG, 'Geist-Regular.ttf'), { family: 'Geist' });
-}
-if (existsSync(join(NEXT_OG, 'Geist-Bold.ttf'))) {
-  registerFont(join(NEXT_OG, 'Geist-Bold.ttf'), { family: 'Geist', weight: 'bold' });
-}
+const OG = join(process.cwd(), 'node_modules', 'next', 'dist', 'compiled', '@vercel', 'og');
+if (existsSync(join(OG, 'Geist-Regular.ttf'))) registerFont(join(OG, 'Geist-Regular.ttf'), { family: 'Geist' });
+if (existsSync(join(OG, 'Geist-Bold.ttf')))    registerFont(join(OG, 'Geist-Bold.ttf'),    { family: 'Geist', weight: 'bold' });
 
 const DISPLAY = 'Impact, "Arial Black", sans-serif';
-const MONO = 'Geist, "Courier New", monospace';
+const BODY    = 'Geist, "Helvetica Neue", Arial, sans-serif';
 
-/* ── Unsplash photo fetching ─────────────────────────────────────────────── */
+/* ── canvas size ─────────────────────────────────────────────────────────── */
 
-const UNSPLASH_KEY = process.env.UNSPLASH_ACCESS_KEY ?? '';
+const W  = 1200;
+const H  = 1600;
+const ML = 64;   // left margin
+const MR = 64;   // right margin
+const CW = W - ML - MR; // content width
 
-async function fetchPhotoBuffer(query: string): Promise<Buffer | null> {
-  if (!UNSPLASH_KEY) {
-    console.warn('  ⚠  UNSPLASH_ACCESS_KEY not set — using flat background');
-    return null;
-  }
-
-  const cacheKey = query.replace(/[^a-z0-9]+/gi, '-').toLowerCase().slice(0, 80);
-  const cachePath = join(PHOTO_CACHE, `${cacheKey}.jpg`);
-
-  if (existsSync(cachePath)) {
-    return readFileSync(cachePath);
-  }
-
-  try {
-    const apiUrl = `https://api.unsplash.com/photos/random?query=${encodeURIComponent(query)}&orientation=portrait&content_filter=high`;
-    const apiRes = await fetch(apiUrl, {
-      headers: { Authorization: `Client-ID ${UNSPLASH_KEY}` },
-    });
-    if (!apiRes.ok) {
-      console.warn(`  ⚠  Unsplash API ${apiRes.status} for "${query}"`);
-      return null;
-    }
-    const data = (await apiRes.json()) as { urls: { regular: string }; id: string };
-    const imgRes = await fetch(data.urls.regular);
-    if (!imgRes.ok) return null;
-    const buf = Buffer.from(await imgRes.arrayBuffer());
-    writeFileSync(cachePath, buf);
-
-    // Track download per Unsplash guidelines
-    await fetch(`https://api.unsplash.com/photos/${data.id}/download`, {
-      headers: { Authorization: `Client-ID ${UNSPLASH_KEY}` },
-    }).catch(() => {});
-
-    return buf;
-  } catch (e) {
-    console.warn(`  ⚠  photo fetch failed for "${query}": ${(e as Error).message}`);
-    return null;
-  }
-}
-
-/* ── drawing helpers ─────────────────────────────────────────────────────── */
+/* ── helpers ─────────────────────────────────────────────────────────────── */
 
 type Ctx = ReturnType<ReturnType<typeof createCanvas>['getContext']>;
 
-function hexToRgba(hex: string, a: number) {
+function rgba(hex: string, a: number) {
   const h = hex.replace('#', '');
-  const r = parseInt(h.slice(0, 2), 16);
-  const g = parseInt(h.slice(2, 4), 16);
-  const b = parseInt(h.slice(4, 6), 16);
-  return `rgba(${r},${g},${b},${a})`;
+  return `rgba(${parseInt(h.slice(0,2),16)},${parseInt(h.slice(2,4),16)},${parseInt(h.slice(4,6),16)},${a})`;
 }
 
-function drawPhotoBackground(ctx: Ctx, photo: import('canvas').Image | null, accent: string) {
-  if (photo) {
-    // Scale to cover
-    const scale = Math.max(W / photo.width, H / photo.height);
-    const dw = photo.width * scale;
-    const dh = photo.height * scale;
-    const dx = (W - dw) / 2;
-    const dy = (H - dh) / 2;
-    ctx.drawImage(photo as any, dx, dy, dw, dh);
-  } else {
-    // Fallback: ink + subtle accent grain
-    ctx.fillStyle = INK;
-    ctx.fillRect(0, 0, W, H);
-    ctx.fillStyle = hexToRgba(accent, 0.08);
-    for (let y = 0; y < H; y += 28) ctx.fillRect(0, y, W, 1);
+function roundedRect(ctx: Ctx, x: number, y: number, w: number, h: number, r: number) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  ctx.lineTo(x + r, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.closePath();
+}
+
+/** Draw a single pill badge. Returns badge width. */
+function drawPill(ctx: Ctx, text: string, x: number, y: number, accent: string): number {
+  const PX = 24, R = 7;
+  ctx.font = `600 21px ${BODY}`;
+  const tw = ctx.measureText(text).width;
+  const pw = tw + PX * 2, ph = 44;
+  ctx.save();
+  roundedRect(ctx, x, y, pw, ph, R);
+  ctx.fillStyle   = rgba(accent, 0.13);
+  ctx.fill();
+  ctx.strokeStyle = rgba(accent, 0.45);
+  ctx.lineWidth   = 1.5;
+  ctx.stroke();
+  ctx.fillStyle   = rgba(accent, 0.88);
+  ctx.textBaseline = 'middle';
+  ctx.textAlign    = 'left';
+  ctx.fillText(text, x + PX, y + ph / 2);
+  ctx.restore();
+  return pw;
+}
+
+/** Draw a headline. Lines are white; the last line is drawn in accent colour. Returns height used. */
+function drawHeadline(ctx: Ctx, lines: string[], accent: string, x: number, y: number): number {
+  // Auto-shrink so no line overflows
+  let size = 156;
+  ctx.font = `900 ${size}px ${DISPLAY}`;
+  while (size > 72) {
+    ctx.font = `900 ${size}px ${DISPLAY}`;
+    if (Math.max(...lines.map(l => ctx.measureText(l).width)) <= CW) break;
+    size -= 4;
   }
+  const lh = size * 0.90;
+  lines.forEach((line, i) => {
+    ctx.save();
+    ctx.font         = `900 ${size}px ${DISPLAY}`;
+    ctx.fillStyle    = i === lines.length - 1 ? accent : '#FFFFFF';
+    ctx.textBaseline = 'top';
+    ctx.textAlign    = 'left';
+    ctx.fillText(line, x, y + i * lh);
+    ctx.restore();
+  });
+  return lines.length * lh;
 }
 
-function drawGradientOverlay(ctx: Ctx, hasPhoto: boolean) {
-  const g = ctx.createLinearGradient(0, 0, 0, H);
-  if (hasPhoto) {
-    g.addColorStop(0,    'rgba(11,16,32,0.50)');
-    g.addColorStop(0.38, 'rgba(11,16,32,0.55)');
-    g.addColorStop(0.62, 'rgba(11,16,32,0.82)');
-    g.addColorStop(0.80, 'rgba(11,16,32,0.94)');
-    g.addColorStop(1,    'rgba(11,16,32,0.98)');
-  } else {
-    g.addColorStop(0, 'rgba(11,16,32,0.0)');
-    g.addColorStop(1, 'rgba(11,16,32,0.0)');
-  }
-  ctx.fillStyle = g;
-  ctx.fillRect(0, 0, W, H);
-}
-
-function drawAccentBar(ctx: Ctx, accent: string) {
-  ctx.fillStyle = accent;
-  ctx.fillRect(0, 0, 10, H);
-}
-
-function wrapText(ctx: Ctx, text: string, maxW: number): string[] {
-  const words = text.split(/\s+/);
+/** Wrap and draw body text. Returns height used. */
+function drawBody(ctx: Ctx, text: string, x: number, y: number, maxLines = 3): number {
+  const SIZE = 30, LH = SIZE * 1.58;
+  ctx.save();
+  ctx.font         = `400 ${SIZE}px ${BODY}`;
+  ctx.fillStyle    = 'rgba(255,255,255,0.62)';
+  ctx.textBaseline = 'top';
+  ctx.textAlign    = 'left';
+  const words: string[] = text.split(/\s+/);
   const lines: string[] = [];
   let cur = '';
   for (const w of words) {
     const probe = cur ? `${cur} ${w}` : w;
-    if (ctx.measureText(probe).width <= maxW) { cur = probe; }
+    if (ctx.measureText(probe).width <= CW) { cur = probe; }
     else { if (cur) lines.push(cur); cur = w; }
   }
   if (cur) lines.push(cur);
-  return lines;
+  lines.slice(0, maxLines).forEach((l, i) => ctx.fillText(l, x, y + i * LH));
+  ctx.restore();
+  return Math.min(lines.length, maxLines) * LH;
 }
 
-/** Letter-spaced monospace label. */
-function drawLabel(ctx: Ctx, text: string, x: number, y: number, opts: {
-  size?: number; color?: string; align?: CanvasTextAlign;
-} = {}) {
-  const { size = 22, color = 'rgba(255,255,255,0.55)', align = 'left' } = opts;
+function hRule(ctx: Ctx, y: number) {
   ctx.save();
-  ctx.font = `600 ${size}px ${MONO}`;
-  ctx.fillStyle = color;
-  ctx.textAlign = align;
-  ctx.textBaseline = 'top';
-  // Simulate letter-spacing by spacing out individual characters
-  const gap = size * 0.12;
-  if (align === 'left') {
-    let cx = x;
-    for (const ch of text) { ctx.fillText(ch, cx, y); cx += ctx.measureText(ch).width + gap; }
-  } else {
-    // measure total width first
-    let total = 0;
-    const chars = [...text];
-    const widths = chars.map(c => { const w = ctx.measureText(c).width; total += w + gap; return w; });
-    total -= gap;
-    let cx = align === 'right' ? x - total : x - total / 2;
-    chars.forEach((ch, i) => { ctx.fillText(ch, cx, y); cx += widths[i] + gap; });
-  }
+  ctx.strokeStyle = 'rgba(255,255,255,0.10)';
+  ctx.lineWidth   = 1;
+  ctx.beginPath(); ctx.moveTo(ML, y); ctx.lineTo(W - MR, y); ctx.stroke();
   ctx.restore();
 }
 
-/** Solid 1px horizontal rule. */
-function drawRule(ctx: Ctx, y: number, color = 'rgba(255,255,255,0.22)') {
-  ctx.save();
-  ctx.strokeStyle = color;
-  ctx.lineWidth = 1.5;
-  ctx.beginPath();
-  ctx.moveTo(56, y); ctx.lineTo(W - 56, y);
-  ctx.stroke();
-  ctx.restore();
+type Stat = { value: string; label: string };
+
+function drawStats(ctx: Ctx, stats: Stat[], y: number, accent: string) {
+  const colW = CW / Math.max(stats.length, 1);
+  stats.forEach((s, i) => {
+    const x = ML + i * colW;
+    ctx.save();
+    ctx.font         = `900 68px ${DISPLAY}`;
+    ctx.fillStyle    = accent;
+    ctx.textBaseline = 'top';
+    ctx.textAlign    = 'left';
+    ctx.fillText(s.value, x, y);
+    ctx.font         = `600 19px ${BODY}`;
+    ctx.fillStyle    = 'rgba(255,255,255,0.42)';
+    ctx.fillText(s.label.toUpperCase(), x, y + 76);
+    ctx.restore();
+  });
 }
 
-/** Dashed receipt-style rule. */
-function drawDash(ctx: Ctx, y: number, accent: string) {
-  ctx.save();
-  ctx.strokeStyle = hexToRgba(accent, 0.6);
-  ctx.lineWidth = 2;
-  ctx.setLineDash([9, 7]);
-  ctx.beginPath();
-  ctx.moveTo(56, y); ctx.lineTo(W - 56, y);
-  ctx.stroke();
-  ctx.restore();
-}
+/* ── custom headlines ────────────────────────────────────────────────────── */
 
-/** Large display title, returns height used. */
-function drawTitle(ctx: Ctx, text: string, x: number, y: number, opts: {
-  maxW: number; size?: number; lineHeight?: number;
-} = { maxW: W - 112 }): number {
-  const { maxW, size = 104, lineHeight = 0.9 } = opts;
-  ctx.save();
-  ctx.font = `900 ${size}px ${DISPLAY}`;
-  ctx.fillStyle = '#FFFFFF';
-  ctx.textAlign = 'left';
-  ctx.textBaseline = 'top';
-  const lines = wrapText(ctx, text.toUpperCase(), maxW);
-  const lh = size * lineHeight;
-  lines.forEach((l, i) => ctx.fillText(l, x, y + i * lh));
-  ctx.restore();
-  return lines.length * lh;
-}
-
-/* ── cover input type ────────────────────────────────────────────────────── */
-
-type CoverInput = {
-  slug: string;
-  name: string;       // Main title line (short — product name only)
-  subtitle?: string;  // Below the name (e.g. "Body · Looks & Mind")
-  category: string;   // Category label
-  price: string;      // e.g. "₹999"
-  stats: string;      // e.g. "39 PAGES  ·  5 TRACKERS"
-  accent: string;
-  photoQuery: string;
-  isBundle: boolean;
+/** 2–3 element array. Last element is rendered in accent colour. */
+const HEADLINES: Record<string, string[]> = {
+  'glow-up-os':              ['STOP LOOKING', 'AVERAGE'],
+  'aura-os':                 ['BECOME THE', "WOMAN THEY", "CAN'T IGNORE"],
+  'money-os':                ['THE FIRST', '₹1,000'],
+  'social-os':               ['THE ROOM', 'REMEMBERS', 'YOU'],
+  'study-os':                ['SIX HOURS.', 'NOTHING', 'FORGOTTEN'],
+  'career-os':               ['GET HIRED,', 'NOT JUST', 'SCREENED'],
+  'skin-os':                 ['SKIN THAT', 'DOES THE', 'TALKING'],
+  'sleep-os':                ['WAKE UP A', 'DIFFERENT', 'PERSON'],
+  'money-habits-os':         ['10 HABITS.', 'ONE BANK', 'ACCOUNT'],
+  'english-confidence-os':   ['SPEAK LIKE', 'YOU MEAN', 'IT'],
+  'thirty-days-of-focus':    ['30 DAYS.', 'ONE GOAL.', 'DONE.'],
+  'exam-sprint-os':          ['LAST WEEK.', 'FULL', 'SYLLABUS.'],
+  'home-workout-os':         ['NO GYM.', 'NO EXCUSE.', 'NO LIMITS.'],
+  'gym-beginner-os':         ['FIRST REP.', 'THEN THE', 'REST.'],
+  'wedding-glow-up-os':      ['UNFORGETTABLE', 'ON THE', 'DAY.'],
+  'creator-os':              ['BUILD YOUR', 'AUDIENCE', 'TODAY.'],
+  'presence-os':             ['WALK IN.', 'OWN THE', 'ROOM.'],
+  'the-character-codex':     ['40 GUIDES.', '1 CODEX.', 'YOUR MOVE.'],
+  'talking-to-your-parents-full-set': ['12 SCRIPTS.', 'EVERY HARD', 'CONVERSATION.'],
+  'the-ten-series-full-set': ['22 GUIDES.', 'ONE COMPLETE', 'COLLECTION.'],
+  'the-scam-files':          ['EVERY SCAM', 'AIMED AT', 'YOU.'],
 };
 
-/* ── cover renderer ──────────────────────────────────────────────────────── */
+function capitalise(s: string) { return s.charAt(0).toUpperCase() + s.slice(1); }
 
-async function renderCover(input: CoverInput): Promise<Buffer> {
-  const { name, subtitle, category, price, stats, accent, photoQuery } = input;
+function headlineFor(p: Product): string[] {
+  if (HEADLINES[p.slug]) return HEADLINES[p.slug];
+
+  // Character guides: "how-to-be-like-thomas-shelby"
+  if (p.slug.startsWith('how-to-be-like-')) {
+    const name = p.slug.replace('how-to-be-like-', '').split('-').map(capitalise).join(' ');
+    const words = name.split(' ');
+    if (words.length <= 2) return ['HOW TO', 'BE LIKE', name.toUpperCase()];
+    return ['HOW TO BE', 'LIKE', name.toUpperCase()];
+  }
+
+  // Ten-series style slugs: "10-ways-to-*"  "10-things-*"  "10-money-habits-*"
+  if (p.slug.match(/^10-/)) {
+    const words = (p.shortTitle ?? p.title).toUpperCase().replace('10 WAYS TO ', '10 WAYS TO\n').split('\n');
+    if (words.length >= 2) {
+      const rest = words[1].split(' ');
+      const mid  = Math.ceil(rest.length / 2);
+      return [words[0], rest.slice(0, mid).join(' '), rest.slice(mid).join(' ')].filter(Boolean);
+    }
+    const all = words[0].split(' ');
+    const t = Math.ceil(all.length / 3);
+    return [all.slice(0, t).join(' '), all.slice(t, t * 2).join(' '), all.slice(t * 2).join(' ')].filter(Boolean);
+  }
+
+  // Scam / fraud / trap single-issue guides
+  if (p.slug.includes('scam') || p.slug.includes('fraud') || p.slug.includes('trap') || p.slug.includes('arrest')) {
+    const words = (p.shortTitle ?? p.title).toUpperCase().split(' ');
+    const mid   = Math.ceil(words.length / 2);
+    return [words.slice(0, mid).join(' '), words.slice(mid).join(' ')].filter(Boolean);
+  }
+
+  // Talking-to-parents family: derive 2-line headline from the title
+  const title = (p.shortTitle ?? p.title).toUpperCase();
+  const words = title.split(' ');
+  const mid   = Math.ceil(words.length / 2);
+  return [words.slice(0, mid).join(' '), words.slice(mid).join(' ')].filter(Boolean);
+}
+
+function bundleHeadline(b: Bundle): string[] {
+  const words = b.title.toUpperCase().split(' ');
+  if (words.length <= 3) return ['THE', words.join(' ')];
+  const mid = Math.ceil(words.length / 2);
+  return [words.slice(0, mid).join(' '), words.slice(mid).join(' ')];
+}
+
+/* ── pill badge text ─────────────────────────────────────────────────────── */
+
+function pillFor(p: Product): string {
+  if (p.modules?.length) return p.modules.map(m => m.title).join(' · ');
+  if (p.category.slug === 'character-guides')        return 'MINDSET · HABITS · LIFESTYLE · SPEECH';
+  if (p.category.slug === 'talking-to-your-parents') return 'GUIDE · SCRIPTS · TIPS';
+  if (p.category.slug === 'the-ten-series')          return '10 THINGS THAT ACTUALLY WORK';
+  if (p.category.slug === 'the-scam-files')          return 'WHAT TO SPOT · HOW TO RESPOND · WHO TO CALL';
+  return p.category.label.toUpperCase();
+}
+
+/* ── stats ───────────────────────────────────────────────────────────────── */
+
+function statsFor(p: Product): Stat[] {
+  const s: Stat[] = [];
+  if (p.modules?.length)  s.push({ value: String(p.modules.length), label: 'Modules' });
+  if (p.pageCount)        s.push({ value: String(p.pageCount),      label: 'Pages'   });
+  if (p.trackerCount)     s.push({ value: String(p.trackerCount),   label: 'Trackers' });
+  if (p.fileCount)        s.push({ value: String(p.fileCount),      label: 'Files'   });
+  if (s.length === 0)     s.push({ value: '1', label: 'Guide' });
+  return s.slice(0, 4);
+}
+
+function bundleStatsFor(b: Bundle): Stat[] {
+  const s: Stat[] = [{ value: String(b.components.length), label: 'Products' }];
+  if (b.separatePrice) s.push({ value: `₹${(b.separatePrice - b.price).toLocaleString('en-IN')}`, label: 'You Save' });
+  return s;
+}
+
+/* ── renderer ────────────────────────────────────────────────────────────── */
+
+async function renderCover(opts: {
+  headline: string[];
+  accent:   string;
+  chip:     string;   // top-left label e.g. "GLOW-UP OS"
+  pill:     string;   // module badges text
+  tagline:  string;
+  stats:    Stat[];
+  price:    string;
+}): Promise<Buffer> {
+  const { headline, accent, chip, pill, tagline, stats, price } = opts;
   const canvas = createCanvas(W, H);
-  const ctx = canvas.getContext('2d');
+  const ctx    = canvas.getContext('2d');
 
-  // 1. Photo background
-  const photoBuf = await fetchPhotoBuffer(photoQuery);
-  const photo = photoBuf ? await loadImage(photoBuf) : null;
-  drawPhotoBackground(ctx, photo, accent);
+  /* 1. Background */
+  ctx.fillStyle = '#080C1C';
+  ctx.fillRect(0, 0, W, H);
 
-  // 2. Gradient overlay
-  drawGradientOverlay(ctx, !!photo);
+  /* Subtle accent radial, top-right */
+  const glow = ctx.createRadialGradient(W * 0.80, H * 0.08, 0, W * 0.80, H * 0.08, W * 0.72);
+  glow.addColorStop(0, rgba(accent, 0.16));
+  glow.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = glow;
+  ctx.fillRect(0, 0, W, H);
 
-  // 3. Left accent bar
-  drawAccentBar(ctx, accent);
+  /* 2. Left accent bar */
+  ctx.fillStyle = accent;
+  ctx.fillRect(0, 0, 8, H);
 
-  // 4. Top strip — category label (left) + price (right)
-  const topY = 52;
-  drawLabel(ctx, category.toUpperCase(), 60, topY, { size: 20, color: accent });
-  drawLabel(ctx, price, W - 60, topY, { size: 24, color: 'rgba(255,255,255,0.9)', align: 'right' });
-  drawRule(ctx, topY + 40);
+  /* 3. Product chip (top-left, small coloured label) + price (top-right) */
+  const topY = 54;
+  ctx.save();
+  ctx.font = `700 22px ${BODY}`; ctx.fillStyle = rgba(accent, 0.80);
+  ctx.textBaseline = 'top'; ctx.textAlign = 'left';
+  ctx.fillText(chip, ML, topY);
+  ctx.font = `700 28px ${BODY}`; ctx.fillStyle = 'rgba(255,255,255,0.82)';
+  ctx.textAlign = 'right';
+  ctx.fillText(price, W - MR, topY);
+  ctx.restore();
 
-  // 5. Lower content block — placed in bottom 48% of canvas
-  const CONTENT_TOP = H * 0.52;
+  /* 4. Module pill badge */
+  drawPill(ctx, pill, ML, 108, accent);
 
-  // Dashed separator above content
-  drawDash(ctx, CONTENT_TOP - 28, accent);
+  /* 5. Headline */
+  const headY = 196;
+  const headH = drawHeadline(ctx, headline, accent, ML, headY);
 
-  // Product name (large Impact)
-  // Auto-size: if name is very long, shrink
-  const titleSize = name.length > 22 ? (name.length > 34 ? 76 : 88) : 108;
-  const titleH = drawTitle(ctx, name, 60, CONTENT_TOP, {
-    maxW: W - 112,
-    size: titleSize,
-    lineHeight: 0.9,
-  });
+  /* 6. Tagline */
+  const descY = headY + headH + 36;
+  const descH = drawBody(ctx, tagline, ML, descY, 3);
 
-  let cursorY = CONTENT_TOP + titleH + 20;
+  /* 7. Stats section */
+  const statsTop = Math.max(descY + descH + 56, H * 0.62);
+  hRule(ctx, statsTop - 20);
+  drawStats(ctx, stats, statsTop, accent);
 
-  // Subtitle (e.g. "Body · Looks & Mind")
-  if (subtitle) {
-    drawLabel(ctx, subtitle.toUpperCase(), 60, cursorY, {
-      size: 26,
-      color: hexToRgba(accent, 0.95),
-    });
-    cursorY += 44;
-  }
+  /* 8. Price + CTA */
+  const priceTop = statsTop + 148;
+  hRule(ctx, priceTop - 20);
+  ctx.save();
+  ctx.font = `900 96px ${DISPLAY}`; ctx.fillStyle = '#FFFFFF';
+  ctx.textBaseline = 'top'; ctx.textAlign = 'left';
+  ctx.fillText(price, ML, priceTop);
+  ctx.font = `600 22px ${BODY}`; ctx.fillStyle = rgba(accent, 0.85);
+  ctx.textAlign = 'right';
+  ctx.fillText('INSTANT DOWNLOAD', W - MR, priceTop + 10);
+  ctx.fillText('LIFETIME ACCESS',  W - MR, priceTop + 44);
+  ctx.restore();
 
-  // Stats row
-  if (stats) {
-    cursorY += 8;
-    drawLabel(ctx, stats, 60, cursorY, { size: 22, color: 'rgba(255,255,255,0.55)' });
-    cursorY += 36;
-  }
-
-  // Bottom rule + DROPDESK wordmark
-  drawRule(ctx, H - 72);
-  drawLabel(ctx, 'DROPDESK', 60, H - 54, { size: 20, color: 'rgba(255,255,255,0.4)' });
-  drawLabel(ctx, '↗  dropdesk.in', W - 60, H - 54, {
-    size: 20,
-    color: hexToRgba(accent, 0.55),
-    align: 'right',
-  });
+  /* 9. Bottom wordmark */
+  hRule(ctx, H - 86);
+  ctx.save();
+  ctx.font = `700 21px ${BODY}`; ctx.fillStyle = 'rgba(255,255,255,0.28)';
+  ctx.textBaseline = 'middle'; ctx.textAlign = 'left';
+  ctx.fillText('DROPDESK', ML, H - 50);
+  ctx.fillStyle = rgba(accent, 0.42); ctx.textAlign = 'right';
+  ctx.fillText('dropdesk.in', W - MR, H - 50);
+  ctx.restore();
 
   return canvas.toBuffer('image/png');
 }
 
-/* ── catalog → cover inputs ──────────────────────────────────────────────── */
-
-// Unsplash search terms per product slug or family prefix
-const PHOTO_QUERIES: Record<string, string> = {
-  // Self-improvement
-  'glow-up-os':           'male fitness gym dark dramatic moody portrait',
-  'aura-os':              'woman confident beauty wellness dark portrait',
-  'skin-os':              'skincare beauty dark aesthetic minimal',
-  'sleep-os':             'sleep bedroom calm dark night minimal',
-  'home-workout-os':      'home workout exercise dark dramatic',
-  'gym-beginner-os':      'gym weights lifting dark dramatic portrait',
-  'wedding-glow-up-os':   'wedding celebration bokeh lights dark',
-
-  // Money & career
-  'money-os':             'laptop night work dark moody freelance',
-  'career-os':            'professional businessman dark suit portrait',
-  'money-habits-os':      'money finance savings dark minimal',
-  'english-confidence-os':'speaking stage microphone dark confidence',
-
-  // Study
-  'study-os':             'books studying dark minimal night lamp',
-  'thirty-days-of-focus': 'focus concentration dark meditation minimal',
-  'exam-sprint-os':       'exam studying night dark pencil paper',
-
-  // Creator & social
-  'social-os':            'conversation friends talking dark moody',
-  'creator-os':           'content creator camera dark studio',
-  'presence-os':          'stage spotlight dark dramatic confidence',
-
-  // Guide families (shared per family)
-  '__character':          'dark dramatic silhouette portrait moody cinematic',
-  '__parents':            'family warmth connection dark emotional',
-  '__ten-series':         'dark minimal abstract typographic dramatic',
-  '__scam':               'cybersecurity hacker dark screen warning digital',
-  '__tripwire':           'dark minimal dramatic abstract',
-
-  // Bundles
-  '__bundle':             'dark premium collection minimal elegant',
-};
-
-function photoQueryFor(slug: string, category: string): string {
-  if (PHOTO_QUERIES[slug]) return PHOTO_QUERIES[slug];
-  if (category === 'character-guides')       return PHOTO_QUERIES['__character'];
-  if (category === 'talking-to-your-parents') return PHOTO_QUERIES['__parents'];
-  if (category === 'the-ten-series')         return PHOTO_QUERIES['__ten-series'];
-  if (category === 'the-scam-files')         return PHOTO_QUERIES['__scam'];
-  return PHOTO_QUERIES['__tripwire'];
-}
-
-function splitTitle(title: string): { name: string; subtitle?: string } {
-  const sep = title.indexOf(' — ');
-  if (sep === -1) return { name: title };
-  return { name: title.slice(0, sep), subtitle: title.slice(sep + 3) };
-}
-
-function statsLine(p: Product): string {
-  const parts: string[] = [];
-  if (p.pageCount) parts.push(`${p.pageCount} PAGES`);
-  if (p.trackerCount) parts.push(`${p.trackerCount} TRACKERS`);
-  if (p.fileCount && !p.pageCount) parts.push(`${p.fileCount} FILES`);
-  return parts.join('  ·  ');
-}
-
-function productToInput(p: Product): CoverInput {
-  const { name, subtitle } = splitTitle(p.shortTitle ?? p.title);
-  return {
-    slug: p.slug,
-    name,
-    subtitle,
-    category: p.category.label,
-    price: `₹${p.price.toLocaleString('en-IN')}`,
-    stats: statsLine(p),
-    accent: p.accent.hex,
-    photoQuery: photoQueryFor(p.slug, p.category.slug),
-    isBundle: false,
-  };
-}
-
-function bundleToInput(b: Bundle): CoverInput {
-  const { name, subtitle } = splitTitle(b.title);
-  const totalPages = b.components
-    .filter(c => c.inCatalog)
-    .reduce((sum) => sum, 0); // just use the tagline stat
-  return {
-    slug: b.slug,
-    name,
-    subtitle,
-    category: 'DROPDESK BUNDLE',
-    price: `₹${b.price.toLocaleString('en-IN')}`,
-    stats: b.separatePrice
-      ? `SAVES ₹${(b.separatePrice - b.price).toLocaleString('en-IN')}  ·  ${b.components.length} PRODUCTS`
-      : `${b.components.length} PRODUCTS`,
-    accent: '#C42B22',
-    photoQuery: PHOTO_QUERIES['__bundle'],
-    isBundle: true,
-  };
-}
-
-/* ── args / driver ───────────────────────────────────────────────────────── */
-
-type Args = { force: boolean; only: Set<string> | null };
-
-function parseArgs(): Args {
-  const args: Args = { force: false, only: null };
-  for (const a of process.argv.slice(2)) {
-    if (a === '--force') args.force = true;
-    else if (a.startsWith('--only='))
-      args.only = new Set(a.slice('--only='.length).split(',').filter(Boolean));
-  }
-  return args;
-}
+/* ── main ────────────────────────────────────────────────────────────────── */
 
 async function main() {
-  const args = parseArgs();
+  const argv  = process.argv.slice(2);
+  const force = argv.includes('--force');
+  const only  = argv.find(a => a.startsWith('--only='))?.slice(7).split(',').filter(Boolean) ?? null;
+
   const { products, bundles } = fixtureCatalog();
+  let wrote = 0, skipped = 0;
 
-  const inputs: CoverInput[] = [
-    ...products.map(productToInput),
-    ...bundles.map(bundleToInput),
-  ].filter(c => !args.only || args.only.has(c.slug));
-
-  console.log(`\nGenerating ${inputs.length} covers  (force=${args.force})\n`);
-
-  // Pre-fetch unique photos (one per unique photoQuery) so we don't spam the API
-  const uniqueQueries = [...new Set(inputs.map(i => i.photoQuery))];
-  console.log(`Fetching ${uniqueQueries.length} unique Unsplash photos...\n`);
-  for (const q of uniqueQueries) {
-    await fetchPhotoBuffer(q);
-  }
-
-  let wrote = 0; let skipped = 0;
-
-  for (const input of inputs) {
-    const sub = input.isBundle ? 'bundles' : 'products';
-    const dir = join(PUBLIC_DIR, sub, input.slug);
-    if (!existsSync(dir)) mkdirSync(dir, { recursive: true });
+  for (const p of products) {
+    if (only && !only.includes(p.slug)) { continue; }
+    const dir    = join(PUBLIC_DIR, 'products', p.slug);
     const target = join(dir, '1-cover-thumbnail.png');
+    if (!existsSync(dir)) mkdirSync(dir, { recursive: true });
+    if (existsSync(target) && !force) { skipped++; process.stdout.write(`  ·  products/${p.slug}\n`); continue; }
 
-    if (existsSync(target) && !args.force) {
-      skipped++;
-      process.stdout.write(`  ·  ${sub}/${input.slug}\n`);
-      continue;
-    }
-
-    const buf = await renderCover(input);
+    const chip = (p.shortTitle ?? p.title).split(' — ')[0].toUpperCase();
+    const buf  = await renderCover({
+      headline: headlineFor(p),
+      accent:   p.accent.hex,
+      chip,
+      pill:     pillFor(p),
+      tagline:  p.tagline.slice(0, 220),
+      stats:    statsFor(p),
+      price:    `₹${p.price.toLocaleString('en-IN')}`,
+    });
     writeFileSync(target, buf);
     wrote++;
-    process.stdout.write(`  ✎  ${sub}/${input.slug}\n`);
+    process.stdout.write(`  ✎  products/${p.slug}\n`);
   }
 
-  console.log(`\n${wrote} written, ${skipped} skipped.`);
-  console.log(`Output: ${PUBLIC_DIR}`);
-  if (!UNSPLASH_KEY) {
-    console.log('\n⚠  Set UNSPLASH_ACCESS_KEY in .env to enable photo backgrounds.');
+  for (const b of bundles) {
+    if (only && !only.includes(b.slug)) { continue; }
+    const dir    = join(PUBLIC_DIR, 'bundles', b.slug);
+    const target = join(dir, '1-cover-thumbnail.png');
+    if (!existsSync(dir)) mkdirSync(dir, { recursive: true });
+    if (existsSync(target) && !force) { skipped++; process.stdout.write(`  ·  bundles/${b.slug}\n`); continue; }
+
+    const buf = await renderCover({
+      headline: bundleHeadline(b),
+      accent:   '#C42B22',
+      chip:     'DROPDESK BUNDLE',
+      pill:     b.components.slice(0, 4).map(c => c.label.split(' ')[0].toUpperCase()).join(' · '),
+      tagline:  b.tagline.slice(0, 220),
+      stats:    bundleStatsFor(b),
+      price:    `₹${b.price.toLocaleString('en-IN')}`,
+    });
+    writeFileSync(target, buf);
+    wrote++;
+    process.stdout.write(`  ✎  bundles/${b.slug}\n`);
   }
+
+  console.log(`\n${wrote} written, ${skipped} skipped.\nOutput: ${PUBLIC_DIR}`);
 }
 
 main().catch(e => { console.error(e); process.exit(1); });

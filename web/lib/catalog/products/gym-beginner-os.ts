@@ -121,7 +121,7 @@ export const gymBeginnerOs: Product = {
     'beginner workout plan',
     'gym machines explained',
   ],
-  gallery: [],
+  gallery: [{ filename: '1-cover-thumbnail.png', role: 'cover', alt: 'Gym Beginner OS cover — first 90 days in the gym.' }],
   deliveryFiles: [
     'Module-01-WALKING-IN.pdf',
     'Module-02-MACHINES-AND-MOVES.pdf',

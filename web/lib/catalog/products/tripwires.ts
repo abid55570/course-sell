@@ -84,7 +84,7 @@ export const theScamShield: Product = {
     },
   ],
   tags: ['job scam india', 'fake internship', 'task scam', 'placement guarantee scam', 'fresher scam', 'cybercrime 1930'],
-  gallery: [],
+  gallery: [{ filename: '1-cover-thumbnail.png', role: 'cover', alt: 'Product cover.' }],
   deliveryFiles: ['The-Scam-Shield.pdf'],
   pairSlug: 'career-os',
 };
@@ -132,7 +132,7 @@ export const theDesiProteinBible: Product = {
   disclaimer:
     'General nutrition information, not medical or dietetic advice. Prices are approximate ranges and vary by city and season. Anyone with a medical condition, a kidney concern, a food allergy, or who is pregnant should speak to a doctor or a registered dietitian before changing how they eat.',
   tags: ['protein india', 'cheap protein sources', 'indian diet protein', 'budget nutrition', 'vegetarian protein', 'whey vs soya'],
-  gallery: [],
+  gallery: [{ filename: '1-cover-thumbnail.png', role: 'cover', alt: 'Product cover.' }],
   deliveryFiles: ['The-Desi-Protein-Bible.pdf'],
   pairSlug: 'glow-up-os',
 };
@@ -179,7 +179,7 @@ export const theInterviewEight: Product = {
   disclaimer:
     'General interview-preparation guidance. No job, interview outcome, offer or salary is promised or guaranteed — those depend on the role, the competition and factors nobody controls.',
   tags: ['interview questions india', 'star method', 'tell me about yourself', 'fresher interview', 'behavioural interview'],
-  gallery: [],
+  gallery: [{ filename: '1-cover-thumbnail.png', role: 'cover', alt: 'Product cover.' }],
   deliveryFiles: ['The-Interview-Eight.pdf'],
   pairSlug: 'career-os',
 };
@@ -227,7 +227,7 @@ export const theFresherResumeFix: Product = {
   disclaimer:
     'General resume-writing guidance. No job, interview, callback or outcome is promised or guaranteed. Never state a qualification, employer, grade or figure you cannot evidence.',
   tags: ['fresher resume', 'resume format india', 'ats resume', 'cv for freshers', 'linkedin profile'],
-  gallery: [],
+  gallery: [{ filename: '1-cover-thumbnail.png', role: 'cover', alt: 'Product cover.' }],
   deliveryFiles: ['The-Fresher-Resume-Fix.pdf'],
   pairSlug: 'career-os',
 };
@@ -275,7 +275,7 @@ export const theFirstClientScripts: Product = {
   disclaimer:
     'General guidance on freelance outreach. No income, client, contract or outcome is promised or guaranteed, and no earnings figure is claimed. The scope and payment wording is a practical starting point, not legal advice — for a contract that matters, consult a qualified professional.',
   tags: ['first freelance client', 'cold dm script', 'freelancing india', 'client outreach', 'referral script'],
-  gallery: [],
+  gallery: [{ filename: '1-cover-thumbnail.png', role: 'cover', alt: 'Product cover.' }],
   deliveryFiles: ['The-First-Client-Scripts.pdf'],
   pairSlug: 'money-os',
 };
@@ -323,7 +323,7 @@ export const theRs2000SkincareKit: Product = {
   disclaimer:
     'General grooming and skincare information, not medical advice, and no result is promised. It names ingredient categories rather than brands. Cystic acne, scarring, melasma and any skin change that is spreading, bleeding or painful need a qualified dermatologist. Do not use unregulated skin-whitening injections or prescription steroid creams without a doctor supervising — both cause lasting damage and both are widely sold in India.',
   tags: ['skincare for beginners india', 'affordable skincare', 'pharmacy skincare', 'niacinamide', 'sunscreen india', 'skin type test'],
-  gallery: [],
+  gallery: [{ filename: '1-cover-thumbnail.png', role: 'cover', alt: 'Product cover.' }],
   deliveryFiles: ['The-Rs-2000-Skincare-Kit.pdf'],
   pairSlug: 'aura-os',
 };
@@ -368,7 +368,7 @@ export const hostelKitchen: Product = {
   disclaimer:
     'General nutrition and cooking information, not medical or dietetic advice. Prices are approximate ranges and vary by city and season. Anyone with a medical condition, a food allergy, or who is pregnant should speak to a doctor or a registered dietitian. Follow your hostel or PG rules on cooking appliances — some prohibit them, and this guide is not a reason to ignore that.',
   tags: ['hostel food india', 'induction cooking', 'student meals budget', 'high protein hostel', 'pg food', 'cheap indian meals'],
-  gallery: [],
+  gallery: [{ filename: '1-cover-thumbnail.png', role: 'cover', alt: 'Product cover.' }],
   deliveryFiles: ['Hostel-Kitchen.pdf'],
   pairSlug: 'glow-up-os',
 };

@@ -149,7 +149,7 @@ export const sleepOs: Product = {
     'shared room sleep',
     'wake up early',
   ],
-  gallery: [],
+  gallery: [{ filename: '1-cover-thumbnail.png', role: 'cover', alt: 'Sleep OS cover — fix your sleep, then everything downstream.' }],
   deliveryFiles: [
     'Module-01-WHY-YOU-CANNOT-SLEEP.pdf',
     'Module-02-THE-PROTOCOL.pdf',

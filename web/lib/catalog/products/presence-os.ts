@@ -131,7 +131,7 @@ export const presenceOs: Product = {
     'meeting confidence',
     'campus presentation',
   ],
-  gallery: [],
+  gallery: [{ filename: '1-cover-thumbnail.png', role: 'cover', alt: 'Presence OS cover — how to enter a room and be remembered.' }],
   deliveryFiles: [
     'Module-01-THE-FEAR.pdf',
     'Module-02-THE-DELIVERY.pdf',

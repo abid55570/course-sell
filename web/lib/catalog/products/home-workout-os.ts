@@ -115,7 +115,7 @@ export const homeWorkoutOs: Product = {
     'hostel workout',
     'no gym fitness',
   ],
-  gallery: [],
+  gallery: [{ filename: '1-cover-thumbnail.png', role: 'cover', alt: 'Home Workout OS cover — the no-gym system.' }],
   deliveryFiles: [
     'Module-01-THE-MOVES.pdf',
     'Module-02-THE-PLAN.pdf',

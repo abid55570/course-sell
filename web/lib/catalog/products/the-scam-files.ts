@@ -115,7 +115,7 @@ function scamGuide(slug: string, title: string, hook: string, deliveryFile: stri
     disclaimer: SCAM_FILES_DISCLAIMER,
     helplines: SCAM_FILES_HELPLINES,
     tags: SCAM_FILES_TAGS,
-    gallery: [],
+    gallery: [{ filename: '1-cover-thumbnail.png', role: 'cover', alt: 'Product cover.' }],
     deliveryFiles: [deliveryFile],
     setSlug: 'the-scam-files',
   };

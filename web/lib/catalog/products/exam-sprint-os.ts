@@ -130,7 +130,7 @@ export const examSprintOs: Product = {
     'exam day strategy',
     'exam stress',
   ],
-  gallery: [],
+  gallery: [{ filename: '1-cover-thumbnail.png', role: 'cover', alt: 'Exam Sprint OS cover — last-minute revision that sticks.' }],
   deliveryFiles: [
     'Module-01-TRIAGE.pdf',
     'Module-02-THE-SPRINT.pdf',

@@ -66,7 +66,7 @@ export const howToBeLikeAndyDufresne: Product = {
   disclaimer: CHARACTER_GUIDE_DISCLAIMER,
   helplines: CHARACTER_GUIDE_HELPLINES,
   tags: ['character guides', 'unofficial commentary', 'andy dufresne'],
-  gallery: [],
+  gallery: [{ filename: '1-cover-thumbnail.png', role: 'cover', alt: 'Product cover.' }],
   deliveryFiles: ['How-to-be-like-Andy-Dufresne.pdf'],
   setSlug: 'the-character-codex',
 };
@@ -88,7 +88,7 @@ export const howToBeLikeAtticusFinch: Product = {
   disclaimer: CHARACTER_GUIDE_DISCLAIMER,
   helplines: CHARACTER_GUIDE_HELPLINES,
   tags: ['character guides', 'unofficial commentary', 'atticus finch'],
-  gallery: [],
+  gallery: [{ filename: '1-cover-thumbnail.png', role: 'cover', alt: 'Product cover.' }],
   deliveryFiles: ['How-to-be-like-Atticus-Finch.pdf'],
   setSlug: 'the-character-codex',
 };
@@ -110,7 +110,7 @@ export const howToBeLikeBakiHanma: Product = {
   disclaimer: CHARACTER_GUIDE_DISCLAIMER,
   helplines: CHARACTER_GUIDE_HELPLINES,
   tags: ['character guides', 'unofficial commentary', 'baki hanma'],
-  gallery: [],
+  gallery: [{ filename: '1-cover-thumbnail.png', role: 'cover', alt: 'Product cover.' }],
   deliveryFiles: ['How-to-be-like-Baki-Hanma.pdf'],
   setSlug: 'the-character-codex',
 };
@@ -132,7 +132,7 @@ export const howToBeLikeBhuvan: Product = {
   disclaimer: CHARACTER_GUIDE_DISCLAIMER,
   helplines: CHARACTER_GUIDE_HELPLINES,
   tags: ['character guides', 'unofficial commentary', 'bhuvan'],
-  gallery: [],
+  gallery: [{ filename: '1-cover-thumbnail.png', role: 'cover', alt: 'Product cover.' }],
   deliveryFiles: ['How-to-be-like-Bhuvan.pdf'],
   setSlug: 'the-character-codex',
 };
@@ -154,7 +154,7 @@ export const howToBeLikeBruceWayne: Product = {
   disclaimer: CHARACTER_GUIDE_DISCLAIMER,
   helplines: CHARACTER_GUIDE_HELPLINES,
   tags: ['character guides', 'unofficial commentary', 'bruce wayne'],
-  gallery: [],
+  gallery: [{ filename: '1-cover-thumbnail.png', role: 'cover', alt: 'Product cover.' }],
   deliveryFiles: ['How-to-be-like-Bruce-Wayne.pdf'],
   setSlug: 'the-character-codex',
 };
@@ -176,7 +176,7 @@ export const howToBeLikeEdwardElric: Product = {
   disclaimer: CHARACTER_GUIDE_DISCLAIMER,
   helplines: CHARACTER_GUIDE_HELPLINES,
   tags: ['character guides', 'unofficial commentary', 'edward elric'],
-  gallery: [],
+  gallery: [{ filename: '1-cover-thumbnail.png', role: 'cover', alt: 'Product cover.' }],
   deliveryFiles: ['How-to-be-like-Edward-Elric.pdf'],
   setSlug: 'the-character-codex',
 };
@@ -198,7 +198,7 @@ export const howToBeLikeForrestGump: Product = {
   disclaimer: CHARACTER_GUIDE_DISCLAIMER,
   helplines: CHARACTER_GUIDE_HELPLINES,
   tags: ['character guides', 'unofficial commentary', 'forrest gump'],
-  gallery: [],
+  gallery: [{ filename: '1-cover-thumbnail.png', role: 'cover', alt: 'Product cover.' }],
   deliveryFiles: ['How-to-be-like-Forrest-Gump.pdf'],
   setSlug: 'the-character-codex',
 };
@@ -220,7 +220,7 @@ export const howToBeLikeGojoSatoru: Product = {
   disclaimer: CHARACTER_GUIDE_DISCLAIMER,
   helplines: CHARACTER_GUIDE_HELPLINES,
   tags: ['character guides', 'unofficial commentary', 'gojo satoru'],
-  gallery: [],
+  gallery: [{ filename: '1-cover-thumbnail.png', role: 'cover', alt: 'Product cover.' }],
   deliveryFiles: ['How-to-be-like-Gojo-Satoru.pdf'],
   setSlug: 'the-character-codex',
 };
@@ -242,7 +242,7 @@ export const howToBeLikeGoku: Product = {
   disclaimer: CHARACTER_GUIDE_DISCLAIMER,
   helplines: CHARACTER_GUIDE_HELPLINES,
   tags: ['character guides', 'unofficial commentary', 'goku'],
-  gallery: [],
+  gallery: [{ filename: '1-cover-thumbnail.png', role: 'cover', alt: 'Product cover.' }],
   deliveryFiles: ['How-to-be-like-Goku.pdf'],
   setSlug: 'the-character-codex',
 };
@@ -264,7 +264,7 @@ export const howToBeLikeGuts: Product = {
   disclaimer: CHARACTER_GUIDE_DISCLAIMER,
   helplines: CHARACTER_GUIDE_HELPLINES,
   tags: ['character guides', 'unofficial commentary', 'guts'],
-  gallery: [],
+  gallery: [{ filename: '1-cover-thumbnail.png', role: 'cover', alt: 'Product cover.' }],
   deliveryFiles: ['How-to-be-like-Guts.pdf'],
   setSlug: 'the-character-codex',
 };
@@ -286,7 +286,7 @@ export const howToBeLikeHarveySpecter: Product = {
   disclaimer: CHARACTER_GUIDE_DISCLAIMER,
   helplines: CHARACTER_GUIDE_HELPLINES,
   tags: ['character guides', 'unofficial commentary', 'harvey specter'],
-  gallery: [],
+  gallery: [{ filename: '1-cover-thumbnail.png', role: 'cover', alt: 'Product cover.' }],
   deliveryFiles: ['How-to-be-like-Harvey-Specter.pdf'],
   setSlug: 'the-character-codex',
 };
@@ -308,7 +308,7 @@ export const howToBeLikeHermioneGranger: Product = {
   disclaimer: CHARACTER_GUIDE_DISCLAIMER,
   helplines: CHARACTER_GUIDE_HELPLINES,
   tags: ['character guides', 'unofficial commentary', 'hermione granger'],
-  gallery: [],
+  gallery: [{ filename: '1-cover-thumbnail.png', role: 'cover', alt: 'Product cover.' }],
   deliveryFiles: ['How-to-be-like-Hermione-Granger.pdf'],
   setSlug: 'the-character-codex',
 };
@@ -330,7 +330,7 @@ export const howToBeLikeIqbal: Product = {
   disclaimer: CHARACTER_GUIDE_DISCLAIMER,
   helplines: CHARACTER_GUIDE_HELPLINES,
   tags: ['character guides', 'unofficial commentary', 'iqbal'],
-  gallery: [],
+  gallery: [{ filename: '1-cover-thumbnail.png', role: 'cover', alt: 'Product cover.' }],
   deliveryFiles: ['How-to-be-like-Iqbal.pdf'],
   setSlug: 'the-character-codex',
 };
@@ -352,7 +352,7 @@ export const howToBeLikeKabirKhan: Product = {
   disclaimer: CHARACTER_GUIDE_DISCLAIMER,
   helplines: CHARACTER_GUIDE_HELPLINES,
   tags: ['character guides', 'unofficial commentary', 'kabir khan'],
-  gallery: [],
+  gallery: [{ filename: '1-cover-thumbnail.png', role: 'cover', alt: 'Product cover.' }],
   deliveryFiles: ['How-to-be-like-Kabir-Khan.pdf'],
   setSlug: 'the-character-codex',
 };
@@ -374,7 +374,7 @@ export const howToBeLikeKakashiHatake: Product = {
   disclaimer: CHARACTER_GUIDE_DISCLAIMER,
   helplines: CHARACTER_GUIDE_HELPLINES,
   tags: ['character guides', 'unofficial commentary', 'kakashi hatake'],
-  gallery: [],
+  gallery: [{ filename: '1-cover-thumbnail.png', role: 'cover', alt: 'Product cover.' }],
   deliveryFiles: ['How-to-be-like-Kakashi-Hatake.pdf'],
   setSlug: 'the-character-codex',
 };
@@ -396,7 +396,7 @@ export const howToBeLikeKilluaZoldyck: Product = {
   disclaimer: CHARACTER_GUIDE_DISCLAIMER,
   helplines: CHARACTER_GUIDE_HELPLINES,
   tags: ['character guides', 'unofficial commentary', 'killua zoldyck'],
-  gallery: [],
+  gallery: [{ filename: '1-cover-thumbnail.png', role: 'cover', alt: 'Product cover.' }],
   deliveryFiles: ['How-to-be-like-Killua-Zoldyck.pdf'],
   setSlug: 'the-character-codex',
 };
@@ -418,7 +418,7 @@ export const howToBeLikeL: Product = {
   disclaimer: CHARACTER_GUIDE_DISCLAIMER,
   helplines: CHARACTER_GUIDE_HELPLINES,
   tags: ['character guides', 'unofficial commentary', 'l'],
-  gallery: [],
+  gallery: [{ filename: '1-cover-thumbnail.png', role: 'cover', alt: 'Product cover.' }],
   deliveryFiles: ['How-to-be-like-L.pdf'],
   setSlug: 'the-character-codex',
 };
@@ -440,7 +440,7 @@ export const howToBeLikeLeviAckerman: Product = {
   disclaimer: CHARACTER_GUIDE_DISCLAIMER,
   helplines: CHARACTER_GUIDE_HELPLINES,
   tags: ['character guides', 'unofficial commentary', 'levi ackerman'],
-  gallery: [],
+  gallery: [{ filename: '1-cover-thumbnail.png', role: 'cover', alt: 'Product cover.' }],
   deliveryFiles: ['How-to-be-like-Levi-Ackerman.pdf'],
   setSlug: 'the-character-codex',
 };
@@ -462,7 +462,7 @@ export const howToBeLikeMichaelScofield: Product = {
   disclaimer: CHARACTER_GUIDE_DISCLAIMER,
   helplines: CHARACTER_GUIDE_HELPLINES,
   tags: ['character guides', 'unofficial commentary', 'michael scofield'],
-  gallery: [],
+  gallery: [{ filename: '1-cover-thumbnail.png', role: 'cover', alt: 'Product cover.' }],
   deliveryFiles: ['How-to-be-like-Michael-Scofield.pdf'],
   setSlug: 'the-character-codex',
 };
@@ -484,7 +484,7 @@ export const howToBeLikeMob: Product = {
   disclaimer: CHARACTER_GUIDE_DISCLAIMER,
   helplines: CHARACTER_GUIDE_HELPLINES,
   tags: ['character guides', 'unofficial commentary', 'mob'],
-  gallery: [],
+  gallery: [{ filename: '1-cover-thumbnail.png', role: 'cover', alt: 'Product cover.' }],
   deliveryFiles: ['How-to-be-like-Mob.pdf'],
   setSlug: 'the-character-codex',
 };
@@ -506,7 +506,7 @@ export const howToBeLikeNarutoUzumaki: Product = {
   disclaimer: CHARACTER_GUIDE_DISCLAIMER,
   helplines: CHARACTER_GUIDE_HELPLINES,
   tags: ['character guides', 'unofficial commentary', 'naruto uzumaki'],
-  gallery: [],
+  gallery: [{ filename: '1-cover-thumbnail.png', role: 'cover', alt: 'Product cover.' }],
   deliveryFiles: ['How-to-be-like-Naruto-Uzumaki.pdf'],
   setSlug: 'the-character-codex',
 };
@@ -528,7 +528,7 @@ export const howToBeLikePatrickJane: Product = {
   disclaimer: CHARACTER_GUIDE_DISCLAIMER,
   helplines: CHARACTER_GUIDE_HELPLINES,
   tags: ['character guides', 'unofficial commentary', 'patrick jane'],
-  gallery: [],
+  gallery: [{ filename: '1-cover-thumbnail.png', role: 'cover', alt: 'Product cover.' }],
   deliveryFiles: ['How-to-be-like-Patrick-Jane.pdf'],
   setSlug: 'the-character-codex',
 };
@@ -550,7 +550,7 @@ export const howToBeLikePeterParker: Product = {
   disclaimer: CHARACTER_GUIDE_DISCLAIMER,
   helplines: CHARACTER_GUIDE_HELPLINES,
   tags: ['character guides', 'unofficial commentary', 'peter parker'],
-  gallery: [],
+  gallery: [{ filename: '1-cover-thumbnail.png', role: 'cover', alt: 'Product cover.' }],
   deliveryFiles: ['How-to-be-like-Peter-Parker.pdf'],
   setSlug: 'the-character-codex',
 };
@@ -572,7 +572,7 @@ export const howToBeLikeRancho: Product = {
   disclaimer: CHARACTER_GUIDE_DISCLAIMER,
   helplines: CHARACTER_GUIDE_HELPLINES,
   tags: ['character guides', 'unofficial commentary', 'rancho'],
-  gallery: [],
+  gallery: [{ filename: '1-cover-thumbnail.png', role: 'cover', alt: 'Product cover.' }],
   deliveryFiles: ['How-to-be-like-Rancho.pdf'],
   setSlug: 'the-character-codex',
 };
@@ -594,7 +594,7 @@ export const howToBeLikeRockLee: Product = {
   disclaimer: CHARACTER_GUIDE_DISCLAIMER,
   helplines: CHARACTER_GUIDE_HELPLINES,
   tags: ['character guides', 'unofficial commentary', 'rock lee'],
-  gallery: [],
+  gallery: [{ filename: '1-cover-thumbnail.png', role: 'cover', alt: 'Product cover.' }],
   deliveryFiles: ['How-to-be-like-Rock-Lee.pdf'],
   setSlug: 'the-character-codex',
 };
@@ -616,7 +616,7 @@ export const howToBeLikeRocketSingh: Product = {
   disclaimer: CHARACTER_GUIDE_DISCLAIMER,
   helplines: CHARACTER_GUIDE_HELPLINES,
   tags: ['character guides', 'unofficial commentary', 'rocket singh'],
-  gallery: [],
+  gallery: [{ filename: '1-cover-thumbnail.png', role: 'cover', alt: 'Product cover.' }],
   deliveryFiles: ['How-to-be-like-Rocket-Singh.pdf'],
   setSlug: 'the-character-codex',
 };
@@ -638,7 +638,7 @@ export const howToBeLikeRockyBalboa: Product = {
   disclaimer: CHARACTER_GUIDE_DISCLAIMER,
   helplines: CHARACTER_GUIDE_HELPLINES,
   tags: ['character guides', 'unofficial commentary', 'rocky balboa'],
-  gallery: [],
+  gallery: [{ filename: '1-cover-thumbnail.png', role: 'cover', alt: 'Product cover.' }],
   deliveryFiles: ['How-to-be-like-Rocky-Balboa.pdf'],
   setSlug: 'the-character-codex',
 };
@@ -660,7 +660,7 @@ export const howToBeLikeRoronoaZoro: Product = {
   disclaimer: CHARACTER_GUIDE_DISCLAIMER,
   helplines: CHARACTER_GUIDE_HELPLINES,
   tags: ['character guides', 'unofficial commentary', 'roronoa zoro'],
-  gallery: [],
+  gallery: [{ filename: '1-cover-thumbnail.png', role: 'cover', alt: 'Product cover.' }],
   deliveryFiles: ['How-to-be-like-Roronoa-Zoro.pdf'],
   setSlug: 'the-character-codex',
 };
@@ -683,7 +683,7 @@ export const howToBeLikeSaitama: Product = {
   disclaimer: CHARACTER_GUIDE_DISCLAIMER,
   helplines: CHARACTER_GUIDE_HELPLINES,
   tags: ['character guides', 'unofficial commentary', 'saitama'],
-  gallery: [],
+  gallery: [{ filename: '1-cover-thumbnail.png', role: 'cover', alt: 'Product cover.' }],
   deliveryFiles: ['How-to-be-like-Saitama.pdf'],
   setSlug: 'the-character-codex',
 };
@@ -705,7 +705,7 @@ export const howToBeLikeSenkuIshigami: Product = {
   disclaimer: CHARACTER_GUIDE_DISCLAIMER,
   helplines: CHARACTER_GUIDE_HELPLINES,
   tags: ['character guides', 'unofficial commentary', 'senku ishigami'],
-  gallery: [],
+  gallery: [{ filename: '1-cover-thumbnail.png', role: 'cover', alt: 'Product cover.' }],
   deliveryFiles: ['How-to-be-like-Senku-Ishigami.pdf'],
   setSlug: 'the-character-codex',
 };
@@ -727,7 +727,7 @@ export const howToBeLikeSherlockHolmes: Product = {
   disclaimer: CHARACTER_GUIDE_DISCLAIMER,
   helplines: CHARACTER_GUIDE_HELPLINES,
   tags: ['character guides', 'unofficial commentary', 'sherlock holmes'],
-  gallery: [],
+  gallery: [{ filename: '1-cover-thumbnail.png', role: 'cover', alt: 'Product cover.' }],
   deliveryFiles: ['How-to-be-like-Sherlock-Holmes.pdf'],
   setSlug: 'the-character-codex',
 };
@@ -749,7 +749,7 @@ export const howToBeLikeShikamaruNara: Product = {
   disclaimer: CHARACTER_GUIDE_DISCLAIMER,
   helplines: CHARACTER_GUIDE_HELPLINES,
   tags: ['character guides', 'unofficial commentary', 'shikamaru nara'],
-  gallery: [],
+  gallery: [{ filename: '1-cover-thumbnail.png', role: 'cover', alt: 'Product cover.' }],
   deliveryFiles: ['How-to-be-like-Shikamaru-Nara.pdf'],
   setSlug: 'the-character-codex',
 };
@@ -771,7 +771,7 @@ export const howToBeLikeSteveRogers: Product = {
   disclaimer: CHARACTER_GUIDE_DISCLAIMER,
   helplines: CHARACTER_GUIDE_HELPLINES,
   tags: ['character guides', 'unofficial commentary', 'steve rogers'],
-  gallery: [],
+  gallery: [{ filename: '1-cover-thumbnail.png', role: 'cover', alt: 'Product cover.' }],
   deliveryFiles: ['How-to-be-like-Steve-Rogers.pdf'],
   setSlug: 'the-character-codex',
 };
@@ -793,7 +793,7 @@ export const howToBeLikeTanjiroKamado: Product = {
   disclaimer: CHARACTER_GUIDE_DISCLAIMER,
   helplines: CHARACTER_GUIDE_HELPLINES,
   tags: ['character guides', 'unofficial commentary', 'tanjiro kamado'],
-  gallery: [],
+  gallery: [{ filename: '1-cover-thumbnail.png', role: 'cover', alt: 'Product cover.' }],
   deliveryFiles: ['How-to-be-like-Tanjiro-Kamado.pdf'],
   setSlug: 'the-character-codex',
 };
@@ -815,7 +815,7 @@ export const howToBeLikeTedLasso: Product = {
   disclaimer: CHARACTER_GUIDE_DISCLAIMER,
   helplines: CHARACTER_GUIDE_HELPLINES,
   tags: ['character guides', 'unofficial commentary', 'ted lasso'],
-  gallery: [],
+  gallery: [{ filename: '1-cover-thumbnail.png', role: 'cover', alt: 'Product cover.' }],
   deliveryFiles: ['How-to-be-like-Ted-Lasso.pdf'],
   setSlug: 'the-character-codex',
 };
@@ -837,7 +837,7 @@ export const howToBeLikeThomasShelby: Product = {
   disclaimer: CHARACTER_GUIDE_DISCLAIMER,
   helplines: CHARACTER_GUIDE_HELPLINES,
   tags: ['character guides', 'unofficial commentary', 'thomas shelby'],
-  gallery: [],
+  gallery: [{ filename: '1-cover-thumbnail.png', role: 'cover', alt: 'Product cover.' }],
   deliveryFiles: ['How-to-be-like-Thomas-Shelby.pdf'],
   setSlug: 'the-character-codex',
 };
@@ -859,7 +859,7 @@ export const howToBeLikeThorfinn: Product = {
   disclaimer: CHARACTER_GUIDE_DISCLAIMER,
   helplines: CHARACTER_GUIDE_HELPLINES,
   tags: ['character guides', 'unofficial commentary', 'thorfinn'],
-  gallery: [],
+  gallery: [{ filename: '1-cover-thumbnail.png', role: 'cover', alt: 'Product cover.' }],
   deliveryFiles: ['How-to-be-like-Thorfinn.pdf'],
   setSlug: 'the-character-codex',
 };
@@ -881,7 +881,7 @@ export const howToBeLikeTonyStark: Product = {
   disclaimer: CHARACTER_GUIDE_DISCLAIMER,
   helplines: CHARACTER_GUIDE_HELPLINES,
   tags: ['character guides', 'unofficial commentary', 'tony stark'],
-  gallery: [],
+  gallery: [{ filename: '1-cover-thumbnail.png', role: 'cover', alt: 'Product cover.' }],
   deliveryFiles: ['How-to-be-like-Tony-Stark.pdf'],
   setSlug: 'the-character-codex',
 };
@@ -903,7 +903,7 @@ export const howToBeLikeTyrionLannister: Product = {
   disclaimer: CHARACTER_GUIDE_DISCLAIMER,
   helplines: CHARACTER_GUIDE_HELPLINES,
   tags: ['character guides', 'unofficial commentary', 'tyrion lannister'],
-  gallery: [],
+  gallery: [{ filename: '1-cover-thumbnail.png', role: 'cover', alt: 'Product cover.' }],
   deliveryFiles: ['How-to-be-like-Tyrion-Lannister.pdf'],
   setSlug: 'the-character-codex',
 };
@@ -925,7 +925,7 @@ export const howToBeLikeVegeta: Product = {
   disclaimer: CHARACTER_GUIDE_DISCLAIMER,
   helplines: CHARACTER_GUIDE_HELPLINES,
   tags: ['character guides', 'unofficial commentary', 'vegeta'],
-  gallery: [],
+  gallery: [{ filename: '1-cover-thumbnail.png', role: 'cover', alt: 'Product cover.' }],
   deliveryFiles: ['How-to-be-like-Vegeta.pdf'],
   setSlug: 'the-character-codex',
 };

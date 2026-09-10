@@ -1,115 +1,53 @@
-import { describe, it, expect, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { describe, it, expect, vi, afterEach } from 'vitest';
+import { render, screen, cleanup } from '@testing-library/react';
 import '@testing-library/jest-dom/vitest';
-
-/**
- * Regression coverage for the order page's download link 404: it used to
- * build downloadLink from order.drive_link || order.pdf_file, but pdf_file
- * is the storage path routes/admin.js's persistPdf() wrote to disk
- * (/uploads/pdfs/<filename>, relative to the API's own directory) -- not a
- * URL the browser can fetch. The delivery email (api/utils/template.js)
- * instead links to `${SITE_URL}/api/orders/${order.order_id}/pdf`, the real
- * route that checks payment status and the send_pdf_in_email flag before
- * streaming the file. These tests assert the order page builds that same
- * URL, and that a product with no file at all gets an honest message
- * instead of no link and no explanation.
- */
-
-let mockOrderResult: unknown;
-vi.mock('next/navigation', () => ({
-  useParams: () => ({ id: 'ORD-TEST' }),
-}));
-vi.mock('@/lib/orders', () => ({
-  getOrder: () => Promise.resolve(mockOrderResult),
-}));
-
+let result: unknown;
+vi.mock('next/navigation', () => ({ useParams: () => ({ id: 'ORD-TEST' }) }));
+vi.mock('@/lib/orders', () => ({ getOrder: () => Promise.resolve(result) }));
 import OrderView from '@/components/order/OrderView';
-
-// /order/[id] is a server shell that resolves footer data and renders this
-// client view. The view is what these tests are about, so they render it
-// directly with a footer stub.
-const FOOTER_STUB = { productCount: 84, categories: [] };
-import { PUBLIC_API_BASE } from '@/lib/env';
-
-function baseOrder(overrides: Record<string, unknown> = {}) {
-  return {
-    order_id: 'ORD-TEST',
-    status: 'completed',
-    amount: 999,
-    buyer_name: 'Asha Verma',
-    buyer_email: 'asha@example.com',
-    product_type: 'course',
-    created_at: new Date().toISOString(),
-    course_title: 'Glow-Up OS',
-    course_slug: 'glow-up-os',
-    drive_link: null,
-    pdf_file: null,
-    ...overrides,
-  };
+afterEach(cleanup);
+const footer = { productCount: 113, categories: [] };
+function order(overrides: Record<string, unknown> = {}) {
+  return { order_id: 'ORD-TEST', status: 'completed', amount: 499, buyer_name: 'Buyer',
+    buyer_email: 'buyer@example.com', product_type: 'catalog', course_title: 'Mobile Repair',
+    created_at: '2026-09-10T00:00:00Z', ...overrides };
 }
-
-describe('order page download link', () => {
-  it('uses drive_link directly when the course has one', async () => {
-    mockOrderResult = { ok: true, data: baseOrder({ drive_link: 'https://drive.google.com/folder/abc' }) };
-    render(<OrderView footer={FOOTER_STUB} />);
-    const link = await screen.findByRole('link', { name: /download now/i });
-    expect(link).toHaveAttribute('href', 'https://drive.google.com/folder/abc');
+describe('email-only order delivery', () => {
+  for (const product_type of ['catalog', 'course']) {
+    it(product_type + ' shows sent only with delivered status and never exposes content links', async () => {
+      result = { ok: true, data: order({ product_type, delivery_status: 'delivered',
+        drive_link: 'https://drive.google.com/file/d/private/view', pdf_file: '/uploads/pdfs/private.pdf' }) };
+      const { container } = render(<OrderView footer={footer} />);
+      await screen.findByText(/access link has been emailed/i);
+      expect(container.innerHTML).not.toContain('drive.google.com');
+      expect(container.innerHTML).not.toContain('/uploads/pdfs');
+      expect(screen.queryByRole('link', { name: /download/i })).not.toBeInTheDocument();
+    });
+  }
+  for (const delivery_status of ['pending', 'sending']) {
+    it(delivery_status + ' does not claim email was sent', async () => {
+      result = { ok: true, data: order({ delivery_status }) };
+      render(<OrderView footer={footer} />);
+      await screen.findByText(/we are sending/i);
+      expect(screen.queryByText(/has been emailed/i)).not.toBeInTheDocument();
+    });
+  }
+  it('failed delivery explains delay and offers a status refresh', async () => {
+    result = { ok: true, data: order({ delivery_status: 'failed' }) };
+    render(<OrderView footer={footer} />);
+    await screen.findByText(/has not been sent successfully/i);
+    expect(screen.getByRole('button', { name: /check email status/i })).toBeInTheDocument();
   });
-
-  it('routes a PDF through the same /api/orders/:id/pdf endpoint the delivery email uses, not the raw storage path', async () => {
-    mockOrderResult = { ok: true, data: baseOrder({ pdf_file: '/uploads/pdfs/1699999999-glow-up-os.pdf' }) };
-    render(<OrderView footer={FOOTER_STUB} />);
-    const link = await screen.findByRole('link', { name: /download now/i });
-    // This must equal the exact URL api/utils/template.js's buildResourcesBlock
-    // constructs for the delivery email: `${SITE_URL}/api/orders/${order_id}/pdf`.
-    expect(link).toHaveAttribute('href', `${PUBLIC_API_BASE}/api/orders/ORD-TEST/pdf`);
-    // Never the raw on-disk path the admin upload wrote -- that 404s in a browser.
-    expect(link.getAttribute('href')).not.toContain('/uploads/pdfs/');
+  it('historical untracked delivery does not claim success', async () => {
+    result = { ok: true, data: order({ delivery_status: 'untracked' }) };
+    render(<OrderView footer={footer} />);
+    await screen.findByText(/cannot confirm email delivery/i);
+    expect(screen.queryByText(/has been emailed/i)).not.toBeInTheDocument();
   });
-
-  it('prefers drive_link over a pdf_file when both are present', async () => {
-    mockOrderResult = {
-      ok: true,
-      data: baseOrder({ drive_link: 'https://drive.google.com/folder/xyz', pdf_file: '/uploads/pdfs/x.pdf' }),
-    };
-    render(<OrderView footer={FOOTER_STUB} />);
-    const link = await screen.findByRole('link', { name: /download now/i });
-    expect(link).toHaveAttribute('href', 'https://drive.google.com/folder/xyz');
-  });
-
-  it('a completed course order with no file at all gets an explanation, not a dead link', async () => {
-    mockOrderResult = { ok: true, data: baseOrder({ drive_link: null, pdf_file: null }) };
-    render(<OrderView footer={FOOTER_STUB} />);
-    await screen.findByText(/payment confirmed/i);
-    expect(screen.queryByRole('link', { name: /download now/i })).not.toBeInTheDocument();
-
-    // Say the payment landed, say the file is not ready, and give a route to it.
-    expect(screen.getByText(/payment went through/i)).toBeInTheDocument();
-    expect(screen.getByText(/not ready to download/i)).toBeInTheDocument();
-    expect(screen.getByText(/will not be charged again/i)).toBeInTheDocument();
-
-    // The page used to promise "we sent you a link to download it" and then,
-    // in the next breath, admit no file was attached. Both, to someone who had
-    // just paid. It must never claim a link was sent when none exists.
-    expect(screen.queryByText(/link to download it/i)).not.toBeInTheDocument();
-  });
-
-  it('a completed non-course order (video/carousel/tool) shows no download link and no "no file" message -- those deliver differently', async () => {
-    mockOrderResult = {
-      ok: true,
-      data: baseOrder({ product_type: 'carousel', course_title: undefined, drive_link: null, pdf_file: null }),
-    };
-    render(<OrderView footer={FOOTER_STUB} />);
-    await screen.findByText(/payment confirmed/i);
-    expect(screen.queryByRole('link', { name: /download now/i })).not.toBeInTheDocument();
-    expect(screen.queryByText(/no download file is attached/i)).not.toBeInTheDocument();
-  });
-
-  it('a pending order shows no download link and no "no file" message', async () => {
-    mockOrderResult = { ok: true, data: baseOrder({ status: 'pending' }) };
-    render(<OrderView footer={FOOTER_STUB} />);
+  it('unpaid orders show payment status, not delivery confirmation', async () => {
+    result = { ok: true, data: order({ status: 'pending' }) };
+    render(<OrderView footer={footer} />);
     await screen.findByText(/payment not confirmed yet/i);
-    expect(screen.queryByRole('link', { name: /download now/i })).not.toBeInTheDocument();
-    expect(screen.queryByText(/no download file is attached/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/has been emailed/i)).not.toBeInTheDocument();
   });
 });

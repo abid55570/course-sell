@@ -39,3 +39,11 @@ api/storage/deliverables/
 # The admin panel's upload and api/scripts/attach-product-files.js both
 # write here. Keep the directory, ignore the contents.
 public/uploads/
+
+# Root-level private deliverables and runtime data
+storage/ebooks/
+storage/photos/
+storage/renders/
+data/*.db
+data/*.db-shm
+data/*.db-wal

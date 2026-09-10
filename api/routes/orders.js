@@ -1,6 +1,4 @@
 const express = require('express');
-const path = require('path');
-const fs = require('fs');
 const { v4: uuidv4 } = require('uuid');
 const db = require('../utils/db');
 const payments = require('../services/payments');
@@ -240,10 +238,14 @@ router.get('/:orderId', async (req, res, next) => {
     const order = await db.get('SELECT * FROM orders WHERE order_id = $1', [req.params.orderId]);
     if (!order) return res.status(404).json({ error: 'not found' });
     const isCompleted = order.status === 'completed';
+    const delivery = ['catalog', 'course'].includes(order.product_type)
+      ? await db.get('SELECT status, delivered_at FROM order_email_deliveries WHERE order_id=$1', [order.order_id]) : null;
     const base = {
       order_id: order.order_id, status: order.status, amount: order.amount,
       buyer_name: order.buyer_name, buyer_email: order.buyer_email,
       product_type: order.product_type, created_at: order.created_at,
+      delivery_status: delivery?.status || 'untracked',
+      delivered_at: delivery?.delivered_at || null,
     };
 
     if (order.product_type === 'video') {
@@ -312,10 +314,9 @@ router.get('/:orderId', async (req, res, next) => {
         ...base,
         course_title: item ? item.title : null,
         course_slug: item ? item.slug : null,
-        // Same gating as the courses branch below: a link only appears once the
-        // order is paid AND an admin has switched that delivery method on.
-        drive_link: isCompleted && item && item.send_drive_in_email ? item.drive_link : null,
-        pdf_file: isCompleted && item && item.send_pdf_in_email ? item.pdf_file : null,
+        // Access links are delivered by email only, never through this public API.
+        drive_link: null,
+        pdf_file: null,
       });
     }
 
@@ -326,120 +327,15 @@ router.get('/:orderId', async (req, res, next) => {
       ...base,
       course_title: course ? course.title : null,
       course_slug: course ? course.slug : null,
-      drive_link: isCompleted && course && course.send_drive_in_email ? course.drive_link : null,
-      pdf_file: isCompleted && course && course.send_pdf_in_email ? course.pdf_file : null,
+      drive_link: null,
+      pdf_file: null,
     });
   } catch (e) { next(e); }
 });
 
-/**
- * Where paid deliverables live: outside public/, on purpose.
- *
- * They used to sit in public/uploads/pdfs/, which express.static serves with no
- * authentication — so every product was downloadable at a URL guessable from
- * its own public slug, and the payment gate below was decorative. Moving them
- * out of the web root is what actually enforces payment; this route is now the
- * only way to reach them.
- */
-const DELIVERABLES_ROOT = path.resolve(__dirname, '..', 'storage', 'deliverables');
-
-/**
- * Resolve a stored `pdf_file` to an absolute path, or null if it is unusable.
- *
- * Only the basename is used. That keeps legacy values written by the old
- * uploader ("/uploads/pdfs/x.zip") working unchanged, and makes traversal
- * structurally impossible rather than merely checked for — path.basename
- * cannot produce a separator, so the result can never leave the root.
- */
-function resolveDeliverablePath(stored) {
-  if (!stored || typeof stored !== 'string') return null;
-  const name = path.basename(stored.split('\\').join('/'));
-  if (!name || name === '.' || name === '..') return null;
-  const abs = path.resolve(DELIVERABLES_ROOT, name);
-  const rel = path.relative(DELIVERABLES_ROOT, abs);
-  if (!rel || rel.startsWith('..') || path.isAbsolute(rel)) return null;
-  return abs;
-}
-
-router.get('/:orderId/pdf', async (req, res, next) => {
-  try {
-    const order = await db.get(
-      // LEFT JOIN both product tables: an order references exactly one of them,
-      // and an inner join on `courses` alone made every catalog order 404 as
-      // "we cannot find that order" — untrue, and alarming for someone who has
-      // just paid. COALESCE picks whichever row the order actually points at,
-      // so the gating below reads the same fields either way.
-      `SELECT o.status,
-              COALESCE(c.pdf_file, cp.pdf_file)                   AS pdf_file,
-              COALESCE(c.send_pdf_in_email, cp.send_pdf_in_email) AS send_pdf_in_email,
-              COALESCE(c.title, cp.title)                         AS title
-         FROM orders o
-         LEFT JOIN courses c ON c.id = o.course_id
-         LEFT JOIN catalog_products cp ON cp.id = o.catalog_product_id
-        WHERE o.order_id = $1`,
-      [req.params.orderId]
-    );
-    if (!order) return res.status(404).type('html').send(
-      downloadProblem('We cannot find that order', 'Check the link in your email, or reply to it and we will look the order up for you.')
-    );
-    if (order.status !== 'completed') return res.status(403).type('html').send(
-      downloadProblem('This payment has not been confirmed yet', 'If you have just paid, wait a moment and open the link again. If it was declined, nothing was charged.')
-    );
-    if (!order.send_pdf_in_email) return res.status(403).type('html').send(
-      downloadProblem('This download is not switched on yet', 'Your payment is recorded. Reply to your order email and we will send the file straight to you.')
-    );
-    if (!order.pdf_file) return res.status(404).type('html').send(
-      downloadProblem('There is no file attached to this order yet', 'Your payment is recorded. Reply to your order email and we will send the file straight to you.')
-    );
-    // Confine the resolved path to the uploads directory.
-    //
-    // `pdf_file` is a free-text column an admin sets, and this route streams
-    // whatever it points at to an unauthenticated caller who has the order id.
-    // Without this check a value like `../../.env` resolves outside public/ and
-    // path.join happily produces it — turning an admin write into an arbitrary
-    // server-file read through the buyer's own download link.
-    const abs = resolveDeliverablePath(order.pdf_file);
-    if (!abs) {
-      console.error('[download] refused a path outside uploads:', order.pdf_file);
-      return res.status(404).type('html').send(
-        downloadProblem('That file has gone missing', 'This is our fault, not yours. Reply to your order email and we will get it to you.')
-      );
-    }
-    if (!fs.existsSync(abs)) return res.status(404).type('html').send(
-      downloadProblem('That file has gone missing', 'This is our fault, not yours. Reply to your order email and we will get it to you.')
-    );
-    // Use the stored file's real extension, not a hardcoded .pdf. Most catalog
-    // deliverables are ZIPs of several PDFs, and naming one "Glow_Up_OS.pdf"
-    // hands the buyer a file their reader refuses to open.
-    const ext = path.extname(order.pdf_file) || '.pdf';
-    res.download(abs, `${order.title.replace(/[^a-z0-9]+/gi, '_')}${ext}`);
-  } catch (e) { next(e); }
+router.get('/:orderId/pdf', (req, res) => {
+  res.status(410).json({ error: 'Content is provided only through the Google Drive link in your delivery email' });
 });
-
-/**
- * A download that fails still has a paying customer on the other end of it.
- * These used to return two words of plain text ("PDF missing"), which reads as
- * a broken site rather than a problem with a fix. Each message now says what
- * happened and what the buyer should do next.
- */
-function downloadProblem(title, advice) {
-  const esc = (v) => String(v).replace(/[&<>"']/g, (c) => (
-    { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]
-  ));
-  return `<!doctype html><html lang="en"><head><meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>${esc(title)}</title></head>
-<body style="margin:0;font-family:Arial,Helvetica,sans-serif;background:#fff;color:#0b1020">
-  <main style="max-width:34rem;margin:0 auto;padding:3rem 1.25rem">
-    <p style="margin:0 0 .5rem;font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:#5a6480">Dropdesk</p>
-    <h1 style="margin:0 0 .75rem;font-size:1.6rem;line-height:1.2">${esc(title)}</h1>
-    <p style="margin:0 0 1.5rem;color:#5a6480;line-height:1.6">${esc(advice)}</p>
-    <a href="/" style="display:inline-block;padding:.85rem 1.5rem;background:#c42b22;color:#fff;text-decoration:none;font-weight:600">Back to the store</a>
-  </main>
-</body></html>`;
-}
 
 module.exports = router;
 module.exports.resolveProduct = resolveProduct;
-module.exports.resolveDeliverablePath = resolveDeliverablePath;
-module.exports.DELIVERABLES_ROOT = DELIVERABLES_ROOT;

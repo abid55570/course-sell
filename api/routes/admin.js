@@ -12,7 +12,7 @@ const router = express.Router();
 
 // public/ stays at the repo root; this route now runs from api/routes/.
 // Outside public/: express.static would otherwise serve every uploaded
-// deliverable with no payment check. See routes/orders.js DELIVERABLES_ROOT.
+// deliverable with no payment check. Retained for legacy administration only.
 const pdfDir = path.join(__dirname, '..', 'storage', 'deliverables');
 if (!fs.existsSync(pdfDir)) fs.mkdirSync(pdfDir, { recursive: true });
 
@@ -198,11 +198,13 @@ router.get('/orders', async (req, res, next) => {
     // read regardless of which table the product actually lives in — without
     // it, every catalog order would list with a blank title.
     const rows = await db.all(
-      `SELECT o.*,
+      `SELECT o.*, d.status AS delivery_status, d.attempts AS delivery_attempts,
+              d.last_error AS delivery_error, d.delivered_at, d.next_attempt_at,
               COALESCE(c.title, cp.title) AS course_title,
               COALESCE(c.slug,  cp.slug)  AS course_slug,
               vt.name AS template_name, vp.public_id AS project_public_id, vp.render_status
        FROM orders o
+       LEFT JOIN order_email_deliveries d ON d.order_id=o.order_id
        LEFT JOIN courses c ON c.id = o.course_id
        LEFT JOIN catalog_products cp ON cp.id = o.catalog_product_id
        LEFT JOIN video_projects vp ON vp.id = o.video_project_id
@@ -240,25 +242,6 @@ router.post('/orders/:orderId/confirm', async (req, res, next) => {
     if (!order) return res.status(404).json({ error: 'not found' });
     if (order.status === 'completed') return res.status(400).json({ error: 'already completed' });
 
-    // Catalog orders deliver an attached file/drive link by email; confirming with
-    // none attached takes the money and delivers nothing. Fail open; force:true overrides.
-    if (order.product_type === 'catalog' && req.body?.force !== true) {
-      try {
-        const item = await db.get(
-          `SELECT (send_pdf_in_email AND pdf_file IS NOT NULL) AS pdf_ready,
-                  (send_drive_in_email AND drive_link IS NOT NULL) AS drive_ready
-             FROM catalog_products WHERE id = $1`,
-          [order.catalog_product_id]
-        );
-        if (item && !item.pdf_ready && !item.drive_ready) {
-          return res.status(400).json({
-            error:
-              'No deliverable attached to this product yet. Add a PDF or drive link and turn on its "send in email" toggle before confirming — or resend with force to hand it off manually.',
-          });
-        }
-      } catch { /* fail open: the guard must never block a legitimate confirm */ }
-    }
-
     const result = await markOrderPaid(order.order_id, {
       paymentId: req.body?.upi_txn_ref || order.razorpay_payment_id || null,
       actor: req.admin.email,
@@ -266,6 +249,15 @@ router.post('/orders/:orderId/confirm', async (req, res, next) => {
     if (!result.ok) return res.status(400).json({ error: result.error || 'could not complete' });
     res.json({ ok: true, result });
   } catch (e) { next(e); }
+});
+
+// Authenticated retry: does not charge or re-confirm payment, and never
+// automatically resends an email already recorded as delivered.
+router.post('/orders/:orderId/retry-email', async (req, res, next) => {
+  try {
+    const result = await require('../services/email-delivery').retryOrderEmail(req.params.orderId);
+    res.status(result.ok ? 200 : 400).json(result);
+  } catch (err) { next(err); }
 });
 
 router.post('/orders/:orderId/cancel', async (req, res, next) => {

@@ -1,0 +1,31 @@
+{
+  "slug": "mobile-repair-seekho",
+  "title": "Mobile Repair Seekho - Hinglish Guide + Workbook",
+  "shortTitle": "Mobile Repair Seekho",
+  "tagline": "Phone ke parts samjho, sahi test chuno aur workbook se practice karo.",
+  "tags": ["Hinglish", "Mobile Repair", "Beginner", "Workbook"],
+  "content": {
+    "pageCount": 68,
+    "audience": "Mobile repair ki basics seekhne wale beginners",
+    "format": "2 PDF ebooks - simple Hinglish",
+    "fileCount": 2,
+    "longDescription": [
+      {"heading":"Simple Hinglish mein mobile repair ki foundations","paragraphs":["44-page guide mein electronics, parts, tools, charging, display, audio, camera, software aur repair-shop workflow samjho. 18 chapters, 32 concept diagrams/flows, 2 credited real component photographs aur 20 fictional diagnosis cases shamil hain."]},
+      {"heading":"24-page printable practice workbook","paragraphs":["Job cards, observation records, measurement worksheets, two practice capstones, 20-question knowledge check aur answer explanations ke saath practice karo."]},
+      {"heading":"Email par Drive access","paragraphs":["Payment verification ke baad registered email par Google Drive access link milega. Website par ebook download button nahi hai."]}
+    ],
+    "bulletPoints": ["44-page guide + 24-page printable workbook", "Simple Roman-script Hinglish; compact text", "32 concept diagrams and 2 real component photographs", "Practice cases, worksheets and answers", "Google Drive link delivered by email"],
+    "faqs": [
+      {"question":"Language kya hai?","answer":"Simple Hinglish, Roman letters mein. Common technical words explain kiye gaye hain."},
+      {"question":"Kya yeh complete all-model repair manual hai?","answer":"Nahi. Yeh beginner foundations aur guided diagnostic practice hai. Exact device repair ke liye manufacturer manual aur trained supervision chahiye."},
+      {"question":"Files kaise milengi?","answer":"Payment verification ke baad aapke registered email par Drive link milega. Website par download button nahi diya jata."},
+      {"question":"Workbook editable hai?","answer":"Yeh printable PDF hai; interactive fillable form nahi. Print par ya apne PDF annotation tool se answers likh sakte hain."}
+    ],
+    "disclaimer": "Foundations learning edition. Independent technician verification, hands-on repair certification, all-model coverage aur income guarantee ka claim nahi hai.",
+    "gallery": [
+      {"filename":"cover.png","role":"cover","alt":"Mobile Repair Seekho Hinglish guide cover"},
+      {"filename":"inside.png","role":"whats-inside","alt":"Guide contents with 18 chapters"}
+    ],
+    "deliveryFiles": ["mobile-repair-hinglish-course.pdf", "mobile-repair-hinglish-workbook.pdf"]
+  }
+}

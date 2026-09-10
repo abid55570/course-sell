@@ -68,6 +68,8 @@ export type OrderStatusResponse = {
   buyer_email: string;
   product_type: string;
   created_at: string;
+  delivery_status?: 'untracked' | 'pending' | 'sending' | 'failed' | 'delivered';
+  delivered_at?: string | null;
   course_title?: string | null;
   course_slug?: string | null;
   drive_link?: string | null;

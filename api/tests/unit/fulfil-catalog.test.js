@@ -3,188 +3,115 @@ const assert = require('node:assert/strict');
 const db = require('../../utils/db');
 const email = require('../../utils/email');
 const { markOrderPaid } = require('../../services/fulfillment');
+const { deliverOrderEmail, retryOrderEmail, processDueEmails, validDriveLink } = require('../../services/email-delivery');
 
-/**
- * A storefront catalog order carries `catalog_product_id`, not `course_id`.
- * Before the catalog branch existed, markOrderPaid fell through to
- * fulfilCourse, which looks up `courses` by a null id, found nothing, and
- * returned silently — so a buyer who had just paid got no email at all.
- *
- * db and utils/email are plain CommonJS singletons read off the module at call
- * time, so assigning over their methods is enough to exercise this with no
- * database and no SMTP, the same approach tests/unit/resolve-product.test.js
- * uses for db.get.
- */
-function stub({ order, item }) {
-  const original = { get: db.get, run: db.run, log: db.logTransaction, send: email.sendOrderCompletedEmail };
-  const sent = [];
-
-  db.get = async (sql) => {
-    if (/FROM orders/.test(sql)) return order;
-    if (/FROM catalog_products/.test(sql)) return item;
-    if (/FROM courses/.test(sql)) return null;
-    return null;
+function setup(t, options = {}) {
+  const state = {
+    order: { order_id: 'ORD-TEST', status: 'pending', product_type: 'catalog', catalog_product_id: 7,
+      buyer_email: 'buyer@example.com', buyer_name: 'Buyer', amount: 499, ...options.order },
+    product: { title: 'Repair course', drive_link: 'https://drive.google.com/drive/folders/demo', send_drive_in_email: true, ...options.product },
+    job: options.job ? { attempts: 0, due: true, ...options.job } : null, calls: 0,
   };
-  // rowCount matters: markOrderPaid claims the order with a conditional
-  // UPDATE and only fulfils when exactly one row changed.
-  db.run = async () => ({ rowCount: 1, rows: [] });
+  const originals = { get: db.get, run: db.run, all: db.all, logTransaction: db.logTransaction };
+  const originalSend = email.sendOrderCompletedEmail;
+  t.after(() => { Object.assign(db, originals); email.sendOrderCompletedEmail = originalSend; });
+  db.get = async (sql) => /FROM orders/.test(sql) ? { ...state.order } : state.product;
   db.logTransaction = async () => {};
-  email.sendOrderCompletedEmail = async (o, c) => { sent.push({ order: o, course: c }); };
-
-  return {
-    sent,
-    restore() {
-      db.get = original.get;
-      db.run = original.run;
-      db.logTransaction = original.log;
-      email.sendOrderCompletedEmail = original.send;
-    },
+  db.all = async () => state.job && state.job.due && state.order.status === 'completed' ? [{ order_id: 'ORD-TEST' }] : [];
+  db.run = async (sql, args) => {
+    if (sql.includes('WITH paid AS')) {
+      assert.match(sql, /INSERT INTO order_email_deliveries/); // same atomic SQL statement
+      if (!['pending', 'submitted'].includes(state.order.status)) return { rowCount: 0, rows: [] };
+      state.order.status = 'completed';
+      state.job ||= { status: 'pending', attempts: 0, due: true };
+      return { rowCount: 1, rows: [{ ...state.order }] };
+    }
+    if (sql.includes("SET status='sending'")) {
+      if (state.order.status !== 'completed' || !state.job || !state.job.due || state.job.status === 'delivered' || (state.job.status === 'sending' && !state.job.expired)) return { rowCount: 0, rows: [] };
+      Object.assign(state.job, { status: 'sending', attempts: state.job.attempts + 1, claim_token: args[1], due: false });
+      return { rowCount: 1, rows: [{ ...state.job }] };
+    }
+    if (sql.includes("SET status='delivered'")) {
+      assert.equal(state.calls, 1, 'must not mark delivery before sending');
+      Object.assign(state.job, { status: 'delivered', due: false });
+      return { rowCount: 1, rows: [] };
+    }
+    if (sql.includes("SET status='failed'")) {
+      Object.assign(state.job, { status: 'failed', due: state.job.attempts < args[3], error: args[2] });
+      return { rowCount: 1, rows: [] };
+    }
+    if (sql.includes('INSERT INTO order_email_deliveries')) {
+      if (state.order.status !== 'completed' || ['sending','delivered'].includes(state.job?.status)) return { rowCount: 0, rows: [] };
+      state.job = { status: 'pending', attempts: 0, due: true };
+      return { rowCount: 1, rows: [{ order_id: 'ORD-TEST' }] };
+    }
+    throw new Error('Unexpected SQL: ' + sql);
   };
+  email.sendOrderCompletedEmail = async (order, product) => {
+    state.calls++;
+    assert.equal(state.job.status, 'sending');
+    assert.equal(state.order.status, 'completed');
+    assert.equal(product.drive_link, state.product.drive_link);
+    if (options.send) return options.send(state);
+    return { accepted: ['buyer@example.com'], rejected: [], messageId: 'test-only' };
+  };
+  return state;
 }
 
-const CATALOG_ORDER = {
-  order_id: 'ORD-CAT1',
-  product_type: 'catalog',
-  status: 'pending',
-  course_id: null,
-  video_project_id: null,
-  catalog_product_id: 7,
-  buyer_name: 'A',
-  buyer_email: 'a@example.com',
-  amount: '499.00',
-};
-
-test('markOrderPaid: a catalog order sends the delivery email', async () => {
-  const s = stub({ order: CATALOG_ORDER, item: { slug: 'glow-up-os', title: 'Glow-Up OS' } });
-  try {
-    const r = await markOrderPaid('ORD-CAT1', { paymentId: 'pay_1' });
-    assert.equal(r.ok, true);
-    assert.equal(r.productType, 'catalog');
-    assert.equal(s.sent.length, 1, 'a paying buyer must get exactly one email');
-    assert.equal(s.sent[0].course.title, 'Glow-Up OS');
-    assert.equal(s.sent[0].order.status, 'completed');
-  } finally { s.restore(); }
+test('paid catalog order becomes delivered only after SMTP accepts buyer', async t => {
+  const s = setup(t); await markOrderPaid('ORD-TEST');
+  assert.equal(s.order.status, 'completed'); assert.equal(s.job.status, 'delivered');
+  await markOrderPaid('ORD-TEST'); assert.equal(s.calls, 1);
 });
-
-test('markOrderPaid: a catalog order with no file claims no download', async () => {
-  // The delivery template reads these flags to decide between linking a file
-  // and telling the buyer honestly that the download is not ready. A row with
-  // nothing attached must take the honest branch.
-  const s = stub({
-    order: CATALOG_ORDER,
-    item: {
-      slug: 'glow-up-os', title: 'Glow-Up OS',
-      pdf_file: null, drive_link: null,
-      send_pdf_in_email: false, send_drive_in_email: false,
-    },
+test('paid legacy course uses the same tracked Drive delivery', async t => {
+  const s = setup(t, { order: { product_type: 'course', course_id: 1 } });
+  await markOrderPaid('ORD-TEST'); assert.equal(s.job.status, 'delivered');
+});
+test('SMTP failure keeps payment paid and permits background retry', async t => {
+  const s = setup(t, { send: () => { throw new Error('SMTP temporary error'); } });
+  await markOrderPaid('ORD-TEST'); assert.equal(s.order.status, 'completed'); assert.equal(s.job.status, 'failed');
+  s.calls = 0;
+  email.sendOrderCompletedEmail = async () => { s.calls++; return { accepted: ['buyer@example.com'] }; };
+  await processDueEmails(); assert.equal(s.job.status, 'delivered');
+});
+for (const result of [{ skipped: true }, { accepted: [], rejected: ['buyer@example.com'] }, { accepted: ['other@example.com'] }, undefined]) {
+  test('skipped/rejected/unconfirmed send never marks delivery: ' + JSON.stringify(result), async t => {
+    const s = setup(t, { send: () => result }); await markOrderPaid('ORD-TEST'); assert.equal(s.job.status, 'failed');
   });
-  try {
-    await markOrderPaid('ORD-CAT1', {});
-    const { course } = s.sent[0];
-    assert.equal(course.send_pdf_in_email, false);
-    assert.equal(course.send_drive_in_email, false);
-    assert.equal(course.pdf_file, null);
-    assert.equal(course.drive_link, null);
-  } finally { s.restore(); }
-});
-
-test('markOrderPaid: a catalog order WITH a file passes it through to delivery', async () => {
-  // Migration 012 gave catalog_products its own delivery fields. Before that a
-  // paid catalog order could never be delivered automatically, whatever an
-  // admin uploaded, because there was nowhere to record the file.
-  const s = stub({
-    order: CATALOG_ORDER,
-    item: {
-      slug: 'glow-up-os', title: 'Glow-Up OS',
-      pdf_file: '/uploads/pdfs/glow-up-os.pdf', drive_link: null,
-      send_pdf_in_email: true, send_drive_in_email: false,
-    },
+}
+for (const product of [{ drive_link: null }, { send_drive_in_email: false }, { drive_link: 'https://evil.example/book' }]) {
+  test('missing/disabled/non-Drive resource does not send a false delivery email: ' + JSON.stringify(product), async t => {
+    const s = setup(t, { product }); await markOrderPaid('ORD-TEST'); assert.equal(s.calls, 0); assert.equal(s.job.status, 'failed');
   });
-  try {
-    await markOrderPaid('ORD-CAT1', {});
-    const { course } = s.sent[0];
-    assert.equal(course.pdf_file, '/uploads/pdfs/glow-up-os.pdf');
-    assert.equal(course.send_pdf_in_email, true);
-  } finally { s.restore(); }
+}
+test('concurrent payment confirmations send once', async t => {
+  const s = setup(t); await Promise.all([markOrderPaid('ORD-TEST'), markOrderPaid('ORD-TEST')]); assert.equal(s.calls, 1);
 });
-
-test('markOrderPaid: a catalog order with a Drive link passes that through too', async () => {
-  const s = stub({
-    order: CATALOG_ORDER,
-    item: {
-      slug: 'glow-up-os', title: 'Glow-Up OS',
-      pdf_file: null, drive_link: 'https://drive.google.com/xyz',
-      send_pdf_in_email: false, send_drive_in_email: true,
-    },
-  });
-  try {
-    await markOrderPaid('ORD-CAT1', {});
-    const { course } = s.sent[0];
-    assert.equal(course.drive_link, 'https://drive.google.com/xyz');
-    assert.equal(course.send_drive_in_email, true);
-  } finally { s.restore(); }
+test('concurrent workers claim a queued email only once', async t => {
+  const s = setup(t, { order: { status: 'completed' }, job: { status: 'pending' } });
+  await Promise.all([deliverOrderEmail('ORD-TEST'), deliverOrderEmail('ORD-TEST')]); assert.equal(s.calls, 1);
 });
-
-test('markOrderPaid: a catalog order whose product row vanished sends nothing', async () => {
-  const s = stub({ order: CATALOG_ORDER, item: null });
-  try {
-    const r = await markOrderPaid('ORD-CAT1', {});
-    assert.equal(r.ok, true);
-    assert.equal(s.sent.length, 0);
-  } finally { s.restore(); }
+test('a process crash leaves a recoverable expired sending lease', async t => {
+  const s = setup(t, { order: { status: 'completed' }, job: { status: 'sending', expired: true } });
+  await deliverOrderEmail('ORD-TEST'); assert.equal(s.job.status, 'delivered');
 });
-
-test('markOrderPaid: an already-completed catalog order is a no-op', async () => {
-  const s = stub({
-    order: { ...CATALOG_ORDER, status: 'completed' },
-    item: { slug: 'glow-up-os', title: 'Glow-Up OS' },
-  });
-  try {
-    const r = await markOrderPaid('ORD-CAT1', {});
-    assert.equal(r.alreadyDone, true);
-    assert.equal(s.sent.length, 0, 'idempotency: no second email');
-  } finally { s.restore(); }
+test('retry exhaustion stops automatic attempts and admin retry reopens failed work', async t => {
+  const s = setup(t, { order: { status: 'completed' }, job: { status: 'failed', attempts: 7 }, send: () => { throw new Error('failed'); } });
+  await deliverOrderEmail('ORD-TEST'); assert.equal(s.job.due, false); assert.equal(s.job.attempts, 8);
+  await retryOrderEmail('ORD-TEST'); assert.equal(s.job.attempts, 1);
 });
-
-test('markOrderPaid fulfils once when two callers race the same order', async () => {
-  // The browser's verify call and the Razorpay webhook both land here for the
-  // same order — that is the normal case, not a rare race. Both used to pass
-  // the status check and both then sent the delivery email.
-  const original = { get: db.get, run: db.run, log: db.logTransaction, send: email.sendOrderCompletedEmail };
-  const sent = [];
-  let claims = 0;
-
-  db.get = async (sql) => {
-    if (/FROM orders/.test(sql)) return { ...CATALOG_ORDER };
-    if (/FROM catalog_products/.test(sql)) return { slug: 'glow-up-os', title: 'Glow-Up OS' };
-    return null;
-  };
-  // Only the first conditional UPDATE can match a row; the second sees the
-  // order already completed, exactly as Postgres would.
-  db.run = async (sql) => {
-    if (/UPDATE\s+orders\s+SET\s+status/i.test(sql)) {
-      claims += 1;
-      return { rowCount: claims === 1 ? 1 : 0, rows: [] };
-    }
-    return { rowCount: 1, rows: [] };
-  };
-  db.logTransaction = async () => {};
-  email.sendOrderCompletedEmail = async (o, c) => { sent.push({ order: o, course: c }); };
-
-  try {
-    const [a, b] = await Promise.all([
-      markOrderPaid('ORD-CAT1', { actor: 'razorpay-checkout' }),
-      markOrderPaid('ORD-CAT1', { actor: 'razorpay-webhook' }),
-    ]);
-    assert.equal(a.ok, true);
-    assert.equal(b.ok, true);
-    assert.equal(sent.length, 1, 'the buyer must receive exactly one delivery email');
-    assert.equal(claims, 2, 'both callers should have attempted the claim');
-    assert.ok(a.alreadyDone || b.alreadyDone, 'the loser should report alreadyDone');
-  } finally {
-    db.get = original.get;
-    db.run = original.run;
-    db.logTransaction = original.log;
-    email.sendOrderCompletedEmail = original.send;
-  }
+test('historical completed orders are not automatically emailed', async t => {
+  const s = setup(t, { order: { status: 'completed' } }); await markOrderPaid('ORD-TEST'); assert.equal(s.calls, 0);
+  await retryOrderEmail('ORD-TEST'); assert.equal(s.calls, 1);
+});
+test('unpaid and cancelled orders cannot trigger email retries', async t => {
+  const s = setup(t); assert.equal((await retryOrderEmail('ORD-TEST')).ok, false);
+  s.order.status = 'cancelled'; assert.equal((await markOrderPaid('ORD-TEST')).ok, false); assert.equal(s.calls, 0);
+});
+test('successful delivery cannot be resent through retry endpoint', async t => {
+  const s = setup(t); await markOrderPaid('ORD-TEST'); assert.equal((await retryOrderEmail('ORD-TEST')).ok, false); assert.equal(s.calls, 1);
+});
+test('Drive URL validation rejects lookalike and insecure URLs', () => {
+  for (const value of ['http://drive.google.com/x', 'https://drive.google.com.evil.test/x', 'https://drive.google.com/', 'javascript:alert(1)', 'https://user:password@drive.google.com/x']) assert.equal(validDriveLink(value), false);
+  assert.equal(validDriveLink('https://drive.google.com/file/d/abc/view'), true);
 });

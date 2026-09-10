@@ -90,6 +90,8 @@ app.get('/api/site-info', (req, res) => {
   });
 });
 
+// Course content is delivered only through the buyer's email.
+app.use('/uploads/pdfs', (req, res) => res.status(410).json({ error: 'Content is delivered by email' }));
 app.use(express.static(PUBLIC_DIR, { index: 'index.html' }));
 
 app.get('/course/:slug', (req, res) => {
@@ -215,6 +217,7 @@ if (require.main === module) {
   }
   app.listen(PORT, () => {
     console.log(`Server running on http://localhost:${PORT}`);
+    require('./services/email-delivery').startEmailDeliveryWorker();
     // Recover any renders left mid-flight by a previous process.
     require('./services/render-queue').recoverStuck().catch(() => {});
   });

@@ -257,8 +257,8 @@ async function loadCourseDetail() {
           <a class="btn btn-primary" style="width:100%" href="/checkout?course=${encodeURIComponent(c.slug)}">Buy now</a>
           <ul>
             <li>Lifetime access</li>
-            ${c.pdf_file ? '<li>Downloadable PDF on confirmation</li>' : ''}
-            ${c.drive_link ? '<li>Private Google Drive resources</li>' : ''}
+
+            <li>Google Drive access sent by email after payment confirmation</li>
             <li>Email support</li>
           </ul>
         </aside>
@@ -390,11 +390,8 @@ async function loadOrderPage() {
         : `<div class="alert warning mt-16">Awaiting payment. Your license key will be emailed once confirmed.</div>`)
       : (o.status === 'completed'
         ? `<div class="alert success mt-16">
-            <strong>Access granted.</strong>
-            <ul style="margin:10px 0 0;padding-left:18px">
-              ${o.drive_link ? `<li>Drive: <a href="${escapeHtml(o.drive_link)}" target="_blank" rel="noopener">${escapeHtml(o.drive_link)}</a></li>` : ''}
-              ${o.pdf_file ? `<li><a href="/api/orders/${escapeHtml(o.order_id)}/pdf">Download PDF</a></li>` : ''}
-            </ul>
+            <strong>Payment confirmed.</strong>
+            <p>${o.delivery_status === 'delivered' ? 'Your Google Drive link has been emailed. Check your inbox and spam folder.' : o.delivery_status === 'failed' ? 'Your access email is delayed. We will retry where possible; contact support if it remains delayed.' : o.delivery_status === 'untracked' ? 'Email delivery is not tracked for this order. Check your inbox or contact support.' : 'Your Google Drive access email is being prepared.'}</p>
           </div>`
         : `<div class="alert warning mt-16">Awaiting payment confirmation. We'll email you once verified.</div>`);
     root.innerHTML = `

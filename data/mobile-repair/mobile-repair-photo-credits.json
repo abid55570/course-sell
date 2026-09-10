@@ -1,0 +1,30 @@
+[
+  {
+    "id": "board",
+    "title": "IPhone 6s - motherboard-93107.jpg",
+    "source": "https://commons.wikimedia.org/wiki/File:IPhone_6s_-_motherboard-93107.jpg",
+    "original_url": "https://upload.wikimedia.org/wikipedia/commons/1/1e/IPhone_6s_-_motherboard-93107.jpg",
+    "author": "Raimond Spekking",
+    "attribution": "© Raimond Spekking / CC BY-SA 4.0 (via Wikimedia Commons)",
+    "license": "CC BY-SA 4.0",
+    "license_url": "https://creativecommons.org/licenses/by-sa/4.0/",
+    "changes": "No crop, retouching or annotations; proportionally scaled for PDF layout only.",
+    "sha256": "d45bb0437ee4d6267080099593ba14330e585018b7ed2ca9b778c7b2ce26c395",
+    "bytes": 11876235,
+    "accessed": "2026-09-10"
+  },
+  {
+    "id": "camera",
+    "title": "IPhone 6s - flash and rear camera-92997.jpg",
+    "source": "https://commons.wikimedia.org/wiki/File:IPhone_6s_-_flash_and_rear_camera-92997.jpg",
+    "original_url": "https://upload.wikimedia.org/wikipedia/commons/9/9c/IPhone_6s_-_flash_and_rear_camera-92997.jpg",
+    "author": "Raimond Spekking",
+    "attribution": "© Raimond Spekking / CC BY-SA 4.0 (via Wikimedia Commons)",
+    "license": "CC BY-SA 4.0",
+    "license_url": "https://creativecommons.org/licenses/by-sa/4.0/",
+    "changes": "No crop, retouching or annotations; proportionally scaled for PDF layout only.",
+    "sha256": "1d63809b05d1479f76f25b7facfe68db59b6e1e2a76fd782e9fa9ae2add7faa4",
+    "bytes": 4258177,
+    "accessed": "2026-09-10"
+  }
+]

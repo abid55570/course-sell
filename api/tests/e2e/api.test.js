@@ -226,14 +226,15 @@ test('admin sees the completed order in the list', SKIP ? { skip: skipReason } :
   assert.equal(found.status, 'completed');
 });
 
-test('completed order exposes drive_link to public endpoint', SKIP ? { skip: skipReason } : {}, async () => {
+test('completed order keeps Drive access email-only', SKIP ? { skip: skipReason } : {}, async () => {
   const orderId = globalThis.__lastOrderId;
   const cookieBefore = cookieJar; cookieJar = '';
   const r = await http('GET', `/api/orders/${orderId}`);
   cookieJar = cookieBefore;
   assert.equal(r.status, 200);
   assert.equal(r.data.status, 'completed');
-  assert.equal(r.data.drive_link, 'https://drive.google.com/folder/e2e');
+  assert.equal(r.data.drive_link, null);
+  assert.equal(r.data.pdf_file, null);
 });
 
 test('verify is idempotent (second call still completed)', SKIP ? { skip: skipReason } : {}, async () => {

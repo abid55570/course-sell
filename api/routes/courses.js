@@ -5,9 +5,9 @@ const { calcDiscountPercent } = require('../utils/discount');
 const router = express.Router();
 
 const COURSE_PUBLIC_COLS =
-  `id, slug, title, short_description, description, thumbnail, pdf_file, drive_link,
+  `id, slug, title, short_description, description, thumbnail,
    original_price, discounted_price, category, level, duration, kind, is_published,
-   send_pdf_in_email, send_drive_in_email, created_at, updated_at,
+   created_at, updated_at,
    (thumbnail_data IS NOT NULL) AS has_thumbnail`;
 
 function withDiscount(course) {

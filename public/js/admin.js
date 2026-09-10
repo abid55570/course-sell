@@ -295,7 +295,7 @@ async function loadOrders() {
     root.innerHTML = `
       <table class="table">
         <thead><tr>
-          <th>Order</th><th>Product</th><th>Buyer</th><th>Amount</th><th>Payment ID</th><th>Status</th><th>When</th><th></th>
+          <th>Order</th><th>Product</th><th>Buyer</th><th>Amount</th><th>Payment ID</th><th>Payment</th><th>Email delivery</th><th>When</th><th></th>
         </tr></thead>
         <tbody>
           ${rows.map((o) => {
@@ -314,9 +314,11 @@ async function loadOrders() {
               </td>
               <td>₹${fmtPrice(o.amount)}</td>
               <td><code style="font-size:11px">${escapeHtml(o.razorpay_payment_id || '-')}</code></td>
-              <td><span class="badge ${o.status}">${o.status}</span></td>
+              <td><span class="badge ${o.status}">${o.status === 'completed' ? 'Paid' : o.status}</span></td>
+              <td><strong>${escapeHtml(o.delivery_status || 'untracked')}</strong>${o.delivered_at ? `<div>${fmtDate(o.delivered_at)}</div>` : ''}${o.delivery_error ? `<div class="text-muted">${escapeHtml(o.delivery_error)}</div>` : ''}</td>
               <td class="text-muted" style="font-size:12px">${fmtDate(o.created_at)}</td>
               <td>
+                ${o.status === 'completed' && ['catalog','course'].includes(o.product_type) && !['delivered','sending'].includes(o.delivery_status) ? `<button class="btn btn-sm" data-retry-email="${escapeHtml(o.order_id)}">Retry email</button>` : ''}
                 ${o.status !== 'completed' && o.status !== 'cancelled' ? `<button class="btn btn-sm btn-success" data-confirm="${o.order_id}">Confirm</button>` : ''}
                 ${o.status !== 'cancelled' && o.status !== 'completed' ? `<button class="btn btn-sm btn-danger" data-cancel="${o.order_id}">Cancel</button>` : ''}
               </td>
@@ -325,6 +327,13 @@ async function loadOrders() {
         </tbody>
       </table>
     `;
+    root.querySelectorAll('button[data-retry-email]').forEach((b) =>
+      b.addEventListener('click', async () => {
+        b.disabled = true;
+        try { await api.post(`/api/admin/orders/${encodeURIComponent(b.dataset.retryEmail)}/retry-email`, {}); await loadOrders(); }
+        catch (e) { alert(e.message); b.disabled = false; }
+      })
+    );
     root.querySelectorAll('button[data-confirm]').forEach((b) =>
       b.addEventListener('click', async () => {
         if (!confirm('Confirm payment? This sends the customer their course access email.')) return;

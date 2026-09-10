@@ -143,6 +143,9 @@ router.put('/:id', async (req, res, next) => {
     if (after('send_drive_in_email') && !after('drive_link')) {
       return res.status(400).json({ error: 'send_drive_in_email requires a drive_link' });
     }
+    if (after('send_drive_in_email') && !require('../services/email-delivery').validDriveLink(after('drive_link'))) {
+      return res.status(400).json({ error: 'Use an HTTPS drive.google.com link for email delivery' });
+    }
 
     built.params.push(req.params.id);
     const result = await db.run(

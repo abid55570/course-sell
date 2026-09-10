@@ -42,10 +42,8 @@ function renderCatalog() {
   }
 
   const deliveryCell = (r) => {
-    const file = r.pdf_file && r.send_pdf_in_email;
     const drive = r.drive_link && r.send_drive_in_email;
-    if (!file && !drive) return '<span class="badge cancelled">None</span>';
-    return (file ? '<span class="tag">File</span> ' : '') + (drive ? '<span class="tag">Drive</span>' : '');
+    return drive ? '<span class="tag">Drive email</span>' : '<span class="badge cancelled">None</span>';
   };
 
   const statusCell = (r) => {
@@ -138,11 +136,11 @@ function openCatalogModal(id) {
       CAT_HR +
       '<p class="text-muted" style="margin:0 0 10px;font-size:12px">Delivery &mdash; what the buyer receives after paying.</p>' +
       '<div class="grid-2">' +
-        catField('File name', 'pdf_file', row.pdf_file, 'text', 'The deliverable filename, e.g. glow-up-os.zip') +
+
         catField('Drive link', 'drive_link', row.drive_link) +
       '</div>' +
       '<div class="grid-2">' +
-        catCheck('Send the file', 'send_pdf_in_email', row.send_pdf_in_email, 'Needs a file path') +
+
         catCheck('Send the Drive link', 'send_drive_in_email', row.send_drive_in_email, 'Needs a link') +
       '</div>' +
 
@@ -213,9 +211,8 @@ function openCatalogModal(id) {
       tags: val('tags') ? val('tags').split(',').map((t) => t.trim()).filter(Boolean) : [],
       pair_slug: val('pair_slug'),
       set_slug: val('set_slug'),
-      pdf_file: val('pdf_file'),
       drive_link: val('drive_link'),
-      send_pdf_in_email: on('send_pdf_in_email'),
+      send_pdf_in_email: false,
       send_drive_in_email: on('send_drive_in_email'),
       is_published: on('is_published'),
       featured: on('featured'),

@@ -6,7 +6,6 @@ import Link from 'next/link';
 import { getOrder, type OrderStatusResponse } from '@/lib/orders';
 import { formatRupees } from '@/lib/format';
 import { SUPPORT_EMAIL } from '@/lib/support';
-import { PUBLIC_API_BASE } from '@/lib/env';
 import ReceiptPrint from '@/components/order/ReceiptPrint';
 import Footer from '@/components/landing/Footer';
 import type { FooterData } from '@/lib/catalog/footer-data';
@@ -114,23 +113,7 @@ export default function OrderView({ footer }: { footer: FooterData }) {
 
   const { order } = state;
   const title = order.course_title || 'Your order';
-  // course_title/drive_link/pdf_file only exist on the API response for
-  // product_type 'course' (routes/orders.js GET /:orderId) -- video,
-  // carousel and tool orders deliver differently (a render, a license key)
-  // and never populate these fields, so this block stays scoped to courses.
-  const isCourseOrder = order.product_type === 'course';
-  // api/utils/template.js builds the same delivery email's PDF link as
-  // `${SITE_URL}/api/orders/${order.order_id}/pdf` -- the real Express
-  // route that checks payment + the send_pdf_in_email flag and streams the
-  // file. order.pdf_file itself is just the storage path routes/admin.js
-  // wrote to disk (`/uploads/pdfs/<filename>`, relative to the API's own
-  // directory), not a URL the browser can fetch -- using it directly here
-  // 404s. Route through the same endpoint the email uses instead, so the
-  // two never disagree.
-  const downloadLink = order.status === 'completed' && isCourseOrder
-    ? order.drive_link || (order.pdf_file ? `${PUBLIC_API_BASE}/api/orders/${order.order_id}/pdf` : null)
-    : null;
-  const noFileAttachedYet = order.status === 'completed' && isCourseOrder && !downloadLink;
+  const isEmailProduct = ['course', 'catalog'].includes(order.product_type);
 
   return (
     <Shell footer={footer}>
@@ -155,40 +138,23 @@ export default function OrderView({ footer }: { footer: FooterData }) {
           </span>
           <h1 className="mt-3 font-display text-2xl font-bold text-ink sm:text-3xl">{title}</h1>
 
-          {/* The page used to promise "we sent you a link" and then, directly
-              beneath, admit no file was attached. A buyer who has just paid was
-              told both at once. The message now matches what actually happened. */}
-          {downloadLink ? (
-            <>
-              <p className="mt-3 text-ink-soft">
-                We&rsquo;ve emailed <strong>{order.buyer_email}</strong> a download link as well. Check your spam
-                folder if it has not arrived.
-              </p>
-              <a
-                href={downloadLink}
-                className="mt-6 inline-block bg-primary px-6 py-3 text-sm font-semibold uppercase tracking-wide text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-              >
-                Download now
-              </a>
-            </>
-          ) : noFileAttachedYet ? (
-            <>
-              <p className="mt-3 text-ink-soft">
-                Your payment went through and the order is recorded. The file is not ready to download
-                yet, so it is not in your inbox either.
-              </p>
-              <p className="mt-4 border-l-2 border-primary bg-canvas-2 p-4 text-sm text-ink">
-                Email <a className="font-semibold text-primary underline decoration-2 underline-offset-4" href={`mailto:${SUPPORT_EMAIL}?subject=Order%20${order.order_id}`}>{SUPPORT_EMAIL}</a>{' '}
-                quoting order <strong>{order.order_id}</strong> and we will send it to you directly.
-                You will not be charged again.
-              </p>
-            </>
-          ) : (
-            <p className="mt-3 text-ink-soft">
-              We&rsquo;ve emailed <strong>{order.buyer_email}</strong> with everything you need. Check your spam
-              folder if it has not arrived.
-            </p>
-          )}
+          <p className="mt-3 text-ink-soft" role="status">
+            {isEmailProduct && order.delivery_status === 'delivered' ? (
+              <>Your Google Drive access link has been emailed to <strong>{order.buyer_email}</strong>. Check your inbox and spam folder.</>
+            ) : isEmailProduct && ['pending', 'sending'].includes(order.delivery_status || '') ? (
+              <>Your payment is confirmed. We are sending your Google Drive access link to <strong>{order.buyer_email}</strong>.</>
+            ) : isEmailProduct && order.delivery_status === 'failed' ? (
+              <>Your payment is confirmed, but your access email has not been sent successfully yet. We will retry automatically where possible. Contact support if it remains delayed.</>
+            ) : (
+              <>Content is provided by email. We cannot confirm email delivery for this order here. Check your inbox or contact support with your order ID.</>
+            )}
+          </p>
+          <p className="mt-4 text-sm text-ink-soft">
+            Need help? Email <a href={`mailto:${SUPPORT_EMAIL}?subject=Order%20${order.order_id}`} className="underline">{SUPPORT_EMAIL}</a>. You will not be charged again.
+          </p>
+          {isEmailProduct && order.delivery_status !== 'delivered' ? (
+            <button type="button" onClick={retry} className="mt-5 border border-ink/20 px-5 py-3 text-sm">Check email status</button>
+          ) : null}
         </>
       ) : order.status === 'pending' || order.status === 'submitted' ? (
         <>

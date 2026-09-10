@@ -12,6 +12,7 @@ function getTransporter() {
     host: process.env.SMTP_HOST || 'smtp.gmail.com',
     port: parseInt(process.env.SMTP_PORT || '465', 10),
     secure: (process.env.SMTP_SECURE || 'true') === 'true',
+    connectionTimeout: 30000, greetingTimeout: 30000, socketTimeout: 60000,
     auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
   });
   return transporter;
@@ -58,9 +59,11 @@ async function sendOrderCompletedEmail(order, course) {
   const html = renderCompletedEmail({
     course,
     order,
-    includePdf: !!course.send_pdf_in_email && !!course.pdf_file,
+    includePdf: false,
     includeDrive: !!course.send_drive_in_email && !!course.drive_link,
-    customTemplate: course.email_template_html,
+    // Use the controlled Drive-only template; legacy custom HTML can contain
+    // local download links or omit the actual resource entirely.
+    customTemplate: null,
   });
   return sendMail({
     to: order.buyer_email,

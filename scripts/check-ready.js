@@ -250,7 +250,7 @@ async function checkDeliverables() {
   }
   let Pool;
   try {
-    ({ Pool } = require(path.join(ROOT, 'api', 'node_modules', 'pg')));
+    ({ Pool } = require('module').createRequire(path.join(ROOT, 'api', 'package.json'))('pg'));
   } catch {
     warnings.push('Could not load pg — skipped the "is anything deliverable" check');
     return;
@@ -260,45 +260,19 @@ async function checkDeliverables() {
     const cat = await pool.query('SELECT count(*)::int n FROM catalog_products');
     passes.push(`catalog_products holds ${cat.rows[0].n} rows`);
 
-    // catalog_products has no delivery columns at all — not "none uploaded yet",
-    // but no place to put one. Every paid catalog order therefore gets the
-    // "your download is not ready yet" email and must be fulfilled by hand.
-    // Checking `courses` here would be misleading: the legacy tool and course
-    // rows do have files, and none of them are what the storefront sells.
-    const hasDeliveryColumn = await pool.query(
-      `SELECT count(*)::int n FROM information_schema.columns
-        WHERE table_name = 'catalog_products'
-          AND column_name IN ('pdf_file', 'drive_link')`
+    const queue = await pool.query("SELECT to_regclass('order_email_deliveries') AS name");
+    if (!queue.rows[0].name) blockers.push('Email delivery migration 013 has not been applied');
+    const { validDriveLink } = require(path.join(ROOT, 'api', 'services', 'email-delivery'));
+    const published = await pool.query(
+      'SELECT slug, drive_link, send_drive_in_email FROM catalog_products WHERE is_published = TRUE'
     );
-    if (hasDeliveryColumn.rows[0].n === 0) {
-      blockers.push(
-        'catalog_products has no delivery fields, so every paid catalog order gets a ' +
-          '"your download is not ready yet" email and must be fulfilled by hand'
-      );
+    const missing = published.rows.filter((r) => !r.send_drive_in_email || !validDriveLink(r.drive_link));
+    if (missing.length) {
+      blockers.push(`${missing.length} published catalog product(s) need an enabled HTTPS Google Drive link (e.g. ${missing[0].slug})`);
+    } else if (!published.rowCount) {
+      warnings.push('No published catalog products to check for Drive email delivery');
     } else {
-      const withFiles = await pool.query(
-        'SELECT slug, pdf_file, drive_link FROM catalog_products WHERE pdf_file IS NOT NULL OR drive_link IS NOT NULL'
-      );
-      if (withFiles.rowCount === 0) {
-        blockers.push('No catalog product has a file attached yet — paid orders cannot be delivered');
-      } else {
-        // Trusting the column was not enough. After a redeploy that did not
-        // carry the files across, every row still says "deliverable" while the
-        // buyer gets "that file has gone missing". Check the disk.
-        const root = path.join(ROOT, 'api', 'storage', 'deliverables');
-        const missingOnDisk = withFiles.rows.filter((r) => {
-          if (!r.pdf_file) return false;
-          return !fs.existsSync(path.join(root, path.basename(r.pdf_file)));
-        });
-        if (missingOnDisk.length) {
-          blockers.push(
-            `${missingOnDisk.length} product(s) point at a file that is not on this machine ` +
-              `(e.g. ${missingOnDisk[0].slug}). Re-run api/scripts/attach-product-files.js --source <product library>`
-          );
-        } else {
-          passes.push(`${withFiles.rowCount} catalog product(s) have a deliverable, present on disk`);
-        }
-      }
+      passes.push(`${published.rowCount} published catalog product(s) have enabled Google Drive email links; check buyer permissions in Drive separately`);
     }
   } catch (e) {
     warnings.push(`Database check failed (${e.message}) — could not verify deliverables`);

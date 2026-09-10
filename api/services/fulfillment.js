@@ -1,6 +1,6 @@
 // Single source of truth for completing a paid order. Called by BOTH the
 // browser checkout-verify route and the Razorpay webhook, so it must be
-// idempotent: the first caller fulfils, the rest are no-ops.
+// idempotent: payment is recorded once; queued course emails recover independently.
 
 const db = require('../utils/db');
 const { isToolKey, getTool } = require('./tool-products');
@@ -12,7 +12,12 @@ const { isToolKey, getTool } = require('./tool-products');
 async function markOrderPaid(orderId, { paymentId = null, actor = 'razorpay' } = {}) {
   const order = await db.get('SELECT * FROM orders WHERE order_id = $1', [orderId]);
   if (!order) return { ok: false, error: 'order not found' };
-  if (order.status === 'completed') return { ok: true, alreadyDone: true, productType: order.product_type };
+  if (order.status === 'completed') {
+    if (['catalog', 'course'].includes(order.product_type)) {
+      await require('./email-delivery').deliverOrderEmail(orderId);
+    }
+    return { ok: true, alreadyDone: true, productType: order.product_type };
+  }
   if (order.status === 'cancelled') return { ok: false, error: 'order cancelled' };
 
   // The UPDATE is the concurrency gate, not the SELECT above it.
@@ -24,11 +29,16 @@ async function markOrderPaid(orderId, { paymentId = null, actor = 'razorpay' } =
   // transition conditional means exactly one caller can claim the order, and
   // the rest see rowCount 0 and stop.
   const claimed = await db.run(
-    `UPDATE orders
-        SET status='completed',
-            razorpay_payment_id = COALESCE($1, razorpay_payment_id),
-            updated_at=NOW()
-      WHERE order_id=$2 AND status <> 'completed'`,
+    `WITH paid AS (
+       UPDATE orders SET status='completed',
+         razorpay_payment_id=COALESCE($1, razorpay_payment_id), updated_at=NOW()
+       WHERE order_id=$2 AND status IN ('pending','submitted')
+       RETURNING order_id, product_type
+     ), queued AS (
+       INSERT INTO order_email_deliveries(order_id)
+       SELECT order_id FROM paid WHERE product_type IN ('catalog','course')
+       ON CONFLICT(order_id) DO NOTHING
+     ) SELECT * FROM paid`,
     [paymentId, orderId]
   );
   if (!claimed || claimed.rowCount !== 1) {
@@ -44,64 +54,14 @@ async function markOrderPaid(orderId, { paymentId = null, actor = 'razorpay' } =
     await fulfilVideo(order);
   } else if (order.product_type === 'carousel') {
     await fulfilCarousel(order);
-  } else if (order.product_type === 'catalog') {
-    await fulfilCatalog(order);
+  } else if (order.product_type === 'catalog' || order.product_type === 'course') {
+    await require('./email-delivery').deliverOrderEmail(orderId);
   } else if (isToolKey(order.product_type)) {
     await fulfilTool(order);
   } else {
-    await fulfilCourse(order);
+    throw new Error('Unsupported product type');
   }
   return { ok: true, productType: order.product_type };
-}
-
-/**
- * Storefront catalog products and bundles.
- *
- * These orders carry `catalog_product_id`, not `course_id`, so fulfilCourse
- * cannot find them — without this branch a paying buyer would get no email at
- * all, which is worse than the current behaviour.
- *
- * Delivery reads the row's own pdf_file / drive_link (migration 012). Until an
- * admin attaches one, both send_* flags stay false and the shared template
- * tells the buyer their download is not ready rather than linking a file that
- * does not exist.
- */
-async function fulfilCatalog(order) {
-  const { sendOrderCompletedEmail } = require('../utils/email');
-  const item = await db.get(
-    `SELECT slug, title, pdf_file, drive_link, send_pdf_in_email, send_drive_in_email
-       FROM catalog_products WHERE id = $1`,
-    [order.catalog_product_id]
-  );
-  if (!item) return;
-  // Shaped like a `courses` row so the shared delivery template can render it.
-  // When no file is attached, both flags are false and the template says so
-  // honestly rather than linking a download that does not exist.
-  const courseLike = {
-    slug: item.slug,
-    title: item.title,
-    pdf_file: item.pdf_file,
-    drive_link: item.drive_link,
-    send_pdf_in_email: item.send_pdf_in_email,
-    send_drive_in_email: item.send_drive_in_email,
-    email_template_html: null,
-  };
-  try {
-    await sendOrderCompletedEmail({ ...order, status: 'completed' }, courseLike);
-  } catch (e) {
-    console.warn('catalog email failed', e.message);
-  }
-}
-
-async function fulfilCourse(order) {
-  const { sendOrderCompletedEmail } = require('../utils/email');
-  const course = await db.get('SELECT * FROM courses WHERE id = $1', [order.course_id]);
-  if (!course) return;
-  try {
-    await sendOrderCompletedEmail({ ...order, status: 'completed' }, course);
-  } catch (e) {
-    console.warn('course email failed', e.message);
-  }
 }
 
 async function fulfilVideo(order) {

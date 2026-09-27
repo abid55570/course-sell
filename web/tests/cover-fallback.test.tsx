@@ -57,73 +57,78 @@ beforeAll(() => {
   }
 });
 
-const GUIDE_SLUG = 'how-to-be-like-saitama'; // real, cover-less, featured
-const SET_SLUG = 'the-character-codex'; // real, has a cover image
-const CATEGORY_SLUG = 'character-guides';
+// This suite is about CoverFallback: the typographic hero + card that stands
+// in when a product has no image. Originally the character guides carried
+// that role (all 41 shipped `gallery: []`), but covers were added for every
+// guide and the fallback lost its production home. The reel bundles are the
+// new home: 41 published products, none have cover art, and one
+// (`motivation-reel-bundle`) is featured on the homepage — the exact shape
+// this suite needs.
+const COVERLESS_SLUG = 'motivation-reel-bundle';
+const COVERED_NEIGHBOUR_SLUG = 'n8n-mega-pack'; // real cover in a sibling category
+const CATEGORY_SLUG = 'reel-bundles';
 
 function expectNoBrokenCounts(container: HTMLElement) {
   expect(container.textContent).not.toContain('undefined');
   expect(container.textContent).not.toMatch(/\b0\s*(pages?|trackers?|files?)\b/i);
 }
 
-describe('a cover-less guide renders its typographic card, not a broken image', () => {
-  it('on the homepage (it is one of the three featured guides)', async () => {
+describe('a cover-less product renders its typographic card, not a broken image', () => {
+  it('on the homepage (it is featured for its category)', async () => {
     const { container } = render(await Home());
     expectNoBrokenCounts(container);
 
     const link = screen
       .getAllByRole('link')
-      .find((l) => l.getAttribute('href') === `/p/${GUIDE_SLUG}`);
-    expect(link, 'the featured guide has no card on the homepage').toBeDefined();
+      .find((l) => l.getAttribute('href') === `/p/${COVERLESS_SLUG}`);
+    expect(link, 'the featured reel bundle has no card on the homepage').toBeDefined();
     const card = link as HTMLElement;
 
     // No <img> for this card at all: the cover slot is pure text/CSS.
     expect(card.querySelectorAll('img').length).toBe(0);
-    // The title appears twice by design (once large in the typographic
-    // cover slot, once again in the caption row below it), so this checks
-    // "at least once", not "exactly once".
-    expect(within(card).getAllByText('How to be like Saitama').length).toBeGreaterThan(0);
-    // The typographic kicker names the real category, not a placeholder.
-    expect(within(card).getByText('Character Guides')).toBeDefined();
+    expect(within(card).getAllByText('Motivation Reel Bundle').length).toBeGreaterThan(0);
+    expect(within(card).getByText('Reel Bundles')).toBeDefined();
   });
 
   it('on the browse page (/products), sitting in a grid that also holds real covers', async () => {
     const { container } = render(await ProductsPage());
     expectNoBrokenCounts(container);
 
-    const guideLink = container.querySelector(`a[href="/p/${GUIDE_SLUG}"]`);
-    expect(guideLink, 'guide card missing from /products').not.toBeNull();
-    expect(guideLink!.querySelectorAll('img').length).toBe(0);
-    expect(within(guideLink as HTMLElement).getAllByText('How to be like Saitama').length).toBeGreaterThan(0);
+    const coverlessLink = container.querySelector(`a[href="/p/${COVERLESS_SLUG}"]`);
+    expect(coverlessLink, 'reel bundle card missing from /products').not.toBeNull();
+    expect(coverlessLink!.querySelectorAll('img').length).toBe(0);
+    expect(within(coverlessLink as HTMLElement).getAllByText('Motivation Reel Bundle').length).toBeGreaterThan(0);
 
-    // The Character Codex, in the very same category section, does ship a
+    // The N8N pack, in a different category on the same grid, does ship a
     // cover image — proving the grid mixes a real <img> card and a
     // typographic card side by side without either breaking.
-    const setLink = container.querySelector(`a[href="/p/${SET_SLUG}"]`);
-    expect(setLink, 'Character Codex card missing from /products').not.toBeNull();
-    expect(setLink!.querySelectorAll('img').length).toBeGreaterThan(0);
+    const coveredLink = container.querySelector(`a[href="/p/${COVERED_NEIGHBOUR_SLUG}"]`);
+    expect(coveredLink, 'N8N cover-bearing card missing from /products').not.toBeNull();
+    expect(coveredLink!.querySelectorAll('img').length).toBeGreaterThan(0);
   });
 
-  it('on its own category page (/category/character-guides), a 41-item grid', async () => {
+  it('on its own category page (/category/reel-bundles), a grid of cover-less bundles', async () => {
     const Page = await CategoryPage({ params: Promise.resolve({ slug: CATEGORY_SLUG }) });
     const { container } = render(Page);
     expectNoBrokenCounts(container);
-    expect(screen.getByText('41 products in this category.')).toBeDefined();
 
-    const guideLink = container.querySelector(`a[href="/p/${GUIDE_SLUG}"]`);
-    expect(guideLink).not.toBeNull();
-    expect(guideLink!.querySelectorAll('img').length).toBe(0);
+    const coverlessLink = container.querySelector(`a[href="/p/${COVERLESS_SLUG}"]`);
+    expect(coverlessLink).not.toBeNull();
+    expect(coverlessLink!.querySelectorAll('img').length).toBe(0);
 
-    const setLink = container.querySelector(`a[href="/p/${SET_SLUG}"]`);
-    expect(setLink).not.toBeNull();
-    expect(setLink!.querySelectorAll('img').length).toBeGreaterThan(0);
+    // Every published reel bundle is cover-less, so the whole grid is
+    // typographic cards with no <img> tags anywhere.
+    const productLinks = container.querySelectorAll('a[href^="/p/"]');
+    for (const link of Array.from(productLinks)) {
+      expect(link.querySelectorAll('img').length).toBe(0);
+    }
   });
 });
 
-describe("a cover-less guide's own product page", () => {
+describe("a cover-less product's own product page", () => {
   it('renders with no empty headings, no "undefined", no "0 pages", and a working typographic hero', async () => {
-    const product = getProduct(GUIDE_SLUG)!;
-    const Page = await ProductPage({ params: Promise.resolve({ slug: GUIDE_SLUG }) });
+    const product = getProduct(COVERLESS_SLUG)!;
+    const Page = await ProductPage({ params: Promise.resolve({ slug: COVERLESS_SLUG }) });
     const { container } = render(Page);
 
     expectNoBrokenCounts(container);
@@ -131,26 +136,18 @@ describe("a cover-less guide's own product page", () => {
     expect(screen.getAllByText(formatRupees(product.price), { exact: false }).length).toBeGreaterThan(0);
 
     // The hero's image slot carries no <img> — the typographic fallback
-    // fills it instead of leaving it blank. (The page as a whole does have
-    // one <img>, further down: the set-anchor section embeds a ProductCard
-    // for the real, cover-bearing set this guide belongs to — that's
-    // expected and checked separately below.)
+    // fills it instead of leaving it blank.
     const hero = container.querySelector('main > section');
     expect(hero, 'hero section not found').not.toBeNull();
     expect((hero as HTMLElement).querySelectorAll('img').length).toBe(0);
 
-    // No modules exist for a guide, so the section must not render at all
-    // (not render with an empty list under the heading).
+    // Reel bundles have no modules, so the section must not render at all.
     expect(screen.queryByText('Module breakdown')).toBeNull();
 
-    // This guide does carry a disclaimer + helplines, so that section must render.
-    expect(screen.getByText('Disclaimer')).toBeDefined();
-
-    // It belongs to a set, so the set anchor must appear, with the real
-    // guide price and the real set price, not a guessed or hardcoded number.
-    const set = getSetFor(GUIDE_SLUG)!;
-    expect(screen.getByText(new RegExp(`Part of ${set.title.split(' — ')[0]}`))).toBeDefined();
-    expect(screen.getAllByText(formatRupees(set.price), { exact: false }).length).toBeGreaterThan(0);
+    // Reel bundles do not belong to a set (no setSlug), so the set anchor
+    // must not appear.
+    const set = getSetFor(COVERLESS_SLUG);
+    expect(set).toBeUndefined();
   });
 });
 
@@ -183,19 +180,20 @@ describe('the new categories appear across the storefront', () => {
 });
 
 describe('the price ladder reflects the real catalog minimum', () => {
-  it('PricingLadder renders ₹299, not the old flat ₹999, as its lowest tier', async () => {
+  it('PricingLadder renders the real cheapest tier, not a hardcoded ₹999', async () => {
     render(<PricingLadder {...LADDER_PROPS} paymentMode="dev" />);
-    expect(screen.getByText(formatRupees(299))).toBeDefined();
+    expect(screen.getByText(formatRupees(PRICING_LADDER.single))).toBeDefined();
     expect(screen.queryByText(formatRupees(999))).toBeNull();
-    expect(PRICING_LADDER.single).toBe(299);
   });
 
   it('the ladder floor is some real product’s price, not an arbitrary number', () => {
-    // The guides are still ₹499; the floor moved below them when the first
-    // ₹299 tripwire shipped. What matters is that `single` is always a price
-    // some product actually charges, whichever product that happens to be.
-    expect(getProduct(GUIDE_SLUG)!.price).toBe(499);
+    // The floor keeps moving down as cheaper products land: ₹499 (guides),
+    // then ₹299 (tripwires), then ₹29 (reel bundles). What matters is that
+    // `single` is always a price some product actually charges, whichever
+    // product that happens to be.
+    expect(getProduct('how-to-be-like-saitama')!.price).toBe(499);
     expect(ALL_PRODUCTS.map((p) => p.price)).toContain(PRICING_LADDER.single);
-    expect(getProduct('30-days-of-focus')!.price).toBe(PRICING_LADDER.single);
+    const cheapest = ALL_PRODUCTS.reduce((min, p) => (p.price < min ? p.price : min), Number.POSITIVE_INFINITY);
+    expect(PRICING_LADDER.single).toBe(cheapest);
   });
 });

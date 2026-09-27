@@ -485,9 +485,12 @@ describe('catalog featured products', () => {
     // copy points buyers at the set over the individual guides.
     expect(featured.map((p) => p.slug).sort()).toEqual([
       'being-treated-as-an-adult-in-your-own-home',
+      'digital-marketing-ebooks-bundle',
       'glow-up-os',
       'how-to-be-like-saitama',
       'money-os',
+      'motivation-reel-bundle',
+      'n8n-mega-pack',
       'study-os',
       'the-scam-files',
       'what-your-screentime-costs-you',

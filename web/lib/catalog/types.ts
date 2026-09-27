@@ -139,6 +139,15 @@ export type Product = {
   gallery: GalleryImage[];
   /** PDF/asset filenames the buyer receives, from the listing file's "Delivery file" block. */
   deliveryFiles: string[];
+  /**
+   * The Google Drive folder id whose contents ARE the product, for bundles
+   * delivered as a shared folder rather than a downloaded zip. When set, the
+   * product page renders a live "What's inside" preview via Drive's public
+   * embedded-folder view — this is why the folder must be shared "Anyone
+   * with the link" for buyers to see the preview at all. Absent means no
+   * preview is rendered; the product still ships as normal.
+   */
+  driveFolderId?: string;
   /** The partner product slug the README pairs this product with (primary pairing). */
   pairSlug?: ProductSlug;
   /**

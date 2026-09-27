@@ -22,11 +22,12 @@ export default function SetAnchor({
   guide: Product;
   set: Product;
   guideCount: number;
-  paymentMode: 'razorpay' | 'whatsapp' | 'dev';
+  paymentMode: 'razorpay' | 'dev';
 }) {
   // Every product in the set's category except the set product itself is a
   // guide in that set — real catalog data, not a hardcoded "40".
-  const paymentLabel = paymentMode === 'whatsapp' ? 'UPI' : 'card or UPI';
+  void paymentMode;
+  const paymentLabel = 'card or UPI';
 
   return (
     <div className="border-t border-ink/10 pt-8">

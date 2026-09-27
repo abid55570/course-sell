@@ -13,27 +13,12 @@ const STEPS_RAZORPAY = [
   },
 ];
 
-const STEPS_WHATSAPP = [
-  {
-    title: 'Pick a product',
-    body: 'Every product page shows exactly what you get before you pay. Open the one you want.',
-  },
-  {
-    title: 'Transfer by UPI',
-    body: 'Send the amount to the UPI ID on the checkout page. No card or netbanking on this server yet.',
-  },
-  {
-    title: 'Confirm on WhatsApp and download',
-    body: 'Paste your UPI payment reference on the checkout page. We confirm on WhatsApp, then email the download link. No password, no login.',
-  },
-];
-
 // Three ledger rows on carbon-copy paper. The sequence is real (do this,
 // then this, then this): an ordered list carries it for assistive tech, and
 // a mono row number carries it visually, per the corrected design brief.
 // The numbers are aria-hidden because the list already announces position.
-export default function InstallSteps({ paymentMode }: { paymentMode: 'razorpay' | 'whatsapp' | 'dev' }) {
-  const steps = paymentMode === 'whatsapp' ? STEPS_WHATSAPP : STEPS_RAZORPAY;
+export default function InstallSteps({ paymentMode: _paymentMode }: { paymentMode: 'razorpay' | 'dev' }) {
+  const steps = STEPS_RAZORPAY;
 
   return (
     <section className="band-carbon px-5 py-20 sm:py-24 lg:px-12">

@@ -14,7 +14,7 @@ export default function StickyBuyBar({
   slug: string;
   title: string;
   price: number;
-  paymentMode: 'razorpay' | 'whatsapp' | 'dev';
+  paymentMode: 'razorpay' | 'dev';
   className?: string;
 }) {
   const [visible, setVisible] = useState(false);
@@ -37,9 +37,8 @@ export default function StickyBuyBar({
 
   if (!visible) return null;
 
-  const label = paymentMode === 'whatsapp'
-    ? `Buy — ${formatRupees(price)} · UPI`
-    : `Buy for ${formatRupees(price)}`;
+  void paymentMode;
+  const label = `Buy for ${formatRupees(price)}`;
 
   return (
     <div

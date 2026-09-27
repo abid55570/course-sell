@@ -71,12 +71,31 @@ const IMPORTED_SLUGS: ProductSlug[] = listProducts()
   .filter((p) => GUIDE_FAMILY_CATEGORIES.includes(p.category.slug))
   .map((p) => p.slug);
 
+/**
+ * Categories added after the original four families. They are named here so
+ * PIPELINE_SLUGS stays the PRODUCT-PIPELINE family it claims to be: it is a
+ * catch-all, so without this every new category silently lands in it and the
+ * "every product accounted for" check below stops meaning anything.
+ */
+const LATER_FAMILY_CATEGORIES = ['reel-bundles', 'digital-library', 'automation-and-ai'];
+
+/** Raw vertical clip packs sold as Drive folders (web/lib/catalog/products/reel-bundles.ts). */
+const REEL_BUNDLE_SLUGS: ProductSlug[] = listProducts()
+  .filter((p) => p.category.slug === 'reel-bundles')
+  .map((p) => p.slug);
+
+/** The remaining later additions: the digital library and the automation pack. */
+const LATER_MISC_SLUGS: ProductSlug[] = listProducts()
+  .filter((p) => p.category.slug === 'digital-library' || p.category.slug === 'automation-and-ai')
+  .map((p) => p.slug);
+
 /** Everything built in Dashrize-Products/PRODUCT-PIPELINE and listed later. */
 const PIPELINE_SLUGS: ProductSlug[] = listProducts()
   .filter(
     (p) =>
       !LAUNCH_SLUGS.includes(p.slug) &&
       !GUIDE_FAMILY_CATEGORIES.includes(p.category.slug) &&
+      !LATER_FAMILY_CATEGORIES.includes(p.category.slug) &&
       p.category.slug !== 'the-scam-files'
   )
   .map((p) => p.slug);
@@ -119,12 +138,27 @@ describe('catalog products', () => {
     expect(PIPELINE_SLUGS).toHaveLength(18);
     // 8 guides at ₹499 + the ₹1,999 set.
     expect(SCAM_FILES_SLUGS).toHaveLength(9);
+    // 47 themed reel-bundle folders, plus the digital library and automation pack.
+    expect(REEL_BUNDLE_SLUGS).toHaveLength(47);
+    expect(LATER_MISC_SLUGS).toHaveLength(2);
     expect(products).toHaveLength(
-      LAUNCH_SLUGS.length + IMPORTED_SLUGS.length + PIPELINE_SLUGS.length + SCAM_FILES_SLUGS.length
+      LAUNCH_SLUGS.length +
+        IMPORTED_SLUGS.length +
+        PIPELINE_SLUGS.length +
+        SCAM_FILES_SLUGS.length +
+        REEL_BUNDLE_SLUGS.length +
+        LATER_MISC_SLUGS.length
     );
     const slugs = new Set(products.map((p) => p.slug));
     expect(slugs).toEqual(
-      new Set([...LAUNCH_SLUGS, ...IMPORTED_SLUGS, ...PIPELINE_SLUGS, ...SCAM_FILES_SLUGS])
+      new Set([
+        ...LAUNCH_SLUGS,
+        ...IMPORTED_SLUGS,
+        ...PIPELINE_SLUGS,
+        ...SCAM_FILES_SLUGS,
+        ...REEL_BUNDLE_SLUGS,
+        ...LATER_MISC_SLUGS,
+      ])
     );
     // No duplicate slugs across the whole catalog.
     expect(slugs.size).toBe(products.length);
@@ -174,9 +208,10 @@ describe('catalog products', () => {
   it('PRICING_LADDER.single is the real catalog-wide minimum price, not the launch products’ fixed ₹999', () => {
     const min = Math.min(...listProducts().map((p) => p.price));
     expect(PRICING_LADDER.single).toBe(min);
-    // 30 Days of Focus is the first Rs 299 tripwire, so it is the new floor.
-    // This is exactly why `single` is computed rather than hardcoded.
-    expect(PRICING_LADDER.single).toBe(299);
+    // The ₹29-99 Reel Bundles (products/reel-bundles.ts) undercut every
+    // earlier floor, so the cheapest reel bundle is the new floor. Still
+    // exactly why `single` is computed rather than hardcoded.
+    expect(PRICING_LADDER.single).toBe(29);
     expect(PRICING_LADDER.single).toBeLessThan(999);
   });
 
@@ -345,6 +380,9 @@ describe('catalog categories', () => {
       'talking-to-your-parents',
       'the-ten-series',
       'the-scam-files',
+      'automation-and-ai',
+      'digital-library',
+      'reel-bundles',
     ]);
   });
 
@@ -551,7 +589,7 @@ describe('imported guide families (character-guides, talking-to-your-parents, th
     expect(SET_SLUGS.every((slug) => IMPORTED_SLUGS.includes(slug))).toBe(true);
   });
 
-  it.each(guideSlugs)('%s is a ₹499, 20-page, 3-tracker PDF with no cover image', (slug) => {
+  it.each(guideSlugs)('%s is a ₹499, 20-page, 3-tracker PDF with a cover image', (slug) => {
     const guide = getProduct(slug)!;
     expect(guide.price).toBe(499);
     expect(guide.pageCount).toBe(20);
@@ -559,9 +597,12 @@ describe('imported guide families (character-guides, talking-to-your-parents, th
     expect(guide.format).toBe('PDF');
     expect(guide.fileCount).toBe(1);
     expect(guide.fileCount).toBe(guide.deliveryFiles.length);
-    // No cover art ships for any individual guide — only the family's set
-    // does. This is the exact case CoverFallback exists for.
-    expect(guide.gallery).toEqual([]);
+    // Cover art now ships per individual guide (added by the per-character
+    // cover work — 41 files live under public/products/<slug>/). This used to
+    // assert `gallery` was empty, back when only the family's set had a cover.
+    const cover = guide.gallery.find((image) => image.role === 'cover');
+    expect(cover, `${slug} is missing its cover image`).toBeDefined();
+    expect(cover!.filename).toBe('1-cover-thumbnail.png');
   });
 
   it.each(guideSlugs)('%s has a non-empty tagline, FAQ and disclaimer, but no fabricated long-form copy', (slug) => {

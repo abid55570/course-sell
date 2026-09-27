@@ -34,12 +34,10 @@ export default function Footer({
 }: {
   productCount: number;
   categories: Category[];
-  paymentMode?: 'razorpay' | 'whatsapp' | 'dev';
+  paymentMode?: 'razorpay' | 'dev';
 }) {
-  const mode = paymentMode ?? 'razorpay';
-  const paymentLabel = mode === 'whatsapp'
-    ? 'UPI transfer · WhatsApp confirmation'
-    : 'Razorpay · UPI · Cards · Netbanking';
+  void paymentMode;
+  const paymentLabel = 'Razorpay · UPI · Cards · Netbanking';
 
   return (
     <>

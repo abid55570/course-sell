@@ -244,10 +244,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
           <h2 className="font-display text-3xl font-bold uppercase">{name}</h2>
           <p className="mt-2 text-white/80">
             {formatRupees(product.price)}
-            {paymentMode === 'whatsapp'
-              ? ', delivered by email after we confirm your UPI payment.'
-              : ', instant download by email.'}{' '}
-            Pay by {paymentMode === 'whatsapp' ? 'UPI' : 'card or UPI'}.
+            , instant download by email. Pay by card or UPI.
           </p>
           <div className="mt-6 flex flex-wrap items-center justify-center gap-5">
             <BuyButton slug={product.slug} title={product.title} price={product.price} className="bg-white text-primary" />

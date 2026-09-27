@@ -96,9 +96,7 @@ export default async function CheckoutPage({
     );
   }
 
-  const deliveryLine = paymentMode === 'whatsapp'
-    ? 'Delivered by email after we confirm your UPI payment.'
-    : 'Instant delivery by email once payment is confirmed.';
+  const deliveryLine = 'Instant delivery by email once payment is confirmed.';
 
   return (
     <main className="min-h-[70vh] bg-canvas">

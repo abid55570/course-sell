@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Script from 'next/script';
-import { createOrder, verifyOrder, submitPaymentReference, type CreateOrderResponse } from '@/lib/orders';
+import { createOrder, verifyOrder, type CreateOrderResponse } from '@/lib/orders';
 import { formatRupees } from '@/lib/format';
 
 type RazorpaySuccessPayload = {
@@ -47,8 +47,6 @@ type Phase =
   | 'loading-razorpay'
   | 'awaiting-payment'
   | 'verifying'
-  | 'whatsapp'
-  | 'reporting'
   | 'error';
 
 function isEmailShaped(value: string) {
@@ -69,11 +67,12 @@ export default function CheckoutForm({
   title,
   price,
 }: {
-  paymentMode: 'razorpay' | 'whatsapp' | 'dev';
+  paymentMode: 'razorpay' | 'dev';
   slug: string;
   title: string;
   price: number;
 }) {
+  void paymentMode;
   const router = useRouter();
   const [buyerName, setBuyerName] = useState('');
   const [buyerEmail, setBuyerEmail] = useState('');
@@ -91,20 +90,10 @@ export default function CheckoutForm({
   // that would risk charging the buyer twice for one product. It clears only
   // when a brand-new order is created from a clean form.
   const [chargeUncertain, setChargeUncertain] = useState(false);
-  // The interim WhatsApp path: the buyer pays in chat, then types the payment
-  // reference here. Nothing is delivered on that alone — see
-  // api/services/manual-payment.js.
-  const [reference, setReference] = useState('');
-  const [referenceError, setReferenceError] = useState<string | null>(null);
 
   const canRetry = phase === 'error' && !chargeUncertain;
   const canSubmit = buyerName.trim().length > 0 && isEmailShaped(buyerEmail) && (phase === 'form' || canRetry);
   const busy = (phase !== 'form' && phase !== 'error') || chargeUncertain;
-
-  function orderUrl(): string {
-    if (!order) return '/';
-    return `/order/${order.order_id}`;
-  }
 
   async function completeWithoutLiveKeys(target: CreateOrderResponse) {
     setPhase('dev-completing');
@@ -122,28 +111,6 @@ export default function CheckoutForm({
       return;
     }
     router.push(`/order/${target.order_id}`);
-  }
-
-  async function reportReference() {
-    if (!order) return;
-    const trimmed = reference.trim();
-    if (trimmed.length < 4) {
-      setReferenceError('Enter the reference from your UPI app or bank — usually 12 digits.');
-      return;
-    }
-    if (trimmed.length > 64) {
-      setReferenceError('That looks too long — paste just the reference/UTR number, usually 12 digits.');
-      return;
-    }
-    setReferenceError(null);
-    setPhase('reporting');
-    const result = await submitPaymentReference(order.order_id, trimmed);
-    if (!result.ok) {
-      setPhase('whatsapp');
-      setReferenceError(result.error);
-      return;
-    }
-    router.push(`/order/${order.order_id}`);
   }
 
   function openRazorpayCheckout(target: CreateOrderResponse) {
@@ -200,12 +167,10 @@ export default function CheckoutForm({
 
   /** Starts (or restarts) the payment step for an order that already exists. */
   async function startPayment(target: CreateOrderResponse) {
-    // The server decides which path is on offer, so this never has to know
-    // whether Razorpay is live — it just follows what the order says.
-    if (target.payment_mode === 'whatsapp' && target.whatsapp) {
-      setPhase('whatsapp');
-      return;
-    }
+    // The server tells us whether real Razorpay keys are configured. When
+    // they are not, the store completes the order locally without charging
+    // anything ('dev' mode). In prod that path is unreachable — Razorpay
+    // keys are required for checkout to work at all now.
     if (!target.razorpay.configured) {
       await completeWithoutLiveKeys(target);
       return;
@@ -337,90 +302,6 @@ export default function CheckoutForm({
             Payment received — confirming your order…
           </p>
         ) : null}
-        {(phase === 'whatsapp' || phase === 'reporting') && order ? (
-          <div className="space-y-4 border border-ink/15 bg-canvas-2 p-5">
-            <div>
-              <p className="font-mono text-xs font-semibold uppercase tracking-[0.15em] text-ink-soft">
-                Step 1 &mdash; Pay by UPI transfer
-              </p>
-              <p className="mt-2 text-sm text-ink">
-                Card payments aren&rsquo;t switched on yet. Send the amount by UPI to the
-                details on the next screen, then paste your payment reference below.
-              </p>
-              <p className="mt-2 text-xs text-ink-soft">
-                Nothing to retype — your name and email are already saved on this order.
-              </p>
-              <div className="mt-3 flex flex-wrap items-center gap-3">
-                <a
-                  href={order.whatsapp?.link ?? '#'}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex min-h-[44px] items-center bg-[#25D366] px-5 py-3 font-semibold text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-                >
-                  Message us to pay &rarr;
-                </a>
-                <Link
-                  href={orderUrl()}
-                  className="inline-flex min-h-[44px] items-center font-mono text-xs font-semibold uppercase tracking-wide text-primary underline underline-offset-4"
-                >
-                  Save this order link
-                </Link>
-              </div>
-            </div>
-
-            <div className="border-t border-dashed border-ink/25 pt-4">
-              <label
-                htmlFor="payment-reference"
-                className="font-mono text-xs font-semibold uppercase tracking-[0.15em] text-ink-soft"
-              >
-                Step 2 &mdash; Paste your payment reference
-              </label>
-              <p className="mt-2 text-sm text-ink-soft">
-                After paying, your UPI app shows a reference or UTR number. Paste it here so we can
-                match it to your order.
-              </p>
-              <input
-                id="payment-reference"
-                name="payment-reference"
-                value={reference}
-                onChange={(e) => setReference(e.target.value)}
-                onKeyDown={(e) => {
-                  // Enter after typing the reference is the natural habit; without
-                  // this the outer form's guarded submit swallows it and nothing happens.
-                  if (e.key === 'Enter') {
-                    e.preventDefault();
-                    if (phase !== 'reporting') reportReference();
-                  }
-                }}
-                disabled={phase === 'reporting'}
-                autoComplete="off"
-                inputMode="numeric"
-                maxLength={64}
-                placeholder="e.g. 512345678901"
-                aria-describedby={referenceError ? 'payment-reference-error' : undefined}
-                aria-invalid={referenceError ? true : undefined}
-                className="mt-3 min-h-[44px] w-full border border-ink/25 bg-canvas px-3 py-2 text-ink focus:outline-none focus:ring-2 focus:ring-primary"
-              />
-              {referenceError ? (
-                <p id="payment-reference-error" role="alert" className="mt-2 text-sm text-primary">
-                  {referenceError}
-                </p>
-              ) : null}
-              <button
-                type="button"
-                onClick={reportReference}
-                disabled={phase === 'reporting'}
-                className="mt-3 min-h-[44px] w-full bg-primary px-5 py-3 font-semibold text-white disabled:opacity-60 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-              >
-                {phase === 'reporting' ? 'Sending…' : "I've paid — submit reference"}
-              </button>
-              <p className="mt-3 text-xs text-ink-soft">
-                We check every payment by hand before sending your files, so your download arrives
-                once we&rsquo;ve confirmed it — usually within a few hours.
-              </p>
-            </div>
-          </div>
-        ) : null}
 
         {phase === 'dev-completing' ? (
           <div role="status" className="rounded-lg border border-urgent/30 bg-urgent/10 px-4 py-3 text-sm text-ink">
@@ -436,24 +317,15 @@ export default function CheckoutForm({
           >
             Check order status
           </Link>
-        ) : phase === 'whatsapp' || phase === 'reporting' ? (
-          // The WhatsApp block below has its own two-step call to action. A
-          // dead, greyed-out Pay button underneath it reads as something the
-          // buyer is meant to press and cannot.
-          null
         ) : (
           <button
             type="submit"
             disabled={!canSubmit}
             className="w-full rounded-lg bg-primary px-6 py-4 text-center text-sm font-semibold uppercase tracking-wide text-primary-foreground transition-opacity hover:opacity-90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-not-allowed disabled:opacity-40"
           >
-            {paymentMode === 'whatsapp' && phase === 'error'
-              ? `Continue to payment — ${formatRupees(price)}`
-              : paymentMode === 'whatsapp'
-                ? `Continue to payment — ${formatRupees(price)}`
-                : phase === 'error'
-                  ? `Pay ${formatRupees(price)} again`
-                  : `Pay ${formatRupees(price)}`}
+            {phase === 'error'
+              ? `Pay ${formatRupees(price)} again`
+              : `Pay ${formatRupees(price)}`}
           </button>
         )}
       </form>

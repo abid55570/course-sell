@@ -47,3 +47,6 @@ storage/renders/
 data/*.db
 data/*.db-shm
 data/*.db-wal
+
+# Timestamped backups of .env made when rotating secrets.
+.env.bak-*

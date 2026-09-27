@@ -15,7 +15,7 @@ export default function PricingLadder({
   everythingBundle,
   pairBundle,
 }: {
-  paymentMode: 'razorpay' | 'whatsapp' | 'dev';
+  paymentMode: 'razorpay' | 'dev';
   pricingLadder: { single: number; pair: number; allSix: number };
   everythingBundle?: Bundle;
   pairBundle?: Bundle;
@@ -25,7 +25,8 @@ export default function PricingLadder({
   // products it actually contains today), not a hardcoded "six" — this label
   // keeps reading correctly if the bundle ever grows.
   const everythingCount = everythingBundle?.components.length ?? 0;
-  const downloadLabel = paymentMode === 'whatsapp' ? 'Delivered by email' : 'Instant download';
+  void paymentMode;
+  const downloadLabel = 'Instant download';
   const pairTitle = pairBundle?.title?.split(' — ')[0] ?? 'Popular pair';
   const pairSavings = pairBundle?.separatePrice ? pairBundle.separatePrice - pricingLadder.pair : 0;
 

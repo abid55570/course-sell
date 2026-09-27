@@ -12,9 +12,7 @@ import { formatRupees } from '@/lib/format';
 
 // Built per render rather than declared as a module constant: the prices it
 // quotes come from the catalog, which is a database read now.
-// paymentMode affects how the FAQ answers refer to payments and downloads.
-function buildFaqItems(pairPrice: number, everythingBundlePrice: number | undefined, paymentMode: PaymentMode): FaqItem[] {
-  const isWhatsapp = paymentMode === 'whatsapp';
+function buildFaqItems(pairPrice: number, everythingBundlePrice: number | undefined, _paymentMode: PaymentMode): FaqItem[] {
   return [
   {
     question: 'What if my download link never arrives?',
@@ -22,9 +20,7 @@ function buildFaqItems(pairPrice: number, everythingBundlePrice: number | undefi
   },
   {
     question: 'How do I get my product after I pay?',
-    answer: isWhatsapp
-      ? 'After we confirm your payment on WhatsApp, we email a download link to the address you gave. Check inbox and spam.'
-      : 'The moment your payment clears, we email a download link to the address you used at checkout.',
+    answer: 'The moment your payment clears, we email a download link to the address you used at checkout.',
   },
   {
     question: 'Do I need an account?',
@@ -32,9 +28,7 @@ function buildFaqItems(pairPrice: number, everythingBundlePrice: number | undefi
   },
   {
     question: 'What payment methods work?',
-    answer: isWhatsapp
-      ? 'Transfer to UPI using the details on the checkout page. We confirm on WhatsApp once the money arrives.'
-      : 'UPI, cards and netbanking, all through Razorpay.',
+    answer: 'UPI, cards and netbanking, all through Razorpay.',
   },
   {
     question: `Can I buy more than one product?`,
@@ -55,7 +49,7 @@ function buildFaqItems(pairPrice: number, everythingBundlePrice: number | undefi
   ];
 }
 
-type PaymentMode = 'razorpay' | 'whatsapp' | 'dev';
+type PaymentMode = 'razorpay' | 'dev';
 
 export default async function Home() {
   // The homepage used to list every product grouped by category

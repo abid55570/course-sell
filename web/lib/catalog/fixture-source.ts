@@ -42,6 +42,7 @@ import { allTalkingToYourParentsProducts } from './products/talking-to-your-pare
 import { allTheTenSeriesProducts } from './products/the-ten-series';
 import { allScamFilesProducts } from './products/the-scam-files';
 import { n8nMegaPack, digitalMarketingEbooksBundle } from './products/digital-tools';
+import { allReelBundleProducts } from './products/reel-bundles';
 import { bundles as bundleList } from './bundles';
 
 /**
@@ -78,6 +79,7 @@ export function fixtureCatalog(): { products: Product[]; bundles: Bundle[] } {
       ...allScamFilesProducts,
       n8nMegaPack,
       digitalMarketingEbooksBundle,
+      ...allReelBundleProducts,
     ],
     bundles: bundleList,
   };

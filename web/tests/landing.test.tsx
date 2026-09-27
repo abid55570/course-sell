@@ -112,11 +112,17 @@ describe('ProductGrid', () => {
       const card = container.querySelector(`a[href="/p/${product.slug}"]`);
       expect(card, `missing card link for ${product.slug}`).not.toBeNull();
       expect(within(card as HTMLElement).getByText(formatRupees(product.price))).toBeDefined();
-      expect(
-        within(card as HTMLElement).getByText(
-          `${product.format} · ${product.fileCount} ${product.fileCount === 1 ? 'file' : 'files'}`
-        )
-      ).toBeDefined();
+      // Mirrors ProductCard's own meta line: the file count is dropped when a
+      // product has no verified fileCount (the reel bundles deliberately claim
+      // none — see web/lib/catalog/products/reel-bundles.ts), so the label is
+      // just the format on its own rather than "… · undefined files".
+      const expectedMeta = [
+        product.format,
+        product.fileCount ? `${product.fileCount} ${product.fileCount === 1 ? 'file' : 'files'}` : null,
+      ]
+        .filter(Boolean)
+        .join(' · ');
+      expect(within(card as HTMLElement).getByText(expectedMeta)).toBeDefined();
     }
   });
 

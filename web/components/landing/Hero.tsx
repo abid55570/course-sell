@@ -18,26 +18,13 @@ const RAZORPAY_TERMS = [
   'NO SUBSCRIPTION',
 ] as const;
 
-const WHATSAPP_TERMS = [
-  'ONE PAYMENT',
-  'INSTANT DOWNLOAD',
-  'PAY BY UPI TRANSFER',
-  'WHATSAPP CONFIRMATION',
-  'NO ACCOUNT NEEDED',
-  'NO SUBSCRIPTION',
-] as const;
-
 const RAZORPAY_SUB =
   'Dropdesk sells finished digital products you can start using the day you buy them. ' +
   'Pay once, download immediately, priced honestly in rupees. No subscription, no login, no waiting.';
 
-const WHATSAPP_SUB =
-  'Dropdesk sells finished digital products delivered by email. ' +
-  'Pay by UPI, confirm on WhatsApp, download immediately. No subscription, no login, no waiting.';
-
-export default function Hero({ paymentMode }: { paymentMode: 'razorpay' | 'whatsapp' | 'dev' }) {
-  const terms = paymentMode === 'whatsapp' ? WHATSAPP_TERMS : RAZORPAY_TERMS;
-  const sub = paymentMode === 'whatsapp' ? WHATSAPP_SUB : RAZORPAY_SUB;
+export default function Hero({ paymentMode: _paymentMode }: { paymentMode: 'razorpay' | 'dev' }) {
+  const terms = RAZORPAY_TERMS;
+  const sub = RAZORPAY_SUB;
 
   return (
     <>

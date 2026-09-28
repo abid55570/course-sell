@@ -109,3 +109,18 @@ export const DIGITAL_LIBRARY: Category = {
   label: 'Digital Library',
   accent: { name: 'violet', hex: '#6741d9' },
 };
+
+/**
+ * Raw vertical video clips for Reels/Shorts/TikTok editors, sold as a Google
+ * Drive folder per theme — a genuinely different product from everything
+ * above: not a finished PDF or course, no listing-text source file, priced
+ * ₹29–99 as an impulse buy rather than the ₹149+ floor every other category
+ * sits above. Its own category rather than folded into Video Courses (gold,
+ * structured HD courses, ₹899+) or Digital Library (violet), which would
+ * mislead a buyer filtering by either.
+ */
+export const REEL_BUNDLES: Category = {
+  slug: 'reel-bundles',
+  label: 'Reel Bundles',
+  accent: { name: 'grape', hex: '#9c36b5' },
+};

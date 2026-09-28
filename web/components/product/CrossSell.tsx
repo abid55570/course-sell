@@ -23,11 +23,12 @@ export default function CrossSell({ product, pair, bundle, paymentMode }: {
   product: Product;
   pair: Product;
   bundle?: Bundle;
-  paymentMode: 'razorpay' | 'whatsapp' | 'dev';
+  paymentMode: 'razorpay' | 'dev';
 }) {
   const separately = product.price + pair.price;
   const saves = bundle ? separately - bundle.price : 0;
-  const paymentLabel = paymentMode === 'whatsapp' ? 'UPI' : 'card or UPI';
+  void paymentMode;
+  const paymentLabel = 'card or UPI';
 
   return (
     <div className="border-t border-ink/10 pt-8">

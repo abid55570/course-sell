@@ -2,25 +2,30 @@
  * Reads the API's payment mode flag.
  *
  * Cached on the edge with a short revalidation window (5 minutes). A
- * conservative 'whatsapp' fallback means the storefront never claims a payment
- * path that isn't running if the API is unreachable.
+ * conservative 'dev' fallback means the storefront never claims a live
+ * payment path that isn't running when the API is unreachable — 'razorpay'
+ * is returned only when the API explicitly says so.
+ *
+ * The store used to also offer a 'whatsapp' interim manual UPI path, kept
+ * here as a fallback. That has been removed: Razorpay is the only live path
+ * and 'dev' is the local auto-complete for development.
  */
 
 import { PUBLIC_API_BASE } from './env';
 
-export type PaymentMode = 'razorpay' | 'whatsapp' | 'dev';
+export type PaymentMode = 'razorpay' | 'dev';
 
 async function fetchPaymentMode(): Promise<PaymentMode> {
   try {
     const res = await fetch(`${PUBLIC_API_BASE}/api/orders/payment-mode`, {
       next: { revalidate: 300 },
     });
-    if (!res.ok) return 'whatsapp';
+    if (!res.ok) return 'dev';
     const body = (await res.json()) as { payment_mode?: string };
-    if (body.payment_mode === 'razorpay' || body.payment_mode === 'dev') return body.payment_mode;
-    return 'whatsapp';
+    if (body.payment_mode === 'razorpay') return 'razorpay';
+    return 'dev';
   } catch {
-    return 'whatsapp';
+    return 'dev';
   }
 }
 

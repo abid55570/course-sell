@@ -142,10 +142,7 @@ export default async function BundlePage({ params }: { params: Promise<{ slug: s
             <>
               <p className="mt-2 text-white/85">
                 {formatRupees(bundle.price)}
-                {paymentMode === 'whatsapp'
-                  ? ', delivered by email after we confirm your UPI payment.'
-                  : ', instant download by email.'}{' '}
-                Pay by {paymentMode === 'whatsapp' ? 'UPI' : 'card or UPI'}.
+                , instant download by email. Pay by card or UPI.
               </p>
               <div className="mt-6">
                 <BuyButton slug={bundle.slug} title={bundle.title} price={bundle.price} className="bg-white text-primary" />

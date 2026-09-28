@@ -30,7 +30,14 @@ export type BundleSlug = string;
  * vermilion brand primary (#C42B22) — see lib/catalog/categories.ts.
  */
 export type AccentColor = {
-  name: 'green' | 'gold' | 'blue' | 'violet' | 'teal' | 'orange' | 'pink' | 'lime' | 'indigo' | 'cyan';
+  name:
+    | 'green' | 'gold' | 'blue' | 'violet' | 'teal' | 'orange' | 'pink' | 'lime' | 'indigo' | 'cyan'
+    // 'grape' added for REEL_BUNDLES (lib/catalog/categories.ts): the ten
+    // names above were already each claimed by an existing category, so this
+    // widens the union rather than reuse one — picked, same as the three
+    // before it, for hue separation from every accent already in use and
+    // from the vermilion brand primary (#C42B22).
+    | 'grape';
   hex: string;
 };
 

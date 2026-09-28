@@ -41,7 +41,7 @@ export const honestPricing: BlogPost = {
       heading: 'How to read the figures',
       paragraphs: [
         'The price shown is the price you pay. There are no tiers, no introductory periods, and no hidden checkout charges. The payment page shows the amount before you confirm.',
-        'If you are paying by UPI through WhatsApp, the amount is the same. The path is longer - confirm on WhatsApp, paste a payment reference - but the price does not change.',
+        'Payments run through Razorpay: UPI, cards and netbanking, all in one flow. Only your name and email are collected at checkout, and there is no account or login to create.',
       ],
     },
   ],

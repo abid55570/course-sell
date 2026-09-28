@@ -188,18 +188,14 @@ function checkRequiredEnv(vars = REQUIRED_ENV_VARS, env = process.env) {
 
 if (require.main === module) {
   checkRequiredEnv();
-  // Announce the live payment path so a missing/short WHATSAPP_NUMBER — which
-  // silently drops to 'dev' (503s every prod checkout) — is caught at boot.
-  const manualPay = require('./services/manual-payment');
-  const payMode = manualPay.paymentMode();
-  if (payMode === 'razorpay') {
+  // Announce the live payment path so a missing key setup — which silently
+  // drops to 'dev' (503s every prod checkout) — is caught at boot.
+  if (require('./services/payments').isConfigured()) {
     console.log('[startup] PAYMENT MODE: razorpay (live keys configured)');
-  } else if (payMode === 'whatsapp') {
-    console.log(`[startup] PAYMENT MODE: whatsapp — orders taken over WhatsApp at ${manualPay.whatsappNumber()}`);
   } else {
     console.warn(
-      '[startup] PAYMENT MODE: dev — no Razorpay keys and no usable WHATSAPP_NUMBER. ' +
-      'Checkout will FAIL (503) in production. Set WHATSAPP_NUMBER (10+ digits) or Razorpay keys.'
+      '[startup] PAYMENT MODE: dev — no Razorpay keys configured. ' +
+      'Checkout will FAIL (503) in production. Set RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET.'
     );
   }
   // Loud, hard-to-miss warning: this mode lets /api/orders/:id/verify mark

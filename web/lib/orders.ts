@@ -19,16 +19,11 @@ export type CreateOrderInput = {
 
 /**
  * Which payment path the server is offering. 'razorpay' whenever real keys
- * exist; 'whatsapp' is the interim manual path while onboarding is blocked;
- * 'dev' is the local auto-complete.
+ * exist; 'dev' is the local auto-complete for development. A 'whatsapp'
+ * interim manual UPI path used to live here alongside the two others; it
+ * has been removed and the store now runs Razorpay-only.
  */
-export type PaymentMode = 'razorpay' | 'whatsapp' | 'dev';
-
-export type WhatsappCheckout = {
-  number: string;
-  link: string;
-  message: string;
-};
+export type PaymentMode = 'razorpay' | 'dev';
 
 export type CreateOrderResponse = {
   order_id: string;
@@ -36,7 +31,6 @@ export type CreateOrderResponse = {
   currency: string;
   product: { type: string; title: string };
   payment_mode?: PaymentMode;
-  whatsapp?: WhatsappCheckout | null;
   razorpay: {
     configured: boolean;
     key_id: string;
@@ -119,27 +113,6 @@ export function verifyOrder(orderId: string, payload: VerifyOrderInput): Promise
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
   });
-}
-
-/**
- * The buyer reporting a payment reference on the WhatsApp path.
- *
- * This does not deliver anything — it moves the order to `submitted` for an
- * admin to verify against the actual conversation. See
- * api/services/manual-payment.js.
- */
-export function submitPaymentReference(
-  orderId: string,
-  reference: string
-): Promise<ApiResult<{ ok: true; status: string }>> {
-  return apiFetch<{ ok: true; status: string }>(
-    `/api/orders/${encodeURIComponent(orderId)}/reference`,
-    {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ reference }),
-    }
-  );
 }
 
 export function getOrder(orderId: string): Promise<ApiResult<OrderStatusResponse>> {

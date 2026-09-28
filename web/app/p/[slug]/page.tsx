@@ -24,6 +24,16 @@ import BuyReassurance from '@/components/product/BuyReassurance';
 import StickyBuyBar from '@/components/product/StickyBuyBar';
 import DeliveryManifest from '@/components/product/DeliveryManifest';
 import DrivePreview from '@/components/product/DrivePreview';
+import reelSamplesRaw from '@/lib/catalog/reel-samples.json';
+
+// Slug -> up to 4 Drive file ids for the "What's inside" preview. The JSON
+// carries a `_readme` string alongside the arrays, so cast through unknown
+// and drop non-array values rather than fighting TypeScript's inferred type.
+const REEL_SAMPLES: Record<string, string[]> = Object.fromEntries(
+  Object.entries(reelSamplesRaw as Record<string, unknown>).filter(
+    ([, v]) => Array.isArray(v)
+  ) as [string, string[]][]
+);
 import Faq from '@/components/landing/Faq';
 import Footer from '@/components/landing/Footer';
 
@@ -215,7 +225,10 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
       ) : null}
 
       {product.driveFolderId ? (
-        <DrivePreview folderId={product.driveFolderId} productTitle={product.title} />
+        <DrivePreview
+          productTitle={product.title}
+          sampleFileIds={REEL_SAMPLES[product.slug] ?? []}
+        />
       ) : null}
 
       {pair ? (

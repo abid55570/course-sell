@@ -23,6 +23,7 @@ import SetAnchor from '@/components/product/SetAnchor';
 import BuyReassurance from '@/components/product/BuyReassurance';
 import StickyBuyBar from '@/components/product/StickyBuyBar';
 import DeliveryManifest from '@/components/product/DeliveryManifest';
+import DrivePreview from '@/components/product/DrivePreview';
 import Faq from '@/components/landing/Faq';
 import Footer from '@/components/landing/Footer';
 
@@ -211,6 +212,10 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
             <Gallery slug={product.slug} images={secondaryImages} />
           </div>
         </section>
+      ) : null}
+
+      {product.driveFolderId ? (
+        <DrivePreview folderId={product.driveFolderId} productTitle={product.title} />
       ) : null}
 
       {pair ? (

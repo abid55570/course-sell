@@ -96,6 +96,11 @@ export const motivationReelBundle: Product = {
   price: 99,
   accent: REEL_BUNDLES.accent,
   category: REEL_BUNDLES,
+  // The reel-bundles category's flagship on the homepage: broad-appeal
+  // theme, no IP-derived footage baked into the concept (unlike the sports
+  // or cartoon bundles), and one of the priciest at ₹99 so featuring it
+  // signals the top of the range for this category.
+  featured: true,
   format: 'Reel Pack',
   longDescription: [
     {
@@ -1515,3 +1520,20 @@ export const reelBundleDriveFolderIds: Record<string, string> = {
   'abandoned-style-reels-bundle': '1Gt-p2J88h2PeeaQ8k4AYfEM9JisWHuc9',
   'reel-stop-game-bundle': '1OI1BwSh8zWQXfN1cXeZvxi3UPg4lALG2',
 };
+
+/**
+ * Attach the Drive folder id to every reel-bundle product so its page can
+ * render the live "What's inside" preview (see components/product/
+ * DrivePreview.tsx). We do this here, once, instead of hand-adding the field
+ * to every product literal above: the map right above is already the single
+ * source of truth for slug -> folder id, and copying it into 47 product
+ * literals is exactly the kind of drift Product.driveFolderId is trying to
+ * avoid. Mutating in place is safe because these product objects are
+ * consumed only after this module has finished loading.
+ */
+for (const product of allReelBundleProducts) {
+  const folderId = reelBundleDriveFolderIds[product.slug];
+  if (folderId) {
+    product.driveFolderId = folderId;
+  }
+}

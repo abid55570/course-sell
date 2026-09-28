@@ -19,6 +19,10 @@ export const n8nMegaPack: Product = {
   anchorPrice: 2999,
   accent: AUTOMATION_AND_AI.accent,
   category: AUTOMATION_AND_AI,
+  // The category's only product, and its flagship: everything above it in
+  // the catalogue is a ₹149+ single guide, and this is the ₹799 anchor of
+  // its own new category.
+  featured: true,
   format: 'Template Pack',
   fileCount: 25000,
   longDescription: [
@@ -101,6 +105,9 @@ export const digitalMarketingEbooksBundle: Product = {
   anchorPrice: 1499,
   accent: DIGITAL_LIBRARY.accent,
   category: DIGITAL_LIBRARY,
+  // The category's only product, and its flagship: 24 ebooks at ₹399 anchors
+  // the Digital Library section on the homepage until more products land.
+  featured: true,
   format: 'PDF Bundle',
   fileCount: 24,
   longDescription: [

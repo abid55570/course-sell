@@ -138,17 +138,34 @@ export default function OrderView({ footer }: { footer: FooterData }) {
           </span>
           <h1 className="mt-3 font-display text-2xl font-bold text-ink sm:text-3xl">{title}</h1>
 
-          <p className="mt-3 text-ink-soft" role="status">
-            {isEmailProduct && order.delivery_status === 'delivered' ? (
-              <>Your Google Drive access link has been emailed to <strong>{order.buyer_email}</strong>. Check your inbox and spam folder.</>
-            ) : isEmailProduct && ['pending', 'sending'].includes(order.delivery_status || '') ? (
-              <>Your payment is confirmed. We are sending your Google Drive access link to <strong>{order.buyer_email}</strong>.</>
-            ) : isEmailProduct && order.delivery_status === 'failed' ? (
-              <>Your payment is confirmed, but your access email has not been sent successfully yet. We will retry automatically where possible. Contact support if it remains delayed.</>
-            ) : (
-              <>Content is provided by email. We cannot confirm email delivery for this order here. Check your inbox or contact support with your order ID.</>
-            )}
-          </p>
+          {isEmailProduct && order.drive_link ? (
+            <div className="mt-6">
+              <a
+                href={order.drive_link}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-block rounded-lg bg-primary px-6 py-3 text-sm font-semibold uppercase tracking-wide text-primary-foreground"
+              >
+                Open Google Drive folder
+              </a>
+              <p className="mt-3 text-xs text-ink-soft">
+                Bookmark this page — the same link is in the email we sent to{' '}
+                <strong>{order.buyer_email}</strong> (check spam too).
+              </p>
+            </div>
+          ) : (
+            <p className="mt-3 text-ink-soft" role="status">
+              {isEmailProduct && order.delivery_status === 'delivered' ? (
+                <>Your Google Drive access link has been emailed to <strong>{order.buyer_email}</strong>. Check your inbox and spam folder.</>
+              ) : isEmailProduct && ['pending', 'sending'].includes(order.delivery_status || '') ? (
+                <>Your payment is confirmed. We are sending your Google Drive access link to <strong>{order.buyer_email}</strong>.</>
+              ) : isEmailProduct && order.delivery_status === 'failed' ? (
+                <>Your payment is confirmed, but your access email has not been sent successfully yet. We will retry automatically where possible. Contact support if it remains delayed.</>
+              ) : (
+                <>Content is provided by email. We cannot confirm email delivery for this order here. Check your inbox or contact support with your order ID.</>
+              )}
+            </p>
+          )}
           <p className="mt-4 text-sm text-ink-soft">
             Need help? Email <a href={`mailto:${SUPPORT_EMAIL}?subject=Order%20${order.order_id}`} className="underline">{SUPPORT_EMAIL}</a>. You will not be charged again.
           </p>

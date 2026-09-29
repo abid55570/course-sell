@@ -62,7 +62,7 @@ require.extensions['.ts'] = function compileTs(mod, filename) {
   mod._compile(outputText, filename);
 };
 
-const { reelBundleDriveFolderIds } = require(
+const { reelBundleDriveFolderIds, reelBundleComboSlugs } = require(
   path.join(__dirname, '..', '..', 'web', 'lib', 'catalog', 'products', 'reel-bundles.ts')
 );
 
@@ -100,6 +100,30 @@ async function main() {
         `(run api/scripts/migrate-catalog.js first, then re-run this script):`
     );
     for (const s of missing) console.log(`  - ${s}`);
+  }
+
+  // Combo packs stitch several reel bundles into one purchase. Until a
+  // merged Drive folder is added for a combo, unpublish it — a published
+  // combo with no drive_link would take an order and then fail delivery
+  // with "Product needs an enabled HTTPS Google Drive link" (see
+  // api/services/email-delivery.js). A combo that DOES have a folder id
+  // in reelBundleDriveFolderIds is treated like any other product and
+  // stays published, so this pass is idempotent and safe to re-run.
+  if (Array.isArray(reelBundleComboSlugs) && reelBundleComboSlugs.length > 0) {
+    const combosLackingFolder = reelBundleComboSlugs.filter(
+      (slug) => !reelBundleDriveFolderIds[slug]
+    );
+    if (combosLackingFolder.length > 0) {
+      const result = await db.run(
+        `UPDATE catalog_products
+            SET is_published = false, send_drive_in_email = false, updated_at = NOW()
+          WHERE slug = ANY($1::text[]) AND drive_link IS NULL`,
+        [combosLackingFolder]
+      );
+      console.log(
+        `Combos kept unpublished (no merged Drive folder yet): ${result.rowCount} of ${combosLackingFolder.length}.`
+      );
+    }
   }
 }
 

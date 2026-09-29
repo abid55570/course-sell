@@ -24,6 +24,7 @@ import BuyReassurance from '@/components/product/BuyReassurance';
 import StickyBuyBar from '@/components/product/StickyBuyBar';
 import DeliveryManifest from '@/components/product/DeliveryManifest';
 import DrivePreview from '@/components/product/DrivePreview';
+import RelatedPicks from '@/components/product/RelatedPicks';
 import reelSamplesRaw from '@/lib/catalog/reel-samples.json';
 
 // Slug -> up to 4 Drive file ids for the "What's inside" preview. The JSON
@@ -230,6 +231,14 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
           sampleFileIds={REEL_SAMPLES[product.slug] ?? []}
         />
       ) : null}
+
+      <RelatedPicks
+        eyebrow={`More from ${product.category.label}`}
+        headline="Build a bigger set in one visit."
+        products={allProducts
+          .filter((p) => p.category.slug === product.category.slug && p.slug !== product.slug)
+          .slice(0, 6)}
+      />
 
       {pair ? (
         <section className="bg-canvas px-5 py-12 sm:px-10 lg:px-16">

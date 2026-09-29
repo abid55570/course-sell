@@ -1,8 +1,8 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import type { Product } from '@/lib/catalog';
-import { formatRupees } from '@/lib/format';
 import CoverFallback from './CoverFallback';
+import PriceBlock from './PriceBlock';
 
 export default function ProductCard({ product }: { product: Product }) {
   const cover = product.gallery.find((g) => g.role === 'cover') ?? product.gallery[0];
@@ -35,6 +35,21 @@ export default function ProductCard({ product }: { product: Product }) {
         ) : (
           <CoverFallback title={title} kicker={product.category.label} accentHex={product.accent.hex} />
         )}
+        {product.format === 'Combo Pack' ? (
+          <span
+            className="absolute left-2 top-2 rounded-sm px-1.5 py-0.5 font-mono text-[10px] font-bold uppercase tracking-wide text-ink shadow-md"
+            style={{ backgroundColor: product.accent.hex }}
+          >
+            Combo · Best value
+          </span>
+        ) : product.anchorPrice && product.anchorPrice > product.price ? (
+          <span
+            className="absolute left-2 top-2 rounded-sm px-1.5 py-0.5 font-mono text-[10px] font-bold uppercase tracking-wide text-ink shadow-md"
+            style={{ backgroundColor: product.accent.hex }}
+          >
+            -{Math.round(((product.anchorPrice - product.price) / product.anchorPrice) * 100)}%
+          </span>
+        ) : null}
       </div>
       <div className="flex flex-1 flex-col gap-1.5 border-t-2 p-4" style={{ borderColor: product.accent.hex }}>
         {product.audience ? (
@@ -46,9 +61,15 @@ export default function ProductCard({ product }: { product: Product }) {
           <h3 className="font-display text-lg font-bold leading-tight text-white">{title}</h3>
         )}
         {formatLine ? <p className="font-mono text-xs text-white/60">{formatLine}</p> : null}
-        <div className="mt-auto flex items-center justify-between pt-3">
-          <span className="font-display text-xl font-bold text-white">{formatRupees(product.price)}</span>
-          <span className="font-mono text-xs font-semibold uppercase tracking-wide text-white/70 group-hover:text-white">
+        <div className="mt-auto flex items-end justify-between gap-3 pt-3">
+          <PriceBlock
+            price={product.price}
+            anchorPrice={product.anchorPrice}
+            accentHex={product.accent.hex}
+            size="md"
+            variant="dark-surface"
+          />
+          <span className="whitespace-nowrap font-mono text-xs font-semibold uppercase tracking-wide text-white/70 group-hover:text-white">
             View →
           </span>
         </div>

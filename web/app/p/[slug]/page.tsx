@@ -25,6 +25,7 @@ import StickyBuyBar from '@/components/product/StickyBuyBar';
 import DeliveryManifest from '@/components/product/DeliveryManifest';
 import DrivePreview from '@/components/product/DrivePreview';
 import RelatedPicks from '@/components/product/RelatedPicks';
+import PriceBlock from '@/components/product/PriceBlock';
 import reelSamplesRaw from '@/lib/catalog/reel-samples.json';
 
 // Slug -> up to 4 Drive file ids for the "What's inside" preview. The JSON
@@ -94,10 +95,11 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
   const secondaryImages = product.gallery.filter((g) => g.role !== 'cover');
   const name = titleLead(product.title);
 
+  // The price now renders as its own PriceBlock so the crossed-out anchor
+  // and "SAVE ₹X" chip can show; keep the spec line for pages/trackers only.
   const specLine = [
     product.pageCount ? `${product.pageCount} PAGES` : null,
     product.trackerCount ? `${product.trackerCount} TRACKERS` : null,
-    formatRupees(product.price),
   ]
     .filter((part): part is string => Boolean(part))
     .join(' · ');
@@ -153,9 +155,20 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
             </h1>
             <span aria-hidden="true" className="mt-4 block h-1 w-20" style={{ backgroundColor: product.accent.hex }} />
             <p className="mt-5 max-w-xl text-white/80">{product.tagline}</p>
-            <p className="mt-5 font-mono text-xs font-semibold uppercase tracking-[0.15em] text-white/60">
-              {specLine}
-            </p>
+            {specLine ? (
+              <p className="mt-5 font-mono text-xs font-semibold uppercase tracking-[0.15em] text-white/60">
+                {specLine}
+              </p>
+            ) : null}
+            <div className="mt-5">
+              <PriceBlock
+                price={product.price}
+                anchorPrice={product.anchorPrice}
+                accentHex={product.accent.hex}
+                size="lg"
+                variant="dark-surface"
+              />
+            </div>
             <div className="mt-7 flex flex-wrap items-center gap-5">
               <BuyButton slug={product.slug} title={product.title} price={product.price} className="bg-white text-primary" />
               <BuyReassurance tone="dark" />

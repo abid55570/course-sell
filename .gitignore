@@ -11,6 +11,10 @@ node_modules
 
 # ...but product and blog artwork is real content
 !web/public/**/*.png
+# ...and the site favicon + apple-touch-icon (Next.js file-based icons in app/)
+!web/app/icon.png
+!web/app/apple-icon.png
+!web/app/opengraph-image.png
 
 # Secrets. .env carries the SMTP password, JWT/session secrets and API keys.
 # It was previously absent from this file, and a `git add -A` committed it.

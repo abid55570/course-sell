@@ -1414,6 +1414,233 @@ export const reelStopGameBundle: Product = {
   deliveryFiles: ['Reel-Stop-Game-Bundle.zip'],
 };
 
+/**
+ * Combo packs — cross-category bundles that stitch two or three sharp niches
+ * into one purchase. Each is priced below the sum of its parts and is
+ * positioned to sell to a creator who would otherwise pick just one pack.
+ *
+ * IMPORTANT — combos do NOT have their own Drive folder. Until the owner
+ * curates and shares one merged folder per combo, they must NOT go live:
+ * api/scripts/set-reel-bundle-drive-links.js unpublishes any combo slug (any
+ * slug ending in `-pack` in this file) that has no entry in
+ * reelBundleDriveFolderIds. Add the merged folder id to the map to publish.
+ *
+ * How to prepare a combo's folder: create a fresh Drive folder, add
+ * "Shortcut to Drive" pointers to each component folder inside it, share the
+ * parent 'Anyone with the link', paste its id in reelBundleDriveFolderIds
+ * with the combo's slug, and redeploy. That parent then behaves like any
+ * other reel-bundle folder — the buyer opens it and sees the sub-folders.
+ */
+export const aiXFootballCreatorPack: Product = {
+  slug: 'ai-x-football-creator-pack',
+  title: 'AI × Football Creator Pack',
+  tagline:
+    'Four packs for the faceless AI-narration football page: match highlights, star clips, viral facts and AI cutaways. Priced below buying each on its own.',
+  price: 199,
+  anchorPrice: 396,
+  accent: REEL_BUNDLES.accent,
+  category: REEL_BUNDLES,
+  format: 'Combo Pack',
+  longDescription: [
+    {
+      heading: 'Built for one page style',
+      paragraphs: [
+        'The faceless football page that scripts AI voiceovers over highlight clips is one of the fastest-growing formats on Reels and Shorts. This combo is every clip source that format needs, in one purchase: football match footage, footballer star clips, viral fact overlays for the voiceover hook, and AI-generated cutaways.',
+      ],
+    },
+    {
+      heading: 'What\'s inside',
+      paragraphs: [
+        'Football Reel Bundle — match highlights and stadium footage. Football Stars Reel Bundle — individual player clips. Facts Reels Bundle — text-overlay fact clips ideal for AI-voice hooks. AI Reel Bundle — AI-generated cutaways and B-roll.',
+      ],
+    },
+  ],
+  bulletPoints: [
+    'Four packs in one — normally ₹396, this pack is ₹199 (save ₹197)',
+    'Every clip vertical MP4, ready for CapCut / Premiere',
+    'Delivered as one Google Drive folder holding all four sub-folders',
+  ],
+  faqs: [REEL_BUNDLE_FORMAT_FAQ, REEL_BUNDLE_LICENSE_FAQ, REEL_BUNDLE_REFUND_FAQ],
+  tags: ['ai football combo', 'faceless creator pack', 'football reels combo'],
+  gallery: [],
+  deliveryFiles: ['AI-x-Football-Creator-Pack.zip'],
+};
+
+export const sportsDominationCombo: Product = {
+  slug: 'sports-domination-combo-pack',
+  title: 'Sports Domination Combo',
+  tagline:
+    'Five sport packs for a full multi-sport channel: cricket, football, football stars, football legends and basketball. One combined Drive folder, one payment.',
+  price: 249,
+  anchorPrice: 495,
+  accent: REEL_BUNDLES.accent,
+  category: REEL_BUNDLES,
+  format: 'Combo Pack',
+  longDescription: [
+    {
+      heading: 'Every sport a highlight page posts',
+      paragraphs: [
+        'A single sport gets old fast on the algorithm. This combo hands you five, so one page can cover an IPL match, a Premier League highlight, a Ronaldo edit and an NBA dunk in one week without buying five separate packs.',
+      ],
+    },
+    {
+      heading: 'What\'s inside',
+      paragraphs: [
+        'Cricket Reels Bundle. Football Reel Bundle. Football Stars Reel Bundle. Football Legends Reel Bundle. Basketball Reel Bundle.',
+      ],
+    },
+  ],
+  bulletPoints: [
+    'Five packs in one — normally ₹495, this pack is ₹249 (save ₹246)',
+    'Covers cricket, football and basketball formats in one buy',
+    'Delivered as one Google Drive folder holding all five sub-folders',
+  ],
+  faqs: [REEL_BUNDLE_FORMAT_FAQ, REEL_BUNDLE_LICENSE_FAQ, REEL_BUNDLE_REFUND_FAQ],
+  tags: ['sports combo', 'cricket football basketball combo'],
+  gallery: [],
+  deliveryFiles: ['Sports-Domination-Combo.zip'],
+};
+
+export const gamerMegaCombo: Product = {
+  slug: 'gamer-mega-combo-pack',
+  title: 'Gamer Mega Combo',
+  tagline:
+    'Four packs for a full gaming edits page: general gameplay, Roblox, open-world (GTA-style) and stickman animations. One combined Drive folder, one payment.',
+  price: 199,
+  anchorPrice: 396,
+  accent: REEL_BUNDLES.accent,
+  category: REEL_BUNDLES,
+  format: 'Combo Pack',
+  longDescription: [
+    {
+      heading: 'Every gaming format one page posts',
+      paragraphs: [
+        'Gaming pages need footage across sub-niches or the algorithm tags them narrowly. This combo covers general gameplay highlights, Roblox (the biggest under-16 audience), open-world GTA-style clips (the biggest 16–24 audience) and stickman animations (the highest-CPM comment bait).',
+      ],
+    },
+    {
+      heading: 'What\'s inside',
+      paragraphs: [
+        'Gaming Reels Bundle. Roblox Reel Bundle. Open-World Game Reel Bundle. Stickman Reels Bundle.',
+      ],
+    },
+  ],
+  bulletPoints: [
+    'Four packs in one — normally ₹396, this pack is ₹199 (save ₹197)',
+    'Kids, teens and adult gaming audiences covered in one pack',
+    'Delivered as one Google Drive folder holding all four sub-folders',
+  ],
+  faqs: [REEL_BUNDLE_FORMAT_FAQ, REEL_BUNDLE_LICENSE_FAQ, REEL_BUNDLE_REFUND_FAQ],
+  tags: ['gamer combo', 'gaming reels pack', 'roblox gta combo'],
+  gallery: [],
+  deliveryFiles: ['Gamer-Mega-Combo.zip'],
+};
+
+export const hustleCreatorPack: Product = {
+  slug: 'hustle-creator-pack',
+  title: 'Hustle Creator Pack',
+  tagline:
+    'Five packs for the money-mindset creator page: motivational speeches, hustle clips, daily hacks, AI B-roll and stock-market visuals. Priced below buying each separately.',
+  price: 249,
+  anchorPrice: 495,
+  accent: REEL_BUNDLES.accent,
+  category: REEL_BUNDLES,
+  format: 'Combo Pack',
+  longDescription: [
+    {
+      heading: 'The full stack for a self-improvement page',
+      paragraphs: [
+        'A hustle / self-improvement / finance page rotates between four content types every week: a motivation edit on Monday, a daily hack on Tuesday, a market breakdown on Wednesday and a text-over-AI-B-roll on Thursday. This combo hands you every one of those in a single Drive folder.',
+      ],
+    },
+    {
+      heading: 'What\'s inside',
+      paragraphs: [
+        'Motivation Reel Bundle. Hustle Mindset Reel Bundle. Daily Hack Reel Bundle. AI Reel Bundle. Stock Market Reel Bundle.',
+      ],
+    },
+  ],
+  bulletPoints: [
+    'Five packs in one — normally ₹495, this pack is ₹249 (save ₹246)',
+    'Enough variety for a week\'s posting without repeating footage',
+    'Delivered as one Google Drive folder holding all five sub-folders',
+  ],
+  faqs: [REEL_BUNDLE_FORMAT_FAQ, REEL_BUNDLE_LICENSE_FAQ, REEL_BUNDLE_REFUND_FAQ],
+  tags: ['hustle combo', 'motivation ai combo', 'self improvement pack'],
+  gallery: [],
+  deliveryFiles: ['Hustle-Creator-Pack.zip'],
+};
+
+export const editorsToolkitPack: Product = {
+  slug: 'editors-toolkit-pack',
+  title: 'Editor\'s Toolkit',
+  tagline:
+    'Six packs an editor actually needs: video-editing techniques, typography, animation, camera tricks, motion graphics and lofi music beds. One folder, one payment.',
+  price: 299,
+  anchorPrice: 594,
+  accent: REEL_BUNDLES.accent,
+  category: REEL_BUNDLES,
+  format: 'Combo Pack',
+  longDescription: [
+    {
+      heading: 'Not clips to post — clips to edit with',
+      paragraphs: [
+        'The other combos are footage a creator posts. This one is footage a creator edits with: title cards, transition overlays, camera tricks to paste over their own shots, animation loops, motion-graphic accents and licence-free background music. Positioned at the editor buying B-roll and assets, not the page owner buying content.',
+      ],
+    },
+    {
+      heading: 'What\'s inside',
+      paragraphs: [
+        'Video Editing Reel Bundle. Typography Reel Bundle. Animated Video Bundle. Camera Tricks Reel Bundle. Glowing Motion Graphic Bundle. Lofi Music Reel Bundle.',
+      ],
+    },
+  ],
+  bulletPoints: [
+    'Six packs in one — normally ₹594, this pack is ₹299 (save ₹295)',
+    'Titles, transitions, graphics and background music in one download',
+    'Delivered as one Google Drive folder holding all six sub-folders',
+  ],
+  faqs: [REEL_BUNDLE_FORMAT_FAQ, REEL_BUNDLE_LICENSE_FAQ, REEL_BUNDLE_REFUND_FAQ],
+  tags: ['editor pack', 'motion graphics combo', 'creator toolkit'],
+  gallery: [],
+  deliveryFiles: ['Editors-Toolkit-Pack.zip'],
+};
+
+export const facelessContentPack: Product = {
+  slug: 'faceless-content-pack',
+  title: 'Faceless Content Pack',
+  tagline:
+    'Five packs for the faceless creator: satisfying loops, viral facts, lofi music, timelapses and luxury cars. Post without ever showing your face.',
+  price: 199,
+  anchorPrice: 495,
+  accent: REEL_BUNDLES.accent,
+  category: REEL_BUNDLES,
+  format: 'Combo Pack',
+  longDescription: [
+    {
+      heading: 'For people who will not show their face',
+      paragraphs: [
+        'The largest under-served creator segment is people who want to post but do not want their face on camera. This combo is five formats that need zero personal footage: satisfying visual loops, text-overlay facts, lofi music beds, timelapse footage and luxury-lifestyle B-roll. Assemble a full posting schedule without owning a camera.',
+      ],
+    },
+    {
+      heading: 'What\'s inside',
+      paragraphs: [
+        'Satisfying Reels Bundle. Facts Reels Bundle. Lofi Music Reel Bundle. Timelapse Reel Bundle. Luxury Car & Bike Reel Bundle.',
+      ],
+    },
+  ],
+  bulletPoints: [
+    'Five packs in one — normally ₹495, this pack is ₹199 (save ₹296)',
+    'Every format works with text overlay + voiceover, no camera needed',
+    'Delivered as one Google Drive folder holding all five sub-folders',
+  ],
+  faqs: [REEL_BUNDLE_FORMAT_FAQ, REEL_BUNDLE_LICENSE_FAQ, REEL_BUNDLE_REFUND_FAQ],
+  tags: ['faceless creator', 'no camera combo', 'faceless content pack'],
+  gallery: [],
+  deliveryFiles: ['Faceless-Content-Pack.zip'],
+};
+
 export const allReelBundleProducts: Product[] = [
   motivationReelBundle,
   animeReelBundle,
@@ -1462,6 +1689,31 @@ export const allReelBundleProducts: Product[] = [
   madScientistReelBundle,
   abandonedStyleReelsBundle,
   reelStopGameBundle,
+  // Combo packs — cross-category bundles. Kept unpublished by
+  // set-reel-bundle-drive-links.js until each has a merged Drive folder in
+  // reelBundleDriveFolderIds (see the block above these definitions).
+  aiXFootballCreatorPack,
+  sportsDominationCombo,
+  gamerMegaCombo,
+  hustleCreatorPack,
+  editorsToolkitPack,
+  facelessContentPack,
+];
+
+/**
+ * Slugs of combo packs — read by api/scripts/set-reel-bundle-drive-links.js
+ * to unpublish them until their merged Drive folder id is added to
+ * reelBundleDriveFolderIds. Kept as an explicit list rather than a slug
+ * pattern so a future non-combo product ending in `-pack` cannot be
+ * silently unpublished by accident.
+ */
+export const reelBundleComboSlugs: string[] = [
+  'ai-x-football-creator-pack',
+  'sports-domination-combo-pack',
+  'gamer-mega-combo-pack',
+  'hustle-creator-pack',
+  'editors-toolkit-pack',
+  'faceless-content-pack',
 ];
 
 /**

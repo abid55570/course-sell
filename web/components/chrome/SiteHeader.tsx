@@ -33,9 +33,21 @@ export default async function SiteHeader({ searchSlot }: { searchSlot?: React.Re
       <div className="mx-auto flex h-14 max-w-6xl items-center gap-4 px-5 sm:px-10 lg:px-12">
         <Link
           href="/"
-          className="flex min-h-[44px] items-center font-display text-xl font-extrabold uppercase leading-none tracking-tight text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+          aria-label="Dropdesk home"
+          className="flex min-h-[44px] items-center text-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
         >
-          Dropdesk
+          {/* Native <img> rather than next/image: the wordmark is a tiny inline
+              SVG that must accept text colour via currentColor, and next/image
+              would render it as a raster raster with no theming. */}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/dropdesk-wordmark.svg"
+            alt=""
+            aria-hidden="true"
+            width={130}
+            height={26}
+            className="h-6 w-auto"
+          />
         </Link>
 
         <nav

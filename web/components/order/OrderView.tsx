@@ -7,15 +7,25 @@ import { getOrder, type OrderStatusResponse } from '@/lib/orders';
 import { formatRupees } from '@/lib/format';
 import { SUPPORT_EMAIL } from '@/lib/support';
 import ReceiptPrint from '@/components/order/ReceiptPrint';
+import RelatedPicks from '@/components/product/RelatedPicks';
 import Footer from '@/components/landing/Footer';
 import type { FooterData } from '@/lib/catalog/footer-data';
+import type { Product } from '@/lib/catalog';
 
 type LoadState =
   | { kind: 'loading' }
   | { kind: 'error'; message: string }
   | { kind: 'loaded'; order: OrderStatusResponse };
 
-function Shell({ children, footer }: { children: React.ReactNode; footer: FooterData }) {
+function Shell({
+  children,
+  footer,
+  after,
+}: {
+  children: React.ReactNode;
+  footer: FooterData;
+  after?: React.ReactNode;
+}) {
   return (
     <main className="min-h-[70vh] bg-canvas">
       {/* Padding lives on this inner wrapper, not on <main>, so it never
@@ -24,6 +34,7 @@ function Shell({ children, footer }: { children: React.ReactNode; footer: Footer
       <div className="px-5 py-16 sm:px-10 lg:px-16">
         <div className="mx-auto max-w-lg text-center">{children}</div>
       </div>
+      {after}
       <div className="mt-16">
         <Footer {...footer} />
       </div>
@@ -36,7 +47,7 @@ function Shell({ children, footer }: { children: React.ReactNode; footer: Footer
  * is a client component. The footer below it is not — it needs catalog data the
  * client has no way to read — so the server page above passes that in.
  */
-export default function OrderView({ footer }: { footer: FooterData }) {
+export default function OrderView({ footer, picks = [] }: { footer: FooterData; picks?: Product[] }) {
   const params = useParams<{ id: string }>();
   const orderId = params.id;
   const [state, setState] = useState<LoadState>({ kind: 'loading' });
@@ -115,8 +126,24 @@ export default function OrderView({ footer }: { footer: FooterData }) {
   const title = order.course_title || 'Your order';
   const isEmailProduct = ['course', 'catalog'].includes(order.product_type);
 
+  const postPurchasePicks =
+    order.status === 'completed'
+      ? picks.filter((p) => p.slug !== order.course_slug).slice(0, 6)
+      : [];
+
   return (
-    <Shell footer={footer}>
+    <Shell
+      footer={footer}
+      after={
+        postPurchasePicks.length > 0 ? (
+          <RelatedPicks
+            eyebrow="Complete your creator kit"
+            headline="Add more to your download in the same visit."
+            products={postPurchasePicks}
+          />
+        ) : null
+      }
+    >
       {order.status === 'completed' ? (
         <>
           {/* The receipt is decorative and aria-hidden, so the confirmation
@@ -138,17 +165,50 @@ export default function OrderView({ footer }: { footer: FooterData }) {
           </span>
           <h1 className="mt-3 font-display text-2xl font-bold text-ink sm:text-3xl">{title}</h1>
 
-          <p className="mt-3 text-ink-soft" role="status">
-            {isEmailProduct && order.delivery_status === 'delivered' ? (
-              <>Your Google Drive access link has been emailed to <strong>{order.buyer_email}</strong>. Check your inbox and spam folder.</>
-            ) : isEmailProduct && ['pending', 'sending'].includes(order.delivery_status || '') ? (
-              <>Your payment is confirmed. We are sending your Google Drive access link to <strong>{order.buyer_email}</strong>.</>
-            ) : isEmailProduct && order.delivery_status === 'failed' ? (
-              <>Your payment is confirmed, but your access email has not been sent successfully yet. We will retry automatically where possible. Contact support if it remains delayed.</>
-            ) : (
-              <>Content is provided by email. We cannot confirm email delivery for this order here. Check your inbox or contact support with your order ID.</>
-            )}
-          </p>
+          {isEmailProduct && order.drive_link ? (
+            <div className="mt-6">
+              <a
+                href={order.drive_link}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-block rounded-lg bg-primary px-6 py-3 text-sm font-semibold uppercase tracking-wide text-primary-foreground"
+              >
+                Open Google Drive folder
+              </a>
+              <div className="mx-auto mt-5 max-w-md border-l-4 border-urgent bg-urgent/10 px-4 py-3 text-left">
+                <p className="text-sm font-semibold text-urgent">
+                  Also check your <span className="underline decoration-2 underline-offset-2">Spam / Promotions</span> folder
+                </p>
+                <p className="mt-1 text-xs text-ink-soft">
+                  The same link was emailed to <strong>{order.buyer_email}</strong>. Bookmark this page so you can come back to the button above any time.
+                </p>
+              </div>
+            </div>
+          ) : (
+            <>
+              <p className="mt-3 text-ink-soft" role="status">
+                {isEmailProduct && order.delivery_status === 'delivered' ? (
+                  <>Your Google Drive access link has been emailed to <strong>{order.buyer_email}</strong>.</>
+                ) : isEmailProduct && ['pending', 'sending'].includes(order.delivery_status || '') ? (
+                  <>Your payment is confirmed. We are sending your Google Drive access link to <strong>{order.buyer_email}</strong>.</>
+                ) : isEmailProduct && order.delivery_status === 'failed' ? (
+                  <>Your payment is confirmed, but your access email has not been sent successfully yet. We will retry automatically where possible. Contact support if it remains delayed.</>
+                ) : (
+                  <>Content is provided by email. We cannot confirm email delivery for this order here. Check your inbox or contact support with your order ID.</>
+                )}
+              </p>
+              {isEmailProduct && order.delivery_status === 'delivered' ? (
+                <div className="mx-auto mt-4 max-w-md border-l-4 border-urgent bg-urgent/10 px-4 py-3 text-left">
+                  <p className="text-sm font-semibold text-urgent">
+                    Also check your <span className="underline decoration-2 underline-offset-2">Spam / Promotions</span> folder
+                  </p>
+                  <p className="mt-1 text-xs text-ink-soft">
+                    Delivery emails from support@dropdesk.in sometimes land there.
+                  </p>
+                </div>
+              ) : null}
+            </>
+          )}
           <p className="mt-4 text-sm text-ink-soft">
             Need help? Email <a href={`mailto:${SUPPORT_EMAIL}?subject=Order%20${order.order_id}`} className="underline">{SUPPORT_EMAIL}</a>. You will not be charged again.
           </p>

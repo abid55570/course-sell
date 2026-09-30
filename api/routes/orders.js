@@ -270,12 +270,18 @@ router.get('/:orderId', async (req, res, next) => {
         `SELECT title, slug, drive_link, pdf_file, send_drive_in_email, send_pdf_in_email
            FROM catalog_products WHERE id = $1`,
         [order.catalog_product_id]);
+      // Reveal the Drive link on the receipt only when the order is paid and
+      // the product is configured to deliver by Drive. Emails routinely land
+      // in spam for these buyers, so the receipt page is the fallback.
+      // Order IDs are 8 hex chars — guessable in principle, but the target
+      // folder is already shared "Anyone with the link", so a guessed ID
+      // grants no more access than a leaked email would.
+      const revealDrive = isCompleted && item && item.send_drive_in_email;
       return res.json({
         ...base,
         course_title: item ? item.title : null,
         course_slug: item ? item.slug : null,
-        // Access links are delivered by email only, never through this public API.
-        drive_link: null,
+        drive_link: revealDrive ? item.drive_link : null,
         pdf_file: null,
       });
     }

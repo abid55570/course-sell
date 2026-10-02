@@ -94,7 +94,13 @@ async function processDueEmails() {
 }
 
 function startEmailDeliveryWorker() {
-  const tick = () => processDueEmails().catch(() => console.error('[email-delivery] Queue unavailable; check migration 013 and database connectivity'));
+  // Logs the actual error so prod operators can tell apart a missing
+  // migration (`relation "order_email_deliveries" does not exist`) from a
+  // real DB outage (`ECONNREFUSED`), instead of staring at the same vague
+  // "Queue unavailable" line every 30s.
+  const tick = () => processDueEmails().catch((err) => {
+    console.error('[email-delivery] Queue unavailable; check migration 013 and database connectivity.', err && err.code ? `(${err.code})` : '', err && err.message ? err.message : err);
+  });
   tick();
   const timer = setInterval(tick, 30_000);
   timer.unref();
